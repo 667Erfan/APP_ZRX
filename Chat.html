@@ -1,0 +1,185 @@
+<!-- بخش چت - این را می‌توانید در یک فایل جدا یا در کنار تنظیمات قرار دهید -->
+<div class="chat-wrapper">
+    <div class="chat-container">
+        <div class="chat-header">
+            <span class="chat-title">💬 چت عمومی (Global Chat)</span>
+            <button id="changeNameBtn" class="small-btn">تغییر نام</button>
+        </div>
+
+        <!-- قسمت پیام‌ها -->
+        <div class="chat-messages" id="chatMessages">
+            <!-- پیام نمونه -->
+            <div class="message">
+                <span class="msg-user player-name">Player123:</span>
+                <span class="msg-text">سلام بچه‌ها! چطوری؟</span>
+            </div>
+            <div class="message">
+                <span class="msg-user admin-name">Admin:</span>
+                <span class="msg-text">خوش اومدید به Zrx Launcher! 🔥</span>
+            </div>
+        </div>
+
+        <!-- قسمت تایپ پیام -->
+        <div class="chat-input-area">
+            <input type="text" id="chatInput" placeholder="پیام خود را اینجا بنویسید...">
+            <button id="sendBtn">🚀</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* استایل‌های خفن چت */
+    .chat-wrapper {
+        width: 100%;
+        max-width: 400px;
+        margin: 20px auto;
+    }
+
+    .chat-container {
+        background: rgba(20, 20, 20, 0.7);
+        backdrop-filter: blur(15px);
+        border: 1px solid var(--border-color);
+        border-radius: 20px;
+        display: flex;
+        flex-direction: column;
+        height: 450px;
+        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .chat-header {
+        padding: 15px;
+        background: var(--accent-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .chat-title {
+        color: white;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .small-btn {
+        background: rgba(255,255,255,0.2);
+        border: none;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.7rem;
+    }
+
+    .chat-messages {
+        flex: 1;
+        padding: 15px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* استایل پیام‌ها */
+    .message {
+        font-size: 0.9rem;
+        line-height: 1.4;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg-user {
+        font-weight: bold;
+        margin-left: 5px;
+    }
+
+    .player-name { color: #00ff88; } /* رنگ سبز برای بازیکنان */
+    .admin-name { color: #ff4b2b; }  /* رنگ قرمز برای ادمین‌ها */
+
+    .msg-text {
+        color: var(--text-color);
+    }
+
+    /* قسمت ورودی پیام */
+    .chat-input-area {
+        padding: 15px;
+        display: flex;
+        gap: 10px;
+        background: rgba(0,0,0,0.2);
+    }
+
+    .chat-input-area input {
+        flex: 1;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 10px;
+        color: var(--text-color);
+        outline: none;
+    }
+
+    .chat-input-area input:focus {
+        border-color: var(--accent-color);
+    }
+
+    #sendBtn {
+        background: var(--accent-color);
+        border: none;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+
+    /* استایل اسکرول بار خفن */
+    .chat-messages::-webkit-scrollbar {
+        width: 5px;
+    }
+    .chat-messages::-webkit-scrollbar-thumb {
+        background: var(--accent-color);
+        border-radius: 10px;
+    }
+</style>
+
+<script>
+    // منطق اولیه برای نمایش پیام (فعلاً فقط برای خودت کار می‌کند)
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatMessages = document.getElementById('chatMessages');
+    
+    let currentUsername = "Player_" + Math.floor(Math.random() * 1000);
+
+    function sendMessage() {
+        const text = chatInput.value.trim();
+        if (text !== "") {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
+            msgDiv.innerHTML = `<span class="msg-user player-name">${currentUsername}:</span> <span class="msg-text">${text}</span>`;
+            
+            chatMessages.appendChild(msgDiv);
+            chatInput.value = "";
+            
+            // اسکرول خودکار به پایین
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+
+    // دکمه تغییر نام
+    document.getElementById('changeNameBtn').addEventListener('click', () => {
+        const newName = prompt("نام جدید خود را وارد کنید:", currentUsername);
+        if (newName) {
+            currentUsername = newName;
+            alert("نام شما تغییر کرد به: " + newName);
+        }
+    });
+</script>
