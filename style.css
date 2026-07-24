@@ -84,8 +84,8 @@
 }
 
 /* background */
-html, body{
-  height:100%;
+html { height:100%; }
+body { min-height:100vh; }
 }
 body{
   margin:0;
@@ -195,4 +195,12 @@ body .bg-scan{
   body::before, body::after, body .bg-scan, body .bg-stars{
     animation:none !important;
   }
+}
+/* قبلی: overflow:hidden; */
+body{
+  margin:0;
+  overflow-y:auto;   /* یا overflow:auto; */
+  overflow-x:hidden;
+  position:relative;
+  min-height:100vh; /* به جای height:100% فقط */
 }
