@@ -1,0 +1,40 @@
+.loader{
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  position: relative;
+
+  /* پایه گرد */
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,.9), rgba(255,255,255,0) 45%),
+    conic-gradient(
+      from 0deg,
+      #7c3aed,
+      #06b6d4,
+      #22c55e,
+      #7c3aed
+    );
+
+  filter: drop-shadow(0 10px 20px rgba(0,0,0,.25));
+  animation: spin 1s linear infinite;
+}
+
+.loader::after{
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: #111; /* رنگ پس‌زمینه رو با سایتت هماهنگ کن */
+  /* نمای حلقه‌ای */
+  mask: radial-gradient(circle, transparent 55%, #000 56%);
+  animation: breathe 1.2s ease-in-out infinite;
+}
+
+@keyframes spin{
+  to { transform: rotate(360deg); }
+}
+
+@keyframes breathe{
+  0%, 100% { transform: scale(1); opacity: .95; }
+  50% { transform: scale(.88); opacity: .75; }
+}
