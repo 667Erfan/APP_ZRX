@@ -3,811 +3,440 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cloud Chat - Zrx_MINE</title>
-
+  <title>Chat - Zrx_MINE (No Server)</title>
   <style>
     :root{
-      --bg1:#050814;
-      --bg2:#0b1433;
-      --card: rgba(255,255,255,.08);
-      --card2: rgba(255,255,255,.12);
-      --text:#eaf2ff;
-      --muted: rgba(234,242,255,.75);
-      --line: rgba(255,255,255,.14);
-      --accent1:#7c3aed;
-      --accent2:#38bdf8;
-      --good:#22c55e;
-      --bad:#fb7185;
+      --bg1:#050814; --bg2:#0b1433;
+      --text:#eaf2ff; --muted:rgba(234,242,255,.75);
+      --line:rgba(255,255,255,.14);
+      --meBg: rgba(56,189,248,.12);
     }
-
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
       color:var(--text);
-      background: radial-gradient(1200px 800px at 70% 10%, rgba(124,58,237,.35), transparent 55%),
-                  radial-gradient(900px 600px at 20% 40%, rgba(56,189,248,.25), transparent 55%),
-                  linear-gradient(180deg, var(--bg1), var(--bg2));
-      overflow-x:hidden;
+      background: linear-gradient(180deg,var(--bg1),var(--bg2));
+      display:flex; flex-direction:column;
     }
-
-    /* ابرهای پس‌زمینه */
-    .cloud-layer{
-      position: fixed;
-      inset: -40vh -20vw;
-      pointer-events:none;
-      opacity:.75;
-      filter: blur(0.2px);
-      z-index:0;
-    }
-    .cloud{
-      position:absolute;
-      width: 420px;
-      height: 140px;
-      background: radial-gradient(circle at 30% 50%, rgba(255,255,255,.7), rgba(255,255,255,.05) 60%),
-                  radial-gradient(circle at 60% 60%, rgba(255,255,255,.45), rgba(255,255,255,.04) 62%),
-                  radial-gradient(circle at 50% 20%, rgba(255,255,255,.35), rgba(255,255,255,.02) 60%);
-      border-radius: 999px;
-      transform: translate3d(0,0,0);
-      animation: drift linear infinite;
-      opacity:.55;
-    }
-    @keyframes drift{
-      0%{ transform: translateX(-15vw) translateY(0); }
-      100%{ transform: translateX(15vw) translateY(10vh); }
-    }
-
-    .wrap{
-      position:relative;
-      z-index:1;
-      min-height:100%;
-      display:flex;
-      flex-direction:column;
-    }
-
     header{
-      padding: 20px 18px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      max-width: 1100px;
-      margin: 0 auto;
-      width: 100%;
+      padding:14px 16px;
+      border-bottom:1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      background: rgba(0,0,0,.08); backdrop-filter: blur(8px);
     }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-    .logo{
-      width:44px;height:44px;border-radius:14px;
+    .brand{ display:flex; align-items:center; gap:10px; font-weight:1000; }
+    .logo{ width:36px; height:36px; border-radius:14px;
       background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85));
-      box-shadow: 0 18px 50px rgba(56,189,248,.18), inset 0 0 0 1px rgba(255,255,255,.18);
       display:grid; place-items:center;
-      font-weight:1000;
-      letter-spacing:.5px;
+      box-shadow: 0 18px 50px rgba(56,189,248,.18), inset 0 0 0 1px rgba(255,255,255,.18);
     }
-    .brand h1{
-      margin:0;
-      font-size:16px;
-      line-height:1.2;
-    }
-    .brand p{
-      margin:0;
-      color:var(--muted);
-      font-size:12px;
-    }
-
-    .pill{
-      border: 1px solid var(--line);
-      background: rgba(255,255,255,.06);
-      padding:10px 12px;
-      border-radius:999px;
-      color:var(--muted);
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:flex-start;
-      flex-wrap:wrap;
-    }
-    .dot{
-      width:10px;height:10px;border-radius:50%;
-      background: var(--good);
-      box-shadow: 0 0 0 6px rgba(34,197,94,.15);
-    }
-
-    main{
-      width:100%;
-      max-width:1100px;
-      margin: 0 auto;
-      padding: 0 18px 26px;
-      display:grid;
-      grid-template-columns: 360px 1fr;
-      gap:16px;
+    header .sub{ color:var(--muted); font-size:12px; font-weight:900; }
+    .grid{
       flex:1;
+      display:grid;
+      grid-template-columns: 320px 1fr;
+      gap:14px;
+      padding:14px;
+      min-height:0;
     }
-
-    @media (max-width: 900px){
-      main{ grid-template-columns: 1fr; }
-    }
+    @media (max-width:900px){ .grid{ grid-template-columns: 1fr; } }
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
-      border: 1px solid rgba(255,255,255,.14);
-      border-radius: 18px;
-      box-shadow: 0 18px 60px rgba(0,0,0,.15);
+      border:1px solid var(--line);
+      border-radius:18px;
+      background: rgba(255,255,255,.06);
       backdrop-filter: blur(10px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.15);
+      min-height:0;
+      display:flex; flex-direction:column;
     }
-
-    .panel{
-      padding:16px;
-      display:flex;
-      flex-direction:column;
-      gap:14px;
-      position:sticky;
-      top: 14px;
-      align-self:start;
-      max-height: calc(100vh - 40px);
-    }
-    @media (max-width: 900px){
-      .panel{ position:relative; top:auto; max-height:none; }
-    }
-
-    .section-title{
-      font-weight:1000;
-      letter-spacing:.2px;
-      font-size:13px;
-      color: rgba(234,242,255,.9);
-    }
-
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-    }
-    label{
-      color:var(--muted);
-      font-size:12px;
-      font-weight:700;
-    }
-
-    input, select{
-      width:100%;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.16);
+    .left{ padding:14px; gap:12px; }
+    .right{ min-height:0; }
+    .left .section{ margin-top:6px; }
+    .field{ display:flex; flex-direction:column; gap:8px; }
+    label{ color:var(--muted); font-size:12px; font-weight:1000; }
+    input{
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.16);
       background: rgba(0,0,0,.15);
-      color: var(--text);
-      padding: 12px 12px;
-      outline:none;
+      color:var(--text);
+      outline:none; font-weight:900;
     }
     input::placeholder{ color: rgba(234,242,255,.45); }
-
-    .row{
-      display:flex; gap:10px;
-    }
-    .row > *{ flex:1; }
-
-    .btn{
+    .btnRow{ display:flex; gap:10px; }
+    button{
+      flex:1;
       border:0;
       border-radius:14px;
-      padding: 12px 12px;
-      cursor:pointer;
+      padding:12px 12px;
       font-weight:1000;
-      color:#07101b;
+      cursor:pointer;
       background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85));
+      color:#07101b;
       box-shadow: 0 18px 55px rgba(56,189,248,.18), inset 0 0 0 1px rgba(255,255,255,.18);
-      transition: transform .15s ease, filter .2s ease;
       user-select:none;
     }
-    .btn:hover{ transform: translateY(-1px); filter: brightness(1.06) saturate(1.1); }
-    .btn:active{ transform: translateY(0); }
-
-    .btn-ghost{
+    .ghost{
       background: rgba(255,255,255,.07);
       color:var(--text);
       box-shadow:none;
-      border: 1px solid rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.14);
     }
 
     .users{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      max-height: 260px;
+      border-top:1px solid var(--line);
+      padding-top:12px;
+      display:flex; flex-direction:column; gap:10px;
       overflow:auto;
-      padding-right: 6px;
+      max-height: 220px;
     }
-    .users::-webkit-scrollbar{ width:8px; }
-    .users::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.16); border-radius: 999px; }
-
-    .user-chip{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
+    .user{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
       padding:10px 12px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-    }
-    .user-left{ display:flex; gap:10px; align-items:center; min-width:0; }
-    .avatar{
-      width:30px;height:30px;border-radius:12px;
-      background: linear-gradient(135deg, rgba(56,189,248,.85), rgba(124,58,237,.85));
-      display:grid; place-items:center;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
       font-weight:1000;
+    }
+    .avatar{
+      width:28px;height:28px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85));
+      display:grid; place-items:center;
       color:#07101b;
       flex:0 0 auto;
     }
-    .uname{
-      font-weight:1000;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      max-width: 200px;
-    }
-    .tag{
-      font-size:12px;
-      color:var(--muted);
-    }
-
-    /* چت */
-    .chat{
-      display:flex;
-      flex-direction:column;
-      min-height: 520px;
-    }
-    .chat-head{
-      padding: 14px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-bottom: 1px solid rgba(255,255,255,.12);
-    }
-    .chat-head .title{
-      font-weight:1000;
-      letter-spacing:.2px;
-    }
-    .chat-head .sub{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:2px;
-    }
+    .name{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
     .messages{
       flex:1;
-      padding: 14px;
+      min-height:0;
       overflow:auto;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
+      padding:14px;
+      display:flex; flex-direction:column; gap:10px;
     }
     .messages::-webkit-scrollbar{ width:10px; }
-    .messages::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.16); border-radius: 999px; }
+    .messages::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.16); border-radius:999px; }
 
-    .bubble-row{
-      display:flex;
-      gap:10px;
-      align-items:flex-end;
-    }
-    .bubble-row.me{ flex-direction:row-reverse; }
-
-    .b-avatar{
-      width:34px;height:34px;border-radius:14px;
+    .row{ display:flex; gap:10px; align-items:flex-end; }
+    .row.me{ flex-direction:row-reverse; }
+    .bAv{
+      width:32px;height:32px;border-radius:14px;
       background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85));
       display:grid; place-items:center;
-      font-weight:1000;
-      color:#07101b;
-      flex:0 0 auto;
+      color:#07101b; font-weight:1000; flex:0 0 auto;
     }
     .bubble{
-      max-width: 72%;
-      padding: 12px 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.12);
+      max-width:78%;
+      border:1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.06);
-      box-shadow: 0 10px 30px rgba(0,0,0,.12);
+      border-radius:16px;
+      padding:12px 12px;
       backdrop-filter: blur(8px);
+      box-shadow: 0 10px 30px rgba(0,0,0,.12);
     }
-    .bubble.me{
-      background: linear-gradient(180deg, rgba(124,58,237,.20), rgba(56,189,248,.10));
-      border-color: rgba(56,189,248,.25);
-    }
-
+    .bubble.me{ background: var(--meBg); border-color: rgba(56,189,248,.25); }
     .meta{
-      display:flex;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:6px;
+      display:flex; justify-content:space-between; gap:10px;
       color: rgba(234,242,255,.82);
-      font-size:12px;
-      font-weight:900;
+      font-size:12px; font-weight:1000;
+      margin-bottom:6px;
     }
-    .text{
-      white-space:pre-wrap;
-      word-break:break-word;
-      line-height:1.45;
-      font-weight:800;
-      letter-spacing:.1px;
-    }
-    .time{
-      color: rgba(234,242,255,.55);
-      font-weight:800;
-      font-size:11px;
-      margin-top:6px;
-      text-align:left;
-    }
-
-    .system{
-      align-self:center;
-      text-align:center;
-      color: rgba(234,242,255,.8);
-      font-weight:1000;
-      border: 1px dashed rgba(255,255,255,.18);
-      background: rgba(255,255,255,.05);
-      padding: 10px 14px;
-      border-radius: 999px;
-      width: fit-content;
-    }
+    .text{ white-space:pre-wrap; word-break:break-word; font-weight:900; line-height:1.45; }
+    .time{ color: rgba(234,242,255,.55); font-size:11px; font-weight:900; margin-top:6px; }
 
     .composer{
-      padding: 12px 14px;
-      border-top: 1px solid rgba(255,255,255,.12);
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      background: rgba(0,0,0,.12);
+      border-top:1px solid var(--line);
+      padding:12px;
+      display:flex; gap:10px;
+      background: rgba(0,0,0,.10);
     }
-    .composer-top{
-      display:flex;
-      gap:10px;
-      align-items:center;
-    }
-    .composer input{
-      flex:1;
-      padding: 12px 12px;
-      border-radius: 14px;
-    }
-    .send{
-      min-width: 130px;
-    }
-
-    .quick{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .chip-btn{
-      border-radius:999px;
-      padding: 8px 10px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(255,255,255,.06);
-      color: var(--text);
-      cursor:pointer;
-      font-weight:900;
-      font-size:12px;
-      user-select:none;
-      transition: transform .12s ease, filter .2s ease;
-    }
-    .chip-btn:hover{ transform: translateY(-1px); filter: brightness(1.07); }
-
+    .composer input{ flex:1; }
+    .send{ flex:0 0 130px; }
+    .hint{ color:var(--muted); font-size:12px; font-weight:900; line-height:1.7; }
   </style>
 </head>
-
 <body>
-  <!-- ابرها -->
-  <div class="cloud-layer" aria-hidden="true">
-    <div class="cloud" style="top:10vh; left:5vw; animation-duration: 22s; animation-delay: -6s;"></div>
-    <div class="cloud" style="top:22vh; left:30vw; animation-duration: 26s; animation-delay: -12s; opacity:.45;"></div>
-    <div class="cloud" style="top:45vh; left:60vw; animation-duration: 24s; animation-delay: -9s; opacity:.4;"></div>
-    <div class="cloud" style="top:62vh; left:10vw; animation-duration: 28s; animation-delay: -18s; opacity:.35;"></div>
+  <header>
+    <div class="brand">
+      <div class="logo">☁️</div>
+      <div>
+        Chat - Zrx_MINE
+        <div class="sub">پخش بین تب‌های همین دستگاه (بدون سرور)</div>
+      </div>
+    </div>
+    <div class="sub" id="status">آماده</div>
+  </header>
+
+  <div class="grid">
+    <aside class="card left">
+      <div class="field">
+        <label>اسم نمایشی</label>
+        <input id="nameInput" maxlength="24" placeholder="مثلا zrx" />
+      </div>
+
+      <div class="btnRow">
+        <button id="applyName">عوض کردن اسم</button>
+        <button id="clearUI" class="ghost" title="فقط UI همین تب پاک میشه">پاک‌سازی</button>
+      </div>
+
+      <div class="section hint">
+        پیام‌ها با <b>BroadcastChannel</b> بین تب‌ها پخش میشه.
+      </div>
+
+      <div class="users" id="usersList">
+        <!-- online users -->
+      </div>
+    </aside>
+
+    <section class="card right">
+      <div class="messages" id="messages"></div>
+
+      <div class="composer">
+        <input id="msgInput" type="text" maxlength="220" placeholder="پیام بنویس… (Enter)" />
+        <button id="sendBtn" class="send">ارسال</button>
+      </div>
+    </section>
   </div>
 
-  <div class="wrap">
-    <header>
-      <div class="brand">
-        <div class="logo">☁️</div>
-        <div>
-          <h1>Cloud Chat</h1>
-          <p>گرد هم بیاییم… خفن حرف بزنیم 😈</p>
-        </div>
-      </div>
-      <div class="pill">
-        <span class="dot" id="statusDot"></span>
-        <span id="statusText">در حال اتصال…</span>
-      </div>
-    </header>
+<script>
+  // ===== NO SERVER CHAT (TAB-to-TAB) =====
+  const channelName = "zrx_cloud_chat_global_v1";
+  const bc = new BroadcastChannel(channelName);
 
-    <main>
-      <!-- پنل سمت چپ -->
-      <aside class="card panel">
-        <div>
-          <div class="section-title">تنظیمات</div>
-        </div>
+  const uidKey = "zrx_local_uid";
+  let myUid = localStorage.getItem(uidKey);
+  if(!myUid){
+    myUid = "u_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
+    localStorage.setItem(uidKey, myUid);
+  }
 
-        <div class="field">
-          <label>نام نمایشی</label>
-          <input id="nameInput" type="text" placeholder="مثلا: zrx" maxlength="24" />
-        </div>
+  const nameInput = document.getElementById("nameInput");
+  const applyName = document.getElementById("applyName");
+  const msgInput = document.getElementById("msgInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const messagesEl = document.getElementById("messages");
+  const usersList = document.getElementById("usersList");
+  const statusEl = document.getElementById("status");
+  const clearUI = document.getElementById("clearUI");
 
-        <div class="row">
-          <div class="field">
-            <label>اتاق</label>
-            <input id="roomInput" type="text" placeholder="مثلا: mine" maxlength="24" />
-          </div>
-        </div>
+  let myName = localStorage.getItem("zrx_local_name") || "";
+  if(!myName) myName = "zrx";
+  nameInput.value = myName;
 
-        <div class="row">
-          <button class="btn btn-ghost" id="joinBtn">ورود / ساخت</button>
-          <button class="btn" id="renameBtn" title="نامت رو عوض کن">عوض کردن اسم</button>
-        </div>
+  // users presence (local tab only)
+  const users = new Map(); // uid -> {uid,name,lastSeen}
+  users.set(myUid, {uid: myUid, name: myName, lastSeen: Date.now()});
 
-        <div>
-          <div class="section-title">کاربرهای آنلاین</div>
-        </div>
-        <div class="users" id="usersList"></div>
+  function avatarLetter(name){
+    const s = (name || "").trim();
+    return s ? s[0] : "U";
+  }
+  function fmtTime(ts){
+    try{
+      const d = new Date(ts);
+      return d.toLocaleTimeString("fa-IR", {hour:"2-digit", minute:"2-digit"});
+    }catch{ return ""; }
+  }
+  function escapeHtml(str){
+    return (str ?? "").toString().replace(/[&<>"']/g, m => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
+    }[m]));
+  }
 
-        <div class="section-title" style="margin-top:6px;">
-          پیام‌های خفن نمونه
-        </div>
-        <div class="quick">
-          <div class="chip-btn" data-msg="سلام! اومدی بینمون 😄">سلام!</div>
-          <div class="chip-btn" data-msg="دور هم جم شدیم، بریم خفن حرف بزنیم 🔥">دور هم جم میشیم</div>
-          <div class="chip-btn" data-msg="این چت ابریه… هر چی بگی میره بالا ☁️">ابری</div>
-          <div class="chip-btn" data-msg="کی حاضره یه برنامه بریزه؟">برنامه</div>
-        </div>
-      </aside>
+  function renderSystem(text){
+    const div = document.createElement("div");
+    div.style.alignSelf = "center";
+    div.style.textAlign = "center";
+    div.style.border = "1px dashed rgba(255,255,255,.18)";
+    div.style.background = "rgba(255,255,255,.05)";
+    div.style.padding = "10px 14px";
+    div.style.borderRadius = "999px";
+    div.style.color = "rgba(234,242,255,.85)";
+    div.style.fontWeight = "1000";
+    div.textContent = text;
+    messagesEl.appendChild(div);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
 
-      <!-- چت -->
-      <section class="card chat">
-        <div class="chat-head">
-          <div>
-            <div class="title" id="roomTitle">—</div>
-            <div class="sub" id="roomSub">—</div>
-          </div>
-          <div class="tag" id="onlineCount">—</div>
-        </div>
+  function renderMessage(m){
+    if(m.type === "system"){
+      renderSystem(m.text || "");
+      return;
+    }
+    const row = document.createElement("div");
+    row.className = "row" + (m.uid === myUid ? " me" : "");
 
-        <div class="messages" id="messages"></div>
+    const av = document.createElement("div");
+    av.className = "bAv";
+    av.textContent = avatarLetter(m.name);
 
-        <div class="composer">
-          <div class="composer-top">
-            <input id="msgInput" type="text" placeholder="پیام بنویس… (Enter برای ارسال)" maxlength="220"/>
-            <button class="btn send" id="sendBtn">ارسال</button>
-          </div>
-          <div class="tag" style="text-align:center;">
-            نکته: با عوض کردن اسم، پیام جدید نمایش داده میشه.
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
+    const bubble = document.createElement("div");
+    bubble.className = "bubble" + (m.uid === myUid ? " me" : "");
 
-  <!-- Firebase (v9 modular) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import {
-      getDatabase,
-      ref,
-      onValue,
-      set,
-      push,
-      remove,
-      onChildAdded,
-      update,
-      serverTimestamp,
-      child,
-      get
-    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+    const meta = document.createElement("div");
+    meta.className = "meta";
 
-    /***********************
-     * 1) این قسمت رو پر کن *
-     ***********************/
-    // TODO: اینا رو از Firebase Project -> Add app -> Web می‌گیری
-    const firebaseConfig = {
-      apiKey: "PASTE_YOUR_API_KEY",
-      authDomain: "PASTE_YOUR_AUTH_DOMAIN",
-      databaseURL: "PASTE_YOUR_DATABASE_URL",
-      projectId: "PASTE_YOUR_PROJECT_ID",
-      storageBucket: "PASTE_YOUR_STORAGE_BUCKET",
-      messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID",
-      appId: "PASTE_YOUR_APP_ID"
-    };
+    const left = document.createElement("div");
+    left.textContent = m.name || "Unknown";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const right = document.createElement("div");
+    right.textContent = "";
 
-    /***********************
-     * 2) کاربران/اتاق/پیام *
-     ***********************/
-    // شناسه ی کاربر (برای هر بار ورود)
-    let myId = localStorage.getItem("cloudchat_uid");
-    if(!myId){
-      myId = "u_" + Math.random().toString(16).slice(2) + "_" + Date.now().toString(16);
-      localStorage.setItem("cloudchat_uid", myId);
+    meta.appendChild(left);
+    meta.appendChild(right);
+
+    const text = document.createElement("div");
+    text.className = "text";
+    text.textContent = m.text || "";
+
+    const time = document.createElement("div");
+    time.className = "time";
+    time.textContent = m.createdAt ? fmtTime(m.createdAt) : "";
+
+    bubble.appendChild(meta);
+    bubble.appendChild(text);
+    bubble.appendChild(time);
+
+    row.appendChild(av);
+    row.appendChild(bubble);
+
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function renderUsers(){
+    // remove stale (not necessary but feels better)
+    const now = Date.now();
+    for(const [uid,u] of users.entries()){
+      if(now - u.lastSeen > 20000) users.delete(uid);
     }
 
-    const nameInput = document.getElementById("nameInput");
-    const roomInput = document.getElementById("roomInput");
-    const joinBtn = document.getElementById("joinBtn");
-    const renameBtn = document.getElementById("renameBtn");
-    const sendBtn = document.getElementById("sendBtn");
-    const msgInput = document.getElementById("msgInput");
+    const arr = Array.from(users.values());
+    arr.sort((a,b)=> (a.name||"").localeCompare(b.name||"","fa"));
 
-    const usersList = document.getElementById("usersList");
-    const messagesEl = document.getElementById("messages");
-    const roomTitle = document.getElementById("roomTitle");
-    const roomSub = document.getElementById("roomSub");
-    const onlineCount = document.getElementById("onlineCount");
-    const statusText = document.getElementById("statusText");
-    const statusDot = document.getElementById("statusDot");
-
-    let currentRoom = null;
-    let currentName = null;
-
-    function escapeHtml(str){
-      return str.replace(/[&<>"']/g, m => ({
-        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"
-      }[m]));
-    }
-
-    function formatTime(ts){
-      if(!ts) return "";
-      try{
-        const d = new Date(ts);
-        return d.toLocaleTimeString("fa-IR", {hour:"2-digit", minute:"2-digit"});
-      }catch{ return ""; }
-    }
-
-    function avatarLetter(name){
-      const s = (name || "").trim();
-      return s ? s[0] : "U";
-    }
-
-    function setStatus(ok, text){
-      statusDot.style.background = ok ? "var(--good)" : "var(--bad)";
-      statusText.textContent = text;
-    }
-
-    function scrollToBottom(){
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    function renderSystem(text){
+    usersList.innerHTML = "";
+    for(const u of arr){
       const div = document.createElement("div");
-      div.className = "system";
-      div.textContent = text;
-      messagesEl.appendChild(div);
-      scrollToBottom();
-    }
+      div.className = "user";
 
-    function renderMessage(msg){
-      const row = document.createElement("div");
-      row.className = "bubble-row" + (msg.uid === myId ? " me" : "");
+      const left = document.createElement("div");
+      left.style.display = "flex";
+      left.style.alignItems = "center";
+      left.style.gap = "10px";
 
       const av = document.createElement("div");
-      av.className = "b-avatar";
-      av.textContent = avatarLetter(msg.name);
-      row.appendChild(av);
+      av.className = "avatar";
+      av.textContent = avatarLetter(u.name);
 
-      const bubble = document.createElement("div");
-      bubble.className = "bubble" + (msg.uid === myId ? " me" : "");
+      const nm = document.createElement("div");
+      nm.className = "name";
+      nm.textContent = u.name || "Unknown";
 
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      const left = document.createElement("div");
-      left.textContent = msg.name + (msg.type === "rename" ? " اسمشو عوض کرد" : "");
+      left.appendChild(av);
+      left.appendChild(nm);
 
-      const right = document.createElement("div");
-      right.textContent = msg.type === "system" ? "" : "";
+      const tag = document.createElement("div");
+      tag.style.color = "rgba(234,242,255,.72)";
+      tag.style.fontSize = "12px";
+      tag.style.fontWeight = "1000";
+      tag.textContent = (u.uid === myUid) ? "تو" : "آنلاین";
 
-      meta.appendChild(left);
-      meta.appendChild(right);
+      div.appendChild(left);
+      div.appendChild(tag);
 
-      const text = document.createElement("div");
-      text.className = "text";
-      text.textContent = msg.text || "";
+      usersList.appendChild(div);
+    }
+  }
 
-      bubble.appendChild(meta);
-      bubble.appendChild(text);
+  // presence ping
+  function broadcastPresence(){
+    const payload = {type:"presence", uid: myUid, name: myName, at: Date.now()};
+    bc.postMessage(payload);
+  }
 
-      const t = document.createElement("div");
-      t.className = "time";
-      t.textContent = msg.createdAt ? formatTime(msg.createdAt) : "";
-      bubble.appendChild(t);
-
-      // برای پیام سیستم، حباب نزنیم
-      if(msg.type === "system"){
-        // نمایش متفاوت
-        const sys = document.createElement("div");
-        sys.className = "system";
-        sys.textContent = msg.text;
-        messagesEl.appendChild(sys);
-        scrollToBottom();
-        return;
-      }
-
-      row.appendChild(bubble);
-      messagesEl.appendChild(row);
-      scrollToBottom();
+  // on receive
+  bc.onmessage = (ev)=>{
+    const msg = ev.data || {};
+    if(msg.type === "presence"){
+      users.set(msg.uid, {uid: msg.uid, name: msg.name, lastSeen: msg.at || Date.now()});
+      renderUsers();
+      return;
     }
 
-    async function joinRoom(){
-      const room = (roomInput.value || "").trim() || "mine";
-      const name = (nameInput.value || "").trim() || "zrx";
-
-      currentRoom = room;
-      currentName = name;
-
-      localStorage.setItem("cloudchat_name", name);
-      localStorage.setItem("cloudchat_room", room);
-
-      roomTitle.textContent = "اتاق: " + room;
-      roomSub.textContent = "دور هم جم شدیم و خفن حرف می‌زنیم ☁️";
-
-      // ذخیره وضعیت آنلاین
-      set(ref(db, `rooms/${room}/users/${myId}`), {
-        name,
-        uid: myId,
-        lastSeen: serverTimestamp(),
-        joinedAt: serverTimestamp()
-      });
-
-      // پیام سیستم: ورود
-      await push(ref(db, `rooms/${room}/messages`), {
-        type: "system",
-        uid: myId,
-        name,
-        text: `${name} وارد شد. دور هم جم میشیم 😈`,
-        createdAt: serverTimestamp()
-      });
-
-      setStatus(true, "آنلاین شدی!");
-      bindRoom(room);
+    if(msg.type === "rename"){
+      // update sender name locally (UI)
+      users.set(msg.uid, {uid: msg.uid, name: msg.name, lastSeen: Date.now()});
+      renderUsers();
+      renderMessage({type:"system", text: msg.text, createdAt: msg.at || Date.now()});
+      return;
     }
 
-    function bindRoom(room){
-      // کاربران آنلاین
-      const usersRef = ref(db, `rooms/${room}/users`);
-      onValue(usersRef, (snap) => {
-        const data = snap.val() || {};
-        const entries = Object.values(data);
-        // لیست
-        usersList.innerHTML = "";
-        entries.sort((a,b)=>(a.name||"").localeCompare(b.name||"","fa"));
-        for(const u of entries){
-          const chip = document.createElement("div");
-          chip.className = "user-chip";
-
-          const left = document.createElement("div");
-          left.className = "user-left";
-
-          const av = document.createElement("div");
-          av.className = "avatar";
-          av.textContent = avatarLetter(u.name);
-
-          const uname = document.createElement("div");
-          uname.className = "uname";
-          uname.textContent = u.name || "Unknown";
-
-          const tag = document.createElement("div");
-          tag.className = "tag";
-          tag.textContent = (u.uid === myId) ? "تو" : "آنلاین";
-
-          left.appendChild(av);
-          left.appendChild(uname);
-
-          chip.appendChild(left);
-          chip.appendChild(tag);
-          usersList.appendChild(chip);
-        }
-
-        onlineCount.textContent = `آنلاین: ${entries.length}`;
-      });
-
-      // پیام‌ها: listen جدید
-      const msgRef = ref(db, `rooms/${room}/messages`);
-      onChildAdded(msgRef, (snap) => {
-        const msg = snap.val();
-        if(!msg) return;
-
-        // اگر پیام مربوط به اتاق فعلی است و UI آماده است
-        renderMessage({
-          ...msg,
-          createdAt: msg.createdAt ? msg.createdAt : msg.createdAt
-        });
-      });
+    if(msg.type === "chat" || msg.type === "system"){
+      renderMessage(msg);
+      return;
     }
+  };
 
-    function sendMessage(text){
-      if(!currentRoom) return;
-      const t = (text || "").trim();
-      if(!t) return;
+  // announce join
+  statusEl.textContent = "اتصال محلی...";
+  bc.postMessage({type:"system", uid: myUid, name: myName, text: `${myName} وارد شد. دور هم جم میشیم 😈`, createdAt: Date.now()});
+  bc.postMessage({type:"presence", uid: myUid, name: myName, at: Date.now()});
+  renderUsers();
 
-      push(ref(db, `rooms/${currentRoom}/messages`), {
-        type: "chat",
-        uid: myId,
-        name: currentName,
-        text: t,
-        createdAt: serverTimestamp()
-      });
-    }
+  // periodic presence
+  setInterval(broadcastPresence, 5000);
 
-    joinBtn.addEventListener("click", async () => {
-      // پیام‌ها رو پاک کنیم
-      messagesEl.innerHTML = "";
-      setStatus(false, "اتصال…");
-      await joinRoom();
+  function sendMessage(){
+    const t = (msgInput.value || "").trim();
+    if(!t) return;
+    bc.postMessage({
+      type:"chat",
+      uid: myUid,
+      name: myName,
+      text: t,
+      createdAt: Date.now()
     });
+    msgInput.value = "";
+    msgInput.focus();
+  }
 
-    renameBtn.addEventListener("click", async () => {
-      if(!currentRoom) { alert("اول وارد شو"); return; }
-      const newName = (nameInput.value || "").trim() || "zrx";
-      const oldName = currentName || "—";
-      if(newName === oldName) return;
+  sendBtn.addEventListener("click", sendMessage);
+  msgInput.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") sendMessage();
+  });
 
-      currentName = newName;
-      localStorage.setItem("cloudchat_name", newName);
+  applyName.addEventListener("click", ()=>{
+    const newName = (nameInput.value || "").trim().slice(0,24) || "zrx";
+    const oldName = myName;
+    if(newName === oldName) return;
 
-      // آپدیت اسم کاربر
-      await update(ref(db, `rooms/${currentRoom}/users/${myId}`), {
-        name: newName,
-        lastSeen: serverTimestamp()
-      });
+    myName = newName;
+    localStorage.setItem("zrx_local_name", myName);
 
-      // پیام سیستم/اسم
-      await push(ref(db, `rooms/${currentRoom}/messages`), {
-        type: "system",
-        uid: myId,
-        name: newName,
-        text: `${oldName} شد ${newName} 🔥`,
-        createdAt: serverTimestamp()
-      });
-      // پیام کات‌کننده متن هم اگر خواستی:
-      // push chat type rename...
+    users.set(myUid, {uid: myUid, name: myName, lastSeen: Date.now()});
+    renderUsers();
+    broadcastPresence();
+
+    bc.postMessage({
+      type:"rename",
+      uid: myUid,
+      name: myName,
+      text: `اسم عوض شد: ${oldName} → ${myName} 🔥`,
+      at: Date.now()
     });
+    statusEl.textContent = "اسم ذخیره شد ✅";
+    setTimeout(()=> statusEl.textContent = "آنلاین", 1200);
+  });
 
-    sendBtn.addEventListener("click", () => {
-      sendMessage(msgInput.value);
-      msgInput.value = "";
-      msgInput.focus();
-    });
+  clearUI.addEventListener("click", ()=>{
+    messagesEl.innerHTML = "";
+  });
 
-    msgInput.addEventListener("keydown", (e) => {
-      if(e.key === "Enter"){
-        e.preventDefault();
-        sendBtn.click();
-      }
-    });
-
-    // Quick buttons
-    document.querySelectorAll(".chip-btn").forEach(btn=>{
-      btn.addEventListener("click", ()=>{
-        msgInput.value = btn.getAttribute("data-msg") || "";
-        msgInput.focus();
-      });
-    });
-
-    // Restore defaults
-    nameInput.value = localStorage.getItem("cloudchat_name") || "";
-    roomInput.value = localStorage.getItem("cloudchat_room") || "mine";
-    if(localStorage.getItem("cloudchat_autojoin") === "1" && (roomInput.value || "").trim()){
-      // اتومات وارد شو (اختیاری)
-    }
-
-    // اگر می‌خوای با خروج پاک شه:
-    window.addEventListener("beforeunload", async ()=>{
-      if(!currentRoom) return;
-      try{
-        await remove(ref(db, `rooms/${currentRoom}/users/${myId}`));
-      }catch{}
-    });
-
-    setStatus(false, "برای شروع «ورود / ساخت» بزن");
-  </script>
+  // seed initial system
+  renderSystem("دور هم جم شدیم… خفن حرف بزن 😈");
+</script>
 </body>
 </html>
