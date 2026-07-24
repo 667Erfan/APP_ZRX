@@ -935,3 +935,60 @@
   </script>
 </body>
 </html>
+<style>
+  /* دکمه 3D سبک و GPU-friendly */
+  .btn3d{
+    --z: 22px;         /* عمق */
+    --y: 0px;          /* جابه‌جایی Y در حالت عادی */
+    --lift: 0px;       /* سایه/هایلایت */
+    --bg: rgba(255,255,255,.08);
+    --border: rgba(255,255,255,.16);
+    --text: rgba(235,244,255,.98);
+
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    padding: 12px 16px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+
+    transform: translateZ(var(--z)) translateY(var(--y));
+    transform-style: preserve-3d;
+
+    box-shadow:
+      0 18px 45px rgba(0,0,0,.45),
+      inset 0 1px 0 rgba(255,255,255,.12);
+    cursor: pointer;
+
+    /* برای لگ کمتر */
+    will-change: transform;
+    transition: transform 90ms linear, box-shadow 90ms linear;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* افکت فشار دکمه با Z برعکس (3D عقب میره) */
+  .btn3d:active,
+  .btn3d.is-pressed{
+    transform: translateZ(6px) translateY(3px);
+    box-shadow:
+      0 10px 26px rgba(0,0,0,.42),
+      inset 0 1px 0 rgba(255,255,255,.10);
+  }
+
+  /* حالت فوکوس برای دسترس‌پذیری */
+  .btn3d:focus-visible{
+    outline: 2px solid rgba(124,58,237,.55);
+    outline-offset: 3px;
+  }
+
+  /* اگر خواستی برای کاهش حرکت */
+  @media (prefers-reduced-motion: reduce){
+    .btn3d{ transition:none; }
+  }
+</style>
