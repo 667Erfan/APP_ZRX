@@ -3,22 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Right 10 Buttons (Scroll)</title>
-  <style>
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      background:#070A12;
-      color:#EAF0FF;
-    }
+  <title>Right 10 Buttons</title>
 
-    /* این دکمه‌ها ثابت نیستن؛ با اسکرول میرن پایین */
+  <style>
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#070A12; }
+
+    /* اسکرولی و زیر هم */
     .right-stack{
       display:flex;
-      flex-direction:column; /* زیر هم */
-      align-items:flex-end;    /* سمت راست راست */
-      gap:30px;                /* فاصله 30 */
-      padding: 120px 18px 80px 18px; /* فضای بالا که از همون اول به هم نریزه */
+      flex-direction:column;
+      align-items:flex-end;   /* همه دکمه‌ها واقعاً سمت راست */
+      gap:30px;
+      padding: 120px 18px;    /* فضای بالا + فاصله از راست */
     }
 
     .rb{
@@ -29,25 +25,17 @@
       cursor:pointer;
 
       direction: rtl;
-      text-align:right;
+      text-align: right;
 
-      font-weight:900;
       color:#05101a;
-
-      transition: transform .15s ease, filter .2s ease;
-      transform: translateX(0);
-      overflow:hidden;
+      font-weight:900;
 
       background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85));
-      box-shadow: 0 18px 55px rgba(56,189,248,.18),
-                  inset 0 0 0 1px rgba(255,255,255,.18);
+      box-shadow: 0 18px 55px rgba(56,189,248,.18), inset 0 0 0 1px rgba(255,255,255,.18);
+      transition: transform .15s ease, filter .2s ease;
     }
 
-    .rb:hover{
-      transform: translateX(-4px) translateY(-2px) scale(1.02);
-      filter: brightness(1.06) saturate(1.1);
-    }
-    .rb:active{ transform: translateX(-2px) translateY(-1px) scale(1.00); }
+    .rb:hover{ transform: translateX(-4px) translateY(-2px) scale(1.02); filter: brightness(1.06) saturate(1.1); }
 
     .b1{ background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85)); }
     .b2{ background: linear-gradient(135deg, rgba(34,197,94,.95), rgba(56,189,248,.85)); }
@@ -61,13 +49,8 @@
     .b10{ background: linear-gradient(135deg, rgba(217,70,239,.95), rgba(245,158,11,.85)); }
 
     @media (max-width: 520px){
+      .right-stack{ padding: 100px 10px; }
       .rb{ width:160px; }
-      .right-stack{ padding-left:10px; padding-right:10px; gap:22px; }
-    }
-
-    /* فقط برای اینکه صفحه اسکرول داشته باشه */
-    .spacer{
-      height: 1200px; /* مقدار زیاد که پایین بشه دید */
     }
   </style>
 </head>
@@ -85,8 +68,6 @@
     <button class="rb b9" type="button">Button 9</button>
     <button class="rb b10" type="button">Button 10</button>
   </div>
-
-  <div class="spacer"></div>
 
 </body>
 </html>
