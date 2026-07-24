@@ -613,3 +613,325 @@
   </script>
 </body>
 </html>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    :root{
+      --bg1: #0b1030;
+      --p1: rgba(124,58,237,.38);
+      --p2: rgba(6,182,212,.26);
+      --p3: rgba(34,197,94,.18);
+      --text: rgba(235,244,255,.96);
+      --stroke: rgba(255,255,255,.14);
+      --stroke2: rgba(255,255,255,.10);
+      --cardShadow: rgba(0,0,0,.45);
+    }
+
+    html, body { height:100%; }
+    body{
+      margin:0;
+      overflow-x:hidden;
+      overflow-y:auto; /* تا صفحه پایین بیاد */
+      position:relative;
+      min-height:100vh;
+      background: linear-gradient(180deg, var(--bg1), #070a1f);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      color: var(--text);
+    }
+
+    /* پس‌زمینه نئونی موج‌دار (سبک) */
+    .bg{
+      position:fixed;
+      inset:-20vmax;
+      z-index:0;
+      pointer-events:none;
+      background:
+        radial-gradient(circle at 20% 10%, var(--p1), transparent 45%),
+        radial-gradient(circle at 80% 30%, var(--p2), transparent 48%),
+        radial-gradient(circle at 55% 85%, var(--p3), transparent 50%);
+      opacity:.95;
+      animation: drift 16s ease-in-out infinite;
+      transform: translateZ(0);
+      will-change: transform;
+    }
+    @keyframes drift{
+      0%,100%{ transform: translate3d(0,0,0) scale(1); }
+      50%{ transform: translate3d(2.5vw, 2vh, 0) scale(1.03); }
+    }
+
+    /* شبکه خیلی سبک */
+    .grid{
+      position:fixed;
+      inset:0;
+      z-index:0;
+      pointer-events:none;
+      background:
+        linear-gradient(to right, rgba(255,255,255,.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 84px 84px;
+      opacity:.55;
+      mask-image: radial-gradient(circle at 50% 18%, rgba(0,0,0,1), rgba(0,0,0,.25) 55%, transparent 75%);
+    }
+
+    .content{
+      position:relative;
+      z-index:1;
+      min-height:100vh;
+      padding: clamp(16px, 4vw, 28px);
+      display:flex;
+      gap: clamp(14px, 3vw, 26px);
+      align-items:flex-start;
+      justify-content:flex-start;
+    }
+
+    .left{
+      flex: 0 0 auto;
+      padding-top: clamp(8px, 4vh, 40px);
+      max-width: 520px;
+    }
+
+    .title{
+      font-weight: 950;
+      letter-spacing:.08em;
+      font-size: clamp(26px, 5.3vw, 60px);
+      margin:0;
+      line-height:1.05;
+      user-select:none;
+      opacity:0;
+      transform: translate3d(-110px,0,0);
+      animation: slideIn 700ms cubic-bezier(.2,.9,.2,1) forwards;
+      text-shadow:
+        0 0 18px rgba(124,58,237,.20),
+        0 0 28px rgba(6,182,212,.14);
+    }
+    @keyframes slideIn{
+      0%{ opacity:0; transform: translate3d(-110px,0,0); }
+      70%{ opacity:1; transform: translate3d(0,0,0); }
+      100%{ opacity:1; transform: translate3d(0,0,0); }
+    }
+
+    .sub{
+      margin: 14px 0 0 0;
+      font-size: clamp(14px, 2.2vw, 18px);
+      opacity:.75;
+      line-height:1.7;
+      max-width: 52ch;
+    }
+
+    /* کارت سه‌بعدی سبک */
+    .stage{
+      flex: 1;
+      min-width: 260px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 6vh 0 6vh;
+    }
+
+    .tilt-wrap{
+      width: min(600px, 96vw);
+      aspect-ratio: 16/10;
+      perspective: 900px;
+      perspective-origin: 50% 40%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .tilt{
+      position:relative;
+      width:100%;
+      height:100%;
+      transform-style: preserve-3d;
+      will-change: transform;
+      /* انیمیشن سبک برای دستگاه‌هایی که hover ندارند، مثل تبلت */
+      animation: breathe 6s ease-in-out infinite;
+    }
+    @keyframes breathe{
+      0%,100%{ transform: rotateX(6deg) rotateY(-8deg) translateZ(0); }
+      50%{ transform: rotateX(8deg) rotateY(-4deg) translateZ(0); }
+    }
+
+    .device{
+      position:absolute;
+      inset: 7% 9%;
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+      border: 1px solid var(--stroke);
+      box-shadow:
+        0 22px 60px var(--cardShadow),
+        inset 0 1px 0 rgba(255,255,255,.12);
+      overflow:hidden;
+      transform: translateZ(18px);
+    }
+
+    /* لایه‌ها */
+    .glow{
+      position:absolute;
+      inset:-15%;
+      background:
+        radial-gradient(500px 240px at 25% 15%, rgba(124,58,237,.30), transparent 60%),
+        radial-gradient(420px 220px at 75% 35%, rgba(6,182,212,.22), transparent 60%),
+        radial-gradient(460px 260px at 55% 90%, rgba(34,197,94,.14), transparent 60%);
+      transform: translateZ(40px);
+      opacity:.95;
+    }
+
+    .lines{
+      position:absolute;
+      inset: 13% 13%;
+      border-radius: 14px;
+      transform: translateZ(55px);
+      background:
+        repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 1px, transparent 1px 16px),
+        repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, transparent 1px 14px);
+      opacity:.25;
+      border: 1px solid var(--stroke2);
+    }
+
+    .chip{
+      position:absolute;
+      left: 10%;
+      right: 10%;
+      bottom: 10%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      transform: translateZ(75px);
+      background: rgba(6,10,25,.28);
+      border: 1px solid rgba(255,255,255,.16);
+      display:flex;
+      align-items:center;
+      gap: 12px;
+    }
+    .chip .orb{
+      width:12px;
+      height:12px;
+      border-radius:50%;
+      background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,.15));
+      box-shadow: 0 0 18px rgba(124,58,237,.50), 0 0 30px rgba(6,182,212,.25);
+      flex:0 0 auto;
+    }
+    .chip .txt{
+      font-weight:950;
+      letter-spacing:.08em;
+      font-size: clamp(15px, 2.5vw, 22px);
+      text-shadow: 0 0 16px rgba(124,58,237,.18);
+      white-space:nowrap;
+    }
+
+    /* افکت سبک برای حس نئونی (بدون blur) */
+    .scanLite{
+      position:absolute;
+      inset:-30%;
+      background: linear-gradient(120deg, transparent 40%, rgba(255,255,255,.10) 50%, transparent 60%);
+      transform: translateZ(70px) rotate(10deg) translateX(-30%);
+      opacity:.55;
+      animation: scanMove 7s linear infinite;
+      pointer-events:none;
+    }
+    @keyframes scanMove{
+      0%{ transform: translateZ(70px) rotate(10deg) translateX(-35%); opacity:.35; }
+      50%{ opacity:.55; }
+      100%{ transform: translateZ(70px) rotate(10deg) translateX(35%); opacity:.35; }
+    }
+
+    /* برای تبلت: حرکت پارالاکس غیرفعال (کم‌مصرف‌تر) */
+    @media (hover:none) {
+      .tilt{ animation:none; }
+    }
+
+    @media (max-width: 720px){
+      .content{ flex-direction:column; }
+      .stage{ width:100%; padding: 4vh 0 2vh; }
+      .left{ max-width: unset; }
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .bg, .tilt, .scanLite { animation:none !important; }
+      .title{ opacity:1 !important; transform:none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg" aria-hidden="true"></div>
+  <div class="grid" aria-hidden="true"></div>
+
+  <div class="content">
+    <div class="left">
+      <h1 class="title">APP_ZRX</h1>
+      <p class="sub">دکور نئونی سه‌بعدی سبک با پارالاکس نرم. مناسب گوشی و تبلت و بدون افت فریم.</p>
+    </div>
+
+    <div class="stage">
+      <div class="tilt-wrap">
+        <div class="tilt" id="tilt">
+          <div class="device">
+            <div class="glow"></div>
+            <div class="lines"></div>
+            <div class="scanLite" aria-hidden="true"></div>
+
+            <div class="chip">
+              <div class="orb" aria-hidden="true"></div>
+              <div class="txt">APP_ZRX</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // پارالاکس سبک: فقط وقتی ماوس/پویتر حرکت می‌دهد
+    const tilt = document.getElementById('tilt');
+    let raf = 0;
+    let tx = 0, ty = 0;
+
+    function apply(){
+      raf = 0;
+      // شدت کم برای جلوگیری از لگ
+      const rx = (-ty * 6);
+      const ry = (tx * 8);
+      tilt.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
+    }
+
+    function onMove(clientX, clientY){
+      const r = tilt.getBoundingClientRect();
+      const px = (clientX - r.left) / r.width;  // 0..1
+      const py = (clientY - r.top) / r.height;  // 0..1
+      tx = (px - 0.5) * 2; // -1..1
+      ty = (py - 0.5) * 2; // -1..1
+      if(!raf) raf = requestAnimationFrame(apply);
+    }
+
+    function inBounds(e){
+      const r = tilt.getBoundingClientRect();
+      return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+    }
+
+    window.addEventListener('mousemove', (e)=>{
+      if(inBounds(e)) onMove(e.clientX, e.clientY);
+    }, { passive:true });
+
+    window.addEventListener('mouseleave', ()=>{
+      tilt.style.transform = '';
+    }, { passive:true });
+
+    // لمس (اگر خواستی روشن بمونه، میشه فعالش کرد؛ فعلاً برای کم‌مصرف بودن روی hover:none غیرفعال)
+    window.addEventListener('touchmove', (e)=>{
+      const t = e.touches && e.touches[0];
+      if(!t) return;
+
+      const r = tilt.getBoundingClientRect();
+      if(t.clientX >= r.left && t.clientX <= r.right && t.clientY >= r.top && t.clientY <= r.bottom){
+        onMove(t.clientX, t.clientY);
+      }
+    }, { passive:true });
+
+    window.addEventListener('touchend', ()=>{ tilt.style.transform = ''; }, { passive:true });
+    window.addEventListener('touchcancel', ()=>{ tilt.style.transform = ''; }, { passive:true });
+  </script>
+</body>
+</html>
