@@ -3,9 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Right 7 Buttons</title>
+  <title>Right 10 Buttons</title>
   <style>
-    /* کانتینر: همیشه سمت راست */
     .right-stack{
       position: fixed;
       top: 120px;
@@ -13,9 +12,9 @@
       z-index: 99999;
 
       display: flex;
-      flex-direction: column; /* زیر هم */
-      align-items: flex-end;  /* خود دکمه‌ها چسبیده به راست */
-      gap: 30px;               /* فاصله 30px */
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 30px;
       pointer-events: auto;
     }
 
@@ -23,37 +22,44 @@
       direction: rtl;
       text-align: right;
 
-      width: 200px;           /* ثابت که وسط نیفته */
+      width: 200px;
       padding: 12px 14px;
       border: 0;
       border-radius: 16px;
       cursor: pointer;
+
       font-weight: 900;
       color: #05101a;
 
       background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85));
       box-shadow: 0 18px 55px rgba(56,189,248,.18), inset 0 0 0 1px rgba(255,255,255,.18);
 
-      transform: translateX(0);
       transition: transform .15s ease, filter .2s ease;
+      transform: translateX(0);
       overflow: hidden;
-      position: relative;
     }
 
-    /* انیمیشن ساده خفن */
     .rb:hover{
       transform: translateX(-4px) translateY(-2px) scale(1.02);
       filter: brightness(1.06) saturate(1.1);
     }
     .rb:active{ transform: translateX(-2px) translateY(-1px) scale(1.00); }
 
-    /* رنگ‌های مختلف */
+    .b1{ background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85)); }
     .b2{ background: linear-gradient(135deg, rgba(34,197,94,.95), rgba(56,189,248,.85)); }
     .b3{ background: linear-gradient(135deg, rgba(236,72,153,.95), rgba(124,58,237,.85)); }
     .b4{ background: linear-gradient(135deg, rgba(245,158,11,.95), rgba(56,189,248,.85)); }
     .b5{ background: linear-gradient(135deg, rgba(20,184,166,.95), rgba(34,197,94,.85)); }
     .b6{ background: linear-gradient(135deg, rgba(59,130,246,.95), rgba(236,72,153,.85)); }
     .b7{ background: linear-gradient(135deg, rgba(248,113,113,.95), rgba(124,58,237,.85)); }
+    .b8{ background: linear-gradient(135deg, rgba(99,102,241,.95), rgba(34,197,94,.85)); }
+    .b9{ background: linear-gradient(135deg, rgba(34,211,238,.95), rgba(59,130,246,.85)); }
+    .b10{ background: linear-gradient(135deg, rgba(217,70,239,.95), rgba(245,158,11,.85)); }
+
+    @media (max-width: 520px){
+      .right-stack{ right: 10px; top: 90px; gap: 22px; }
+      .rb{ width: 160px; }
+    }
   </style>
 </head>
 <body>
@@ -66,6 +72,9 @@
     <button class="rb b5" type="button">Button 5</button>
     <button class="rb b6" type="button">Button 6</button>
     <button class="rb b7" type="button">Button 7</button>
+    <button class="rb b8" type="button">Button 8</button>
+    <button class="rb b9" type="button">Button 9</button>
+    <button class="rb b10" type="button">Button 10</button>
   </div>
 
 </body>
