@@ -1,207 +1,83 @@
-<!doctype html>
-<html lang="fa" dir="rtl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>7 Buttons</title>
-  <style>
-    body{
-      margin:0;
-      min-height:100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      background: radial-gradient(900px 500px at 20% 10%, rgba(124,58,237,.35), transparent 55%),
-                  radial-gradient(900px 500px at 80% 20%, rgba(56,189,248,.28), transparent 55%),
-                  radial-gradient(900px 600px at 70% 90%, rgba(34,197,94,.20), transparent 55%),
-                  #070A12;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      color:#EAF0FF;
-      padding:24px;
-      overflow:hidden;
-    }
+<style>
+  /* wrapper سمت راست */
+  .right-buttons{
+    position: fixed;
+    right: 18px;
+    top: 120px;
+    z-index: 99999;
 
-    .stack{
-      width: min(360px, 100%);
-      display:flex;
-      flex-direction:column;
-      gap:30px; /* فاصله 30 */
-    }
+    display: flex;
+    flex-direction: column;
+    gap: 30px;            /* فاصله 30 */
+    align-items: flex-end; /* مهم: چپ/راست بودن خودِ دکمه‌ها */
 
-    .btn{
-      position:relative;
-      border:none;
-      cursor:pointer;
-      color:#061116;
-      font-weight:900;
-      letter-spacing:.2px;
-      padding:14px 16px;
-      border-radius:18px;
-      background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85));
-      box-shadow:
-        0 18px 55px rgba(56,189,248,.14),
-        inset 0 0 0 1px rgba(255,255,255,.18);
-      transform: translateZ(0);
-      overflow:hidden;
-      transition: transform .15s ease, filter .2s ease;
-      min-height:54px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
+    pointer-events: auto;
+  }
 
-    /* نور موجی */
-    .btn::before{
-      content:"";
-      position:absolute;
-      top:-80%;
-      left:-40%;
-      width:180%;
-      height:220%;
-      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(255,255,255,.0) 55%);
-      transform: rotate(12deg) translateY(35%);
-      opacity:.55;
-      transition: opacity .2s ease;
-      pointer-events:none;
-    }
+  .rb-btn{
+    direction: rtl;
+    text-align: right;
 
-    /* نوار گرادیانت متحرک */
-    .btn::after{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      background: conic-gradient(from 180deg, rgba(34,197,94,.0), rgba(34,197,94,.55), rgba(56,189,248,.65), rgba(124,58,237,.65), rgba(34,197,94,.0));
-      filter: blur(10px);
-      opacity: .0;
-      transform: translateY(10px);
-      transition: opacity .2s ease, transform .2s ease;
-      pointer-events:none;
-    }
+    position: relative;
+    border: 0;
+    cursor: pointer;
 
-    .btn:hover{
-      transform: translateY(-3px) scale(1.01);
-      filter: brightness(1.06);
-    }
-    .btn:hover::before{ opacity:.9; }
-    .btn:hover::after{ opacity:.35; transform: translateY(0); }
+    font-weight: 900;
+    color: #05101a;
+    padding: 12px 16px;
+    border-radius: 16px;
 
-    /* آیکن گرد کنار متن */
-    .ico{
-      width:38px; height:38px;
-      border-radius:14px;
-      background: rgba(255,255,255,.16);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
-      display:grid; place-items:center;
-      font-size:18px;
-      flex:0 0 auto;
-      position:relative;
-      overflow:hidden;
-    }
-    .ico span{
-      display:block;
-      animation: pop 1.2s ease-in-out infinite alternate;
-      transform-origin:center;
-    }
-    @keyframes pop{
-      from{ transform: translateY(0) scale(.98); opacity:.9; }
-      to{ transform: translateY(-2px) scale(1.05); opacity:1; }
-    }
+    min-width: 170px;
+    background: linear-gradient(135deg, rgba(34,197,94,.95), rgba(56,189,248,.85));
+    box-shadow:
+      0 18px 45px rgba(56,189,248,.18),
+      0 10px 25px rgba(0,0,0,.25);
 
-    /* فلش کوچک زیر دکمه هنگام کلیک */
-    .btn:active{
-      transform: translateY(-1px) scale(.99);
+    overflow: hidden;
+    transition: transform .18s ease, filter .18s ease;
+    transform: translateX(0);
+  }
+
+  .rb-btn:hover{
+    transform: translateX(-3px) translateY(-2px) scale(1.02);
+    filter: saturate(1.12) brightness(1.03);
+  }
+
+  /* نور */
+  .rb-btn::before{
+    content:"";
+    position:absolute;
+    inset:-2px;
+    background: radial-gradient(circle at 20% 0%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%);
+    opacity:.55;
+    transition: opacity .2s ease;
+    pointer-events:none;
+  }
+  .rb-btn:hover::before{ opacity:.85; }
+
+  /* انیمیشن ورود */
+  .rb-btn{ animation: floatIn .9s cubic-bezier(.2,.9,.2,1) both; }
+  .b1{ background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85)); }
+  .b2{ background: linear-gradient(135deg, rgba(34,197,94,.95), rgba(56,189,248,.85)); animation-delay:.07s; }
+  .b3{ background: linear-gradient(135deg, rgba(236,72,153,.95), rgba(124,58,237,.85)); animation-delay:.14s; }
+  .b4{ background: linear-gradient(135deg, rgba(245,158,11,.95), rgba(56,189,248,.85)); animation-delay:.21s; }
+  .b5{ background: linear-gradient(135deg, rgba(20,184,166,.95), rgba(34,197,94,.85)); animation-delay:.28s; }
+  .b6{ background: linear-gradient(135deg, rgba(59,130,246,.95), rgba(236,72,153,.85)); animation-delay:.35s; }
+  .b7{ background: linear-gradient(135deg, rgba(248,113,113,.95), rgba(124,58,237,.85)); animation-delay:.42s; }
+
+  @keyframes floatIn{
+    0%   { opacity:0; transform: translateX(26px) translateY(8px) scale(.96); filter: blur(2px); }
+    60%  { opacity:1; transform: translateX(0) translateY(0) scale(1.02); filter: blur(0); }
+    100% { opacity:1; transform: translateX(0) translateY(0) scale(1); }
+  }
+
+  @media (max-width: 520px){
+    .right-buttons{
+      right: 10px;
+      top: 90px;
+      gap: 22px;
+      align-items: flex-end;
     }
-    .btn .spark{
-      position:absolute;
-      left:50%;
-      top:50%;
-      width:10px; height:10px;
-      background: rgba(255,255,255,.9);
-      border-radius:999px;
-      transform: translate(-50%,-50%) scale(0);
-      opacity:0;
-      pointer-events:none;
-    }
-    .btn:active .spark{
-      animation: spark .35s ease-out;
-    }
-    @keyframes spark{
-      0%{ transform: translate(-50%,-50%) scale(0); opacity:0; }
-      15%{ opacity:1; }
-      100%{ transform: translate(-50%,-50%) scale(8); opacity:0; }
-    }
-
-    /* رنگ‌های متفاوت برای هر دکمه */
-    .b1{ background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85)); }
-    .b2{ background: linear-gradient(135deg, rgba(56,189,248,.95), rgba(34,197,94,.85)); }
-    .b3{ background: linear-gradient(135deg, rgba(34,197,94,.95), rgba(251,191,36,.85)); }
-    .b4{ background: linear-gradient(135deg, rgba(251,191,36,.95), rgba(251,113,133,.85)); }
-    .b5{ background: linear-gradient(135deg, rgba(251,113,133,.95), rgba(124,58,237,.85)); }
-    .b6{ background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(251,113,133,.85)); }
-    .b7{ background: linear-gradient(135deg, rgba(56,189,248,.95), rgba(124,58,237,.85)); }
-
-    .label{
-      flex:1;
-      text-align:right;
-      line-height:1.1;
-    }
-    .label strong{
-      display:block;
-      font-size:14px;
-    }
-    .label span{
-      display:block;
-      font-size:12px;
-      opacity:.78;
-      font-weight:800;
-      margin-top:4px;
-    }
-  </style>
-</head>
-<body>
-  <div class="stack">
-    <button class="btn b1" type="button">
-      <div class="label"><strong>Button 1</strong><span>انیمیشن خفن</span></div>
-      <div class="ico"><span>⚡</span></div>
-      <div class="spark"></div>
-    </button>
-
-    <button class="btn b2" type="button">
-      <div class="label"><strong>Button 2</strong><span>Hover Gradient</span></div>
-      <div class="ico"><span>🌊</span></div>
-      <div class="spark"></div>
-    </button>
-
-    <button class="btn b3" type="button">
-      <div class="label"><strong>Button 3</strong><span>Glow Motion</span></div>
-      <div class="ico"><span>✅</span></div>
-      <div class="spark"></div>
-    </button>
-
-    <button class="btn b4" type="button">
-      <div class="label"><strong>Button 4</strong><span>Click Spark</span></div>
-      <div class="ico"><span>🔥</span></div>
-      <div class="spark"></div>
-    </button>
-
-    <button class="btn b5" type="button">
-      <div class="label"><strong>Button 5</strong><span>Neon Pulse</span></div>
-      <div class="ico"><span>🧠</span></div>
-      <div class="spark"></div>
-    </button>
-
-    <button class="btn b6" type="button">
-      <div class="label"><strong>Button 6</strong><span>Glass Shine</span></div>
-      <div class="ico"><span>🧊</span></div>
-      <div class="spark"></div>
-    </button>
-
-    <button class="btn b7" type="button">
-      <div class="label"><strong>Button 7</strong><span>Auto Pop Icon</span></div>
-      <div class="ico"><span>🚀</span></div>
-      <div class="spark"></div>
-    </button>
-  </div>
-</body>
-</html>
+    .rb-btn{ min-width: 150px; }
+  }
+</style>
