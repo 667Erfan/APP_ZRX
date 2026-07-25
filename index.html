@@ -1028,3 +1028,13 @@ setTimeout(function(){
   setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 320);
 }, 3000);
 </script>
+<script>
+  (function(){
+    const KEY = "zrx_user_name";
+    const saved = (localStorage.getItem(KEY) || "").trim();
+    if(!saved){
+      // جلوگیری از برگشت‌های بی‌پایان
+      location.href = "user.html";
+    }
+  })();
+</script>
