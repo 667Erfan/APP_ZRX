@@ -1,0 +1,62 @@
+.rb{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 14px;
+  min-height:44px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  font-weight:900;
+
+  cursor:pointer;
+  user-select:none;
+
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  transform: translateZ(0);
+  transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease, filter .2s ease;
+  overflow:hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,.25);
+}
+
+.rb::before{
+  content:"";
+  position:absolute;
+  inset:-2px;
+  background: var(--grad, linear-gradient(90deg,#7c3aed,#22d3ee,#34d399));
+  opacity:.9;
+  z-index:0;
+  filter: blur(12px);
+  transform: translateY(10px);
+  transition: opacity .2s ease, transform .2s ease;
+}
+
+.rb > * { position:relative; z-index:1; }
+
+.rb:hover{
+  transform: translateY(-2px);
+  border-color: rgba(255,255,255,.28);
+  box-shadow: 0 18px 60px rgba(0,0,0,.45);
+  filter: saturate(1.15);
+}
+.rb:hover::before{
+  opacity:1;
+  transform: translateY(0px);
+}
+
+.rb:active{
+  transform: translateY(0px) scale(.99);
+}
+
+.rb.b1 { --grad: linear-gradient(90deg,#ff4d6d,#ffb703,#8ecae6); }
+.rb.b2 { --grad: linear-gradient(90deg,#7c3aed,#22d3ee,#34d399); }
+.rb.b3 { --grad: linear-gradient(90deg,#f43f5e,#a78bfa,#60a5fa); }
+.rb.b5 { --grad: linear-gradient(90deg,#22c55e,#06b6d4,#6366f1); }
+.rb.b8 { --grad: linear-gradient(90deg,#fb7185,#f97316,#22c55e); }
+.rb.b9 { --grad: linear-gradient(90deg,#06b6d4,#7c3aed,#f59e0b); }
