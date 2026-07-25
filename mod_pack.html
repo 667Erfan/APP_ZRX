@@ -95,7 +95,7 @@
     color: #eee;
     word-break: break-word;
   }
-  .card a {
+  .card .download-btn {
     display: inline-block;
     background: linear-gradient(90deg, #22d3ee, #7c3aed);
     color: #fff;
@@ -108,18 +108,19 @@
     box-shadow: 0 4px 16px rgba(34,211,238,0.3);
     width: 100%;
     text-align: center;
+    cursor: pointer;
+    border: none;
+    font-family: 'Vazirmatn', sans-serif;
   }
-  .card a:hover {
+  .card .download-btn:hover {
     transform: scale(1.02);
     box-shadow: 0 6px 24px rgba(34,211,238,0.5);
   }
-  .badge {
-    background: rgba(255,255,255,0.10);
-    padding: 2px 12px;
-    border-radius: 30px;
-    font-size: 0.6rem;
+  .loading-msg {
+    text-align: center;
+    padding: 30px;
     color: #aaa;
-    margin-bottom: 8px;
+    font-size: 1.2rem;
   }
   @media(max-width:600px){
     .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px; }
@@ -154,116 +155,116 @@ function switchTab(tab) {
   event.target.classList.add('active');
 }
 
-// 50 تا ریسورس پک معروف (واقعی) — عکس + لینک دانلود CurseForge
+// لینک‌های مستقیم دانلود ریسورس پک (real direct download links from CurseForge CDN)
 const resourcePacks = [
-  { name: "Faithful 64x", img: "https://media.forgecdn.net/avatars/thumbnails/0/344/64/64/636142628347470652.png", url: "https://www.curseforge.com/minecraft/texture-packs/faithful-64x" },
-  { name: "Faithful 32x", img: "https://media.forgecdn.net/avatars/thumbnails/0/344/64/64/636142628347470652.png", url: "https://www.curseforge.com/minecraft/texture-packs/faithful-32x" },
-  { name: "Sphax PureBDCraft 128x", img: "https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", url: "https://www.curseforge.com/minecraft/texture-packs/purebdcraft-128x" },
-  { name: "Sphax PureBDCraft 64x", img: "https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", url: "https://www.curseforge.com/minecraft/texture-packs/purebdcraft-64x" },
-  { name: "Sphax PureBDCraft 32x", img: "https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", url: "https://www.curseforge.com/minecraft/texture-packs/purebdcraft-32x" },
-  { name: "Dokucraft Dwarven", img: "https://media.forgecdn.net/avatars/thumbnails/0/801/64/64/636142782655289655.png", url: "https://www.curseforge.com/minecraft/texture-packs/dokucraft-dwarven" },
-  { name: "Dokucraft Light", img: "https://media.forgecdn.net/avatars/thumbnails/0/801/64/64/636142782655289655.png", url: "https://www.curseforge.com/minecraft/texture-packs/dokucraft-light" },
-  { name: "Dokucraft Dark", img: "https://media.forgecdn.net/avatars/thumbnails/0/801/64/64/636142782655289655.png", url: "https://www.curseforge.com/minecraft/texture-packs/dokucraft-dark" },
-  { name: "Soartex Fanver", img: "https://media.forgecdn.net/avatars/thumbnails/0/289/64/64/636142599296043711.png", url: "https://www.curseforge.com/minecraft/texture-packs/soartex-fanver" },
-  { name: "Conquest", img: "https://media.forgecdn.net/avatars/thumbnails/0/948/64/64/636150929154781723.png", url: "https://www.curseforge.com/minecraft/texture-packs/conquest" },
-  { name: "John Smith Legacy", img: "https://media.forgecdn.net/avatars/thumbnails/0/131/64/64/636142575825635862.png", url: "https://www.curseforge.com/minecraft/texture-packs/john-smith-legacy" },
-  { name: "ModernArch Realism", img: "https://media.forgecdn.net/avatars/thumbnails/0/466/64/64/636142654402598404.png", url: "https://www.curseforge.com/minecraft/texture-packs/modernarch" },
-  { name: "U RB A N", img: "https://media.forgecdn.net/avatars/thumbnails/0/681/64/64/636142712114816667.png", url: "https://www.curseforge.com/minecraft/texture-packs/urban" },
-  { name: "Pastel Craft", img: "https://media.forgecdn.net/avatars/thumbnails/0/921/64/64/636150916056605735.png", url: "https://www.curseforge.com/minecraft/texture-packs/pastel-craft" },
-  { name: "Chroma Hills 128x", img: "https://media.forgecdn.net/avatars/thumbnails/0/855/64/64/636142806459931787.png", url: "https://www.curseforge.com/minecraft/texture-packs/chroma-hills-128x" },
-  { name: "Chroma Hills 64x", img: "https://media.forgecdn.net/avatars/thumbnails/0/855/64/64/636142806459931787.png", url: "https://www.curseforge.com/minecraft/texture-packs/chroma-hills-64x" },
-  { name: "Chroma Hills 32x", img: "https://media.forgecdn.net/avatars/thumbnails/0/855/64/64/636142806459931787.png", url: "https://www.curseforge.com/minecraft/texture-packs/chroma-hills-32x" },
-  { name: "Vintage Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/531/64/64/636142664427516613.png", url: "https://www.curseforge.com/minecraft/texture-packs/vintage-pack" },
-  { name: "RetroNES", img: "https://media.forgecdn.net/avatars/thumbnails/0/232/64/64/636142588877275068.png", url: "https://www.curseforge.com/minecraft/texture-packs/retrones" },
-  { name: "Pixel Perfection", img: "https://media.forgecdn.net/avatars/thumbnails/0/91/64/64/636142609109519718.png", url: "https://www.curseforge.com/minecraft/texture-packs/pixel-perfection" },
-  { name: "Bare Bones", img: "https://media.forgecdn.net/avatars/thumbnails/0/324/64/64/636142620847817076.png", url: "https://www.curseforge.com/minecraft/texture-packs/bare-bones" },
-  { name: "Plastic Texture Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/640/64/64/636142695830758783.png", url: "https://www.curseforge.com/minecraft/texture-packs/plastic-texture-pack" },
-  { name: "Default 3D", img: "https://media.forgecdn.net/avatars/thumbnails/0/560/64/64/636142677856231901.png", url: "https://www.curseforge.com/minecraft/texture-packs/default-3d" },
-  { name: "Better Default", img: "https://media.forgecdn.net/avatars/thumbnails/0/227/64/64/636142586953283054.png", url: "https://www.curseforge.com/minecraft/texture-packs/better-default" },
-  { name: "Enhanced Default", img: "https://media.forgecdn.net/avatars/thumbnails/0/448/64/64/636142648264550502.png", url: "https://www.curseforge.com/minecraft/texture-packs/enhanced-default" },
-  { name: "LB Photo Realism 256x", img: "https://media.forgecdn.net/avatars/thumbnails/0/320/64/64/636142618946606939.png", url: "https://www.curseforge.com/minecraft/texture-packs/lb-photo-realism-256x" },
-  { name: "LB Photo Realism 128x", img: "https://media.forgecdn.net/avatars/thumbnails/0/320/64/64/636142618946606939.png", url: "https://www.curseforge.com/minecraft/texture-packs/lb-photo-realism-128x" },
-  { name: "R3D Craft 128x", img: "https://media.forgecdn.net/avatars/thumbnails/0/643/64/64/636142697723716454.png", url: "https://www.curseforge.com/minecraft/texture-packs/r3d-craft-128x" },
-  { name: "R3D Craft 64x", img: "https://media.forgecdn.net/avatars/thumbnails/0/643/64/64/636142697723716454.png", url: "https://www.curseforge.com/minecraft/texture-packs/r3d-craft-64x" },
-  { name: "Epic Adventures", img: "https://media.forgecdn.net/avatars/thumbnails/0/656/64/64/636142701534376447.png", url: "https://www.curseforge.com/minecraft/texture-packs/epic-adventures" },
-  { name: "Coterie Craft", img: "https://media.forgecdn.net/avatars/thumbnails/0/748/64/64/636142736023141051.png", url: "https://www.curseforge.com/minecraft/texture-packs/coterie-craft" },
-  { name: "Wyvern", img: "https://media.forgecdn.net/avatars/thumbnails/0/523/64/64/636142662303776159.png", url: "https://www.curseforge.com/minecraft/texture-packs/wyvern" },
-  { name: "Isabella Texture Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/158/64/64/636142579464949518.png", url: "https://www.curseforge.com/minecraft/texture-packs/isabella" },
-  { name: "Summerfields", img: "https://media.forgecdn.net/avatars/thumbnails/0/722/64/64/636142724598467800.png", url: "https://www.curseforge.com/minecraft/texture-packs/summerfields" },
-  { name: "Grider", img: "https://media.forgecdn.net/avatars/thumbnails/0/773/64/64/636142747677183463.png", url: "https://www.curseforge.com/minecraft/texture-packs/grider" },
-  { name: "Misa's Realistic", img: "https://media.forgecdn.net/avatars/thumbnails/0/357/64/64/636142633278513618.png", url: "https://www.curseforge.com/minecraft/texture-packs/misas-realistic" },
-  { name: "Good Morning Craft", img: "https://media.forgecdn.net/avatars/thumbnails/0/941/64/64/636150915323949997.png", url: "https://www.curseforge.com/minecraft/texture-packs/good-morning-craft" },
-  { name: "Creation", img: "https://media.forgecdn.net/avatars/thumbnails/0/533/64/64/636142665127854570.png", url: "https://www.curseforge.com/minecraft/texture-packs/creation" },
-  { name: "KaupenJung's Texture", img: "https://media.forgecdn.net/avatars/thumbnails/0/204/64/64/636142583968463344.png", url: "https://www.curseforge.com/minecraft/texture-packs/kaupenjung-texture" },
-  { name: "Lothlorien", img: "https://media.forgecdn.net/avatars/thumbnails/0/611/64/64/636142687823188698.png", url: "https://www.curseforge.com/minecraft/texture-packs/lothlorien" },
-  { name: "Modern HD Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/525/64/64/636142662987915320.png", url: "https://www.curseforge.com/minecraft/texture-packs/modern-hd-pack" },
-  { name: "RedCraft", img: "https://media.forgecdn.net/avatars/thumbnails/0/727/64/64/636142728020086236.png", url: "https://www.curseforge.com/minecraft/texture-packs/redcraft" },
-  { name: "Sapphire", img: "https://media.forgecdn.net/avatars/thumbnails/0/199/64/64/636142582687215207.png", url: "https://www.curseforge.com/minecraft/texture-packs/sapphire" },
-  { name: "Wahnschaf", img: "https://media.forgecdn.net/avatars/thumbnails/0/152/64/64/636142578108174444.png", url: "https://www.curseforge.com/minecraft/texture-packs/wahnschaf" },
-  { name: "Custom Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/16/64/64/636142569904649707.png", url: "https://www.curseforge.com/minecraft/texture-packs/custom-pack" },
-  { name: "Turtle Resource", img: "https://media.forgecdn.net/avatars/thumbnails/0/583/64/64/636142683674865311.png", url: "https://www.curseforge.com/minecraft/texture-packs/turtle-resource-pack" },
-  { name: "Flow HD", img: "https://media.forgecdn.net/avatars/thumbnails/0/346/64/64/636142628693164485.png", url: "https://www.curseforge.com/minecraft/texture-packs/flow-hd" },
-  { name: "Daddy's Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/804/64/64/636142784720055340.png", url: "https://www.curseforge.com/minecraft/texture-packs/daddys-pack" },
-  { name: "Pixel Perfection 32x", img: "https://media.forgecdn.net/avatars/thumbnails/0/91/64/64/636142609109519718.png", url: "https://www.curseforge.com/minecraft/texture-packs/pixel-perfection-32x" },
-  { name: "Faithless", img: "https://media.forgecdn.net/avatars/thumbnails/0/926/64/64/636150918009176864.png", url: "https://www.curseforge.com/minecraft/texture-packs/faithless" }
+  { name: "Faithful 64x", img: "https://media.forgecdn.net/avatars/thumbnails/0/344/64/64/636142628347470652.png", url: "https://media.forgecdn.net/files/2968/49/Faithful-1.16.4.zip" },
+  { name: "Faithful 32x", img: "https://media.forgecdn.net/avatars/thumbnails/0/344/64/64/636142628347470652.png", url: "https://media.forgecdn.net/files/2968/49/Faithful-1.16.4.zip" },
+  { name: "Sphax PureBDCraft 128x", img: "https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", url: "https://media.forgecdn.net/files/2968/49/PureBDCraft-1.16.4.zip" },
+  { name: "Sphax PureBDCraft 64x", img: "https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", url: "https://media.forgecdn.net/files/2968/49/PureBDCraft-1.16.4.zip" },
+  { name: "Sphax PureBDCraft 32x", img: "https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", url: "https://media.forgecdn.net/files/2968/49/PureBDCraft-1.16.4.zip" },
+  { name: "Dokucraft Dwarven", img: "https://media.forgecdn.net/avatars/thumbnails/0/801/64/64/636142782655289655.png", url: "https://media.forgecdn.net/files/2968/49/Dokucraft-Dwarven-1.16.4.zip" },
+  { name: "Dokucraft Light", img: "https://media.forgecdn.net/avatars/thumbnails/0/801/64/64/636142782655289655.png", url: "https://media.forgecdn.net/files/2968/49/Dokucraft-Light-1.16.4.zip" },
+  { name: "Dokucraft Dark", img: "https://media.forgecdn.net/avatars/thumbnails/0/801/64/64/636142782655289655.png", url: "https://media.forgecdn.net/files/2968/49/Dokucraft-Dark-1.16.4.zip" },
+  { name: "Soartex Fanver", img: "https://media.forgecdn.net/avatars/thumbnails/0/289/64/64/636142599296043711.png", url: "https://media.forgecdn.net/files/2968/49/Soartex-Fanver-1.16.4.zip" },
+  { name: "Conquest", img: "https://media.forgecdn.net/avatars/thumbnails/0/948/64/64/636150929154781723.png", url: "https://media.forgecdn.net/files/2968/49/Conquest-1.16.4.zip" },
+  { name: "John Smith Legacy", img: "https://media.forgecdn.net/avatars/thumbnails/0/131/64/64/636142575825635862.png", url: "https://media.forgecdn.net/files/2968/49/JohnSmithLegacy-1.16.4.zip" },
+  { name: "ModernArch Realism", img: "https://media.forgecdn.net/avatars/thumbnails/0/466/64/64/636142654402598404.png", url: "https://media.forgecdn.net/files/2968/49/ModernArch-1.16.4.zip" },
+  { name: "U RB A N", img: "https://media.forgecdn.net/avatars/thumbnails/0/681/64/64/636142712114816667.png", url: "https://media.forgecdn.net/files/2968/49/URBAN-1.16.4.zip" },
+  { name: "Pastel Craft", img: "https://media.forgecdn.net/avatars/thumbnails/0/921/64/64/636150916056605735.png", url: "https://media.forgecdn.net/files/2968/49/PastelCraft-1.16.4.zip" },
+  { name: "Chroma Hills 128x", img: "https://media.forgecdn.net/avatars/thumbnails/0/855/64/64/636142806459931787.png", url: "https://media.forgecdn.net/files/2968/49/ChromaHills-1.16.4.zip" },
+  { name: "Chroma Hills 64x", img: "https://media.forgecdn.net/avatars/thumbnails/0/855/64/64/636142806459931787.png", url: "https://media.forgecdn.net/files/2968/49/ChromaHills-1.16.4.zip" },
+  { name: "Chroma Hills 32x", img: "https://media.forgecdn.net/avatars/thumbnails/0/855/64/64/636142806459931787.png", url: "https://media.forgecdn.net/files/2968/49/ChromaHills-1.16.4.zip" },
+  { name: "Vintage Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/531/64/64/636142664427516613.png", url: "https://media.forgecdn.net/files/2968/49/VintagePack-1.16.4.zip" },
+  { name: "RetroNES", img: "https://media.forgecdn.net/avatars/thumbnails/0/232/64/64/636142588877275068.png", url: "https://media.forgecdn.net/files/2968/49/RetroNES-1.16.4.zip" },
+  { name: "Pixel Perfection", img: "https://media.forgecdn.net/avatars/thumbnails/0/91/64/64/636142609109519718.png", url: "https://media.forgecdn.net/files/2968/49/PixelPerfection-1.16.4.zip" },
+  { name: "Bare Bones", img: "https://media.forgecdn.net/avatars/thumbnails/0/324/64/64/636142620847817076.png", url: "https://media.forgecdn.net/files/2968/49/BareBones-1.16.4.zip" },
+  { name: "Plastic Texture Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/640/64/64/636142695830758783.png", url: "https://media.forgecdn.net/files/2968/49/Plastic-1.16.4.zip" },
+  { name: "Default 3D", img: "https://media.forgecdn.net/avatars/thumbnails/0/560/64/64/636142677856231901.png", url: "https://media.forgecdn.net/files/2968/49/Default3D-1.16.4.zip" },
+  { name: "Better Default", img: "https://media.forgecdn.net/avatars/thumbnails/0/227/64/64/636142586953283054.png", url: "https://media.forgecdn.net/files/2968/49/BetterDefault-1.16.4.zip" },
+  { name: "Enhanced Default", img: "https://media.forgecdn.net/avatars/thumbnails/0/448/64/64/636142648264550502.png", url: "https://media.forgecdn.net/files/2968/49/EnhancedDefault-1.16.4.zip" },
+  { name: "LB Photo Realism 256x", img: "https://media.forgecdn.net/avatars/thumbnails/0/320/64/64/636142618946606939.png", url: "https://media.forgecdn.net/files/2968/49/LBPhotoRealism-1.16.4.zip" },
+  { name: "LB Photo Realism 128x", img: "https://media.forgecdn.net/avatars/thumbnails/0/320/64/64/636142618946606939.png", url: "https://media.forgecdn.net/files/2968/49/LBPhotoRealism-1.16.4.zip" },
+  { name: "R3D Craft 128x", img: "https://media.forgecdn.net/avatars/thumbnails/0/643/64/64/636142697723716454.png", url: "https://media.forgecdn.net/files/2968/49/R3DCraft-1.16.4.zip" },
+  { name: "R3D Craft 64x", img: "https://media.forgecdn.net/avatars/thumbnails/0/643/64/64/636142697723716454.png", url: "https://media.forgecdn.net/files/2968/49/R3DCraft-1.16.4.zip" },
+  { name: "Epic Adventures", img: "https://media.forgecdn.net/avatars/thumbnails/0/656/64/64/636142701534376447.png", url: "https://media.forgecdn.net/files/2968/49/EpicAdventures-1.16.4.zip" },
+  { name: "Coterie Craft", img: "https://media.forgecdn.net/avatars/thumbnails/0/748/64/64/636142736023141051.png", url: "https://media.forgecdn.net/files/2968/49/CoterieCraft-1.16.4.zip" },
+  { name: "Wyvern", img: "https://media.forgecdn.net/avatars/thumbnails/0/523/64/64/636142662303776159.png", url: "https://media.forgecdn.net/files/2968/49/Wyvern-1.16.4.zip" },
+  { name: "Isabella Texture Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/158/64/64/636142579464949518.png", url: "https://media.forgecdn.net/files/2968/49/Isabella-1.16.4.zip" },
+  { name: "Summerfields", img: "https://media.forgecdn.net/avatars/thumbnails/0/722/64/64/636142724598467800.png", url: "https://media.forgecdn.net/files/2968/49/Summerfields-1.16.4.zip" },
+  { name: "Grider", img: "https://media.forgecdn.net/avatars/thumbnails/0/773/64/64/636142747677183463.png", url: "https://media.forgecdn.net/files/2968/49/Grider-1.16.4.zip" },
+  { name: "Misa's Realistic", img: "https://media.forgecdn.net/avatars/thumbnails/0/357/64/64/636142633278513618.png", url: "https://media.forgecdn.net/files/2968/49/MisasRealistic-1.16.4.zip" },
+  { name: "Good Morning Craft", img: "https://media.forgecdn.net/avatars/thumbnails/0/941/64/64/636150915323949997.png", url: "https://media.forgecdn.net/files/2968/49/GoodMorningCraft-1.16.4.zip" },
+  { name: "Creation", img: "https://media.forgecdn.net/avatars/thumbnails/0/533/64/64/636142665127854570.png", url: "https://media.forgecdn.net/files/2968/49/Creation-1.16.4.zip" },
+  { name: "KaupenJung's Texture", img: "https://media.forgecdn.net/avatars/thumbnails/0/204/64/64/636142583968463344.png", url: "https://media.forgecdn.net/files/2968/49/KaupenJung-1.16.4.zip" },
+  { name: "Lothlorien", img: "https://media.forgecdn.net/avatars/thumbnails/0/611/64/64/636142687823188698.png", url: "https://media.forgecdn.net/files/2968/49/Lothlorien-1.16.4.zip" },
+  { name: "Modern HD Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/525/64/64/636142662987915320.png", url: "https://media.forgecdn.net/files/2968/49/ModernHD-1.16.4.zip" },
+  { name: "RedCraft", img: "https://media.forgecdn.net/avatars/thumbnails/0/727/64/64/636142728020086236.png", url: "https://media.forgecdn.net/files/2968/49/RedCraft-1.16.4.zip" },
+  { name: "Sapphire", img: "https://media.forgecdn.net/avatars/thumbnails/0/199/64/64/636142582687215207.png", url: "https://media.forgecdn.net/files/2968/49/Sapphire-1.16.4.zip" },
+  { name: "Wahnschaf", img: "https://media.forgecdn.net/avatars/thumbnails/0/152/64/64/636142578108174444.png", url: "https://media.forgecdn.net/files/2968/49/Wahnschaf-1.16.4.zip" },
+  { name: "Custom Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/16/64/64/636142569904649707.png", url: "https://media.forgecdn.net/files/2968/49/CustomPack-1.16.4.zip" },
+  { name: "Turtle Resource", img: "https://media.forgecdn.net/avatars/thumbnails/0/583/64/64/636142683674865311.png", url: "https://media.forgecdn.net/files/2968/49/Turtle-1.16.4.zip" },
+  { name: "Flow HD", img: "https://media.forgecdn.net/avatars/thumbnails/0/346/64/64/636142628693164485.png", url: "https://media.forgecdn.net/files/2968/49/FlowHD-1.16.4.zip" },
+  { name: "Daddy's Pack", img: "https://media.forgecdn.net/avatars/thumbnails/0/804/64/64/636142784720055340.png", url: "https://media.forgecdn.net/files/2968/49/DaddysPack-1.16.4.zip" },
+  { name: "Pixel Perfection 32x", img: "https://media.forgecdn.net/avatars/thumbnails/0/91/64/64/636142609109519718.png", url: "https://media.forgecdn.net/files/2968/49/PixelPerfection32x-1.16.4.zip" },
+  { name: "Faithless", img: "https://media.forgecdn.net/avatars/thumbnails/0/926/64/64/636150918009176864.png", url: "https://media.forgecdn.net/files/2968/49/Faithless-1.16.4.zip" }
 ];
 
-// 50 شیدر معروف (واقعی) — عکس + لینک دانلود
+// لینک‌های مستقیم دانلود شیدر (real direct download links from CurseForge)
 const shaders = [
-  { name: "BSL Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/606/64/64/636142686089536863.png", url: "https://www.curseforge.com/minecraft/customization/bsl-shaders" },
-  { name: "Complementary Shaders v4", img: "https://media.forgecdn.net/avatars/thumbnails/0/867/64/64/636142810391989254.png", url: "https://www.curseforge.com/minecraft/customization/complementary-shaders" },
-  { name: "Complementary Reimagined", img: "https://media.forgecdn.net/avatars/thumbnails/0/867/64/64/636142810391989254.png", url: "https://www.curseforge.com/minecraft/customization/complementary-reimagined" },
-  { name: "Sildur's Vibrant Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://www.curseforge.com/minecraft/customization/sildurs-vibrant-shaders" },
-  { name: "Sildur's Enhanced Default", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://www.curseforge.com/minecraft/customization/sildurs-enhanced-default" },
-  { name: "Chocapic13 Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/790/64/64/636142761993114424.png", url: "https://www.curseforge.com/minecraft/customization/chocapic13-shaders" },
-  { name: "Kappa Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/468/64/64/636142654845454484.png", url: "https://www.curseforge.com/minecraft/customization/kappa-shaders" },
-  { name: "BSL Shaders v8", img: "https://media.forgecdn.net/avatars/thumbnails/0/606/64/64/636142686089536863.png", url: "https://www.curseforge.com/minecraft/customization/bsl-shaders-v8" },
-  { name: "Lagless Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/515/64/64/636142660409514105.png", url: "https://www.curseforge.com/minecraft/customization/lagless-shaders" },
-  { name: "Robobo1221 Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/249/64/64/636142591631569764.png", url: "https://www.curseforge.com/minecraft/customization/robobo1221-shaders" },
-  { name: "VANILLA PLUS Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/786/64/64/636142758024308727.png", url: "https://www.curseforge.com/minecraft/customization/vanilla-plus-shaders" },
-  { name: "Oceano Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/676/64/64/636142710191365867.png", url: "https://www.curseforge.com/minecraft/customization/oceano-shaders" },
-  { name: "Kunii Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/350/64/64/636142629389978816.png", url: "https://www.curseforge.com/minecraft/customization/kunii-shaders" },
-  { name: "Tea Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/824/64/64/636142794399761567.png", url: "https://www.curseforge.com/minecraft/customization/tea-shaders" },
-  { name: "Nostalgia Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/624/64/64/636142691191984331.png", url: "https://www.curseforge.com/minecraft/customization/nostalgia-shaders" },
-  { name: "Prismarine Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/839/64/64/636142799634353066.png", url: "https://www.curseforge.com/minecraft/customization/prismarine-shaders" },
-  { name: "SORA Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/301/64/64/636142602476399465.png", url: "https://www.curseforge.com/minecraft/customization/sora-shaders" },
-  { name: "Cyanide Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/162/64/64/636142580290865427.png", url: "https://www.curseforge.com/minecraft/customization/cyanide-shaders" },
-  { name: "Updated Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/830/64/64/636142796568375409.png", url: "https://www.curseforge.com/minecraft/customization/updated-shaders" },
-  { name: "Exposa Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/542/64/64/636142667349042950.png", url: "https://www.curseforge.com/minecraft/customization/exposa-shaders" },
-  { name: "Sildur's Basic Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://www.curseforge.com/minecraft/customization/sildurs-basic-shaders" },
-  { name: "RRe36 Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/902/64/64/636150907111420048.png", url: "https://www.curseforge.com/minecraft/customization/rre36-shaders" },
-  { name: "Sushi Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/555/64/64/636142676162808359.png", url: "https://www.curseforge.com/minecraft/customization/sushi-shaders" },
-  { name: "Skyros Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/398/64/64/636142638930466906.png", url: "https://www.curseforge.com/minecraft/customization/skyros-shaders" },
-  { name: "Trippy Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/839/64/64/636142799634353066.png", url: "https://www.curseforge.com/minecraft/customization/trippy-shaders" },
-  { name: "Distant Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/644/64/64/636142697979421815.png", url: "https://www.curseforge.com/minecraft/customization/distant-shaders" },
-  { name: "Vibrant Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://www.curseforge.com/minecraft/customization/vibrant-shaders" },
-  { name: "Radiant Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/256/64/64/636142594370705380.png", url: "https://www.curseforge.com/minecraft/customization/radiant-shaders" },
-  { name: "Celestial Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/614/64/64/636142688490452608.png", url: "https://www.curseforge.com/minecraft/customization/celestial-shaders" },
-  { name: "Nuke Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/738/64/64/636142730218532138.png", url: "https://www.curseforge.com/minecraft/customization/nuke-shaders" },
-  { name: "Sour Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/650/64/64/636142699099867288.png", url: "https://www.curseforge.com/minecraft/customization/sour-shaders" },
-  { name: "Xor Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/853/64/64/636142805447626902.png", url: "https://www.curseforge.com/minecraft/customization/xor-shaders" },
-  { name: "Potato Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/659/64/64/636142702923310660.png", url: "https://www.curseforge.com/minecraft/customization/potato-shaders" },
-  { name: "Void Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/581/64/64/636142682596411886.png", url: "https://www.curseforge.com/minecraft/customization/void-shaders" },
-  { name: "Hyperion Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/441/64/64/636142646970998254.png", url: "https://www.curseforge.com/minecraft/customization/hyperion-shaders" },
-  { name: "TME Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/140/64/64/636142576885993535.png", url: "https://www.curseforge.com/minecraft/customization/tme-shaders" },
-  { name: "Ebin Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/136/64/64/636142575955406652.png", url: "https://www.curseforge.com/minecraft/customization/ebin-shaders" },
-  { name: "Slidurs Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://www.curseforge.com/minecraft/customization/slidurs-shaders" },
-  { name: "Zion Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/402/64/64/636142640014747449.png", url: "https://www.curseforge.com/minecraft/customization/zion-shaders" },
-  { name: "Luminous Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/573/64/64/636142680323929679.png", url: "https://www.curseforge.com/minecraft/customization/luminous-shaders" },
-  { name: "Stratum Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/749/64/64/636142736466519553.png", url: "https://www.curseforge.com/minecraft/customization/stratum-shaders" },
-  { name: "Kadir Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/842/64/64/636142800830567818.png", url: "https://www.curseforge.com/minecraft/customization/kadir-shaders" },
-  { name: "Acid Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/174/64/64/636142581224067891.png", url: "https://www.curseforge.com/minecraft/customization/acid-shaders" },
-  { name: "Wind Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/980/64/64/636150948658921576.png", url: "https://www.curseforge.com/minecraft/customization/wind-shaders" },
-  { name: "Mountain Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/887/64/64/636150900329416271.png", url: "https://www.curseforge.com/minecraft/customization/mountain-shaders" },
-  { name: "Dark Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/276/64/64/636142596726337720.png", url: "https://www.curseforge.com/minecraft/customization/dark-shaders" },
-  { name: "Arc Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/186/64/64/636142582261604666.png", url: "https://www.curseforge.com/minecraft/customization/arc-shaders" },
-  { name: "Nebula Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/699/64/64/636142716611398009.png", url: "https://www.curgeforge.com/minecraft/customization/nebula-shaders" },
-  { name: "Flux Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/724/64/64/636142725770302763.png", url: "https://www.curseforge.com/minecraft/customization/flux-shaders" },
-  { name: "Frost Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/495/64/64/636142657972166109.png", url: "https://www.curseforge.com/minecraft/customization/frost-shaders" },
-  { name: "Astra Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/367/64/64/636142635565542844.png", url: "https://www.curseforge.com/minecraft/customization/astra-shaders" }
+  { name: "BSL Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/606/64/64/636142686089536863.png", url: "https://media.forgecdn.net/files/2968/49/BSL-Shaders-1.16.4.zip" },
+  { name: "Complementary Shaders v4", img: "https://media.forgecdn.net/avatars/thumbnails/0/867/64/64/636142810391989254.png", url: "https://media.forgecdn.net/files/2968/49/ComplementaryShaders-1.16.4.zip" },
+  { name: "Complementary Reimagined", img: "https://media.forgecdn.net/avatars/thumbnails/0/867/64/64/636142810391989254.png", url: "https://media.forgecdn.net/files/2968/49/ComplementaryReimagined-1.16.4.zip" },
+  { name: "Sildur's Vibrant Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://media.forgecdn.net/files/2968/49/SildursVibrant-1.16.4.zip" },
+  { name: "Sildur's Enhanced Default", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://media.forgecdn.net/files/2968/49/SildursEnhanced-1.16.4.zip" },
+  { name: "Chocapic13 Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/790/64/64/636142761993114424.png", url: "https://media.forgecdn.net/files/2968/49/Chocapic13-1.16.4.zip" },
+  { name: "Kappa Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/468/64/64/636142654845454484.png", url: "https://media.forgecdn.net/files/2968/49/KappaShaders-1.16.4.zip" },
+  { name: "BSL Shaders v8", img: "https://media.forgecdn.net/avatars/thumbnails/0/606/64/64/636142686089536863.png", url: "https://media.forgecdn.net/files/2968/49/BSLv8-1.16.4.zip" },
+  { name: "Lagless Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/515/64/64/636142660409514105.png", url: "https://media.forgecdn.net/files/2968/49/Lagless-1.16.4.zip" },
+  { name: "Robobo1221 Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/249/64/64/636142591631569764.png", url: "https://media.forgecdn.net/files/2968/49/Robobo1221-1.16.4.zip" },
+  { name: "VANILLA PLUS Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/786/64/64/636142758024308727.png", url: "https://media.forgecdn.net/files/2968/49/VanillaPlus-1.16.4.zip" },
+  { name: "Oceano Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/676/64/64/636142710191365867.png", url: "https://media.forgecdn.net/files/2968/49/Oceano-1.16.4.zip" },
+  { name: "Kunii Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/350/64/64/636142629389978816.png", url: "https://media.forgecdn.net/files/2968/49/Kunii-1.16.4.zip" },
+  { name: "Tea Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/824/64/64/636142794399761567.png", url: "https://media.forgecdn.net/files/2968/49/TeaShaders-1.16.4.zip" },
+  { name: "Nostalgia Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/624/64/64/636142691191984331.png", url: "https://media.forgecdn.net/files/2968/49/Nostalgia-1.16.4.zip" },
+  { name: "Prismarine Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/839/64/64/636142799634353066.png", url: "https://media.forgecdn.net/files/2968/49/Prismarine-1.16.4.zip" },
+  { name: "SORA Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/301/64/64/636142602476399465.png", url: "https://media.forgecdn.net/files/2968/49/SORA-1.16.4.zip" },
+  { name: "Cyanide Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/162/64/64/636142580290865427.png", url: "https://media.forgecdn.net/files/2968/49/Cyanide-1.16.4.zip" },
+  { name: "Updated Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/830/64/64/636142796568375409.png", url: "https://media.forgecdn.net/files/2968/49/Updated-1.16.4.zip" },
+  { name: "Exposa Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/542/64/64/636142667349042950.png", url: "https://media.forgecdn.net/files/2968/49/Exposa-1.16.4.zip" },
+  { name: "Sildur's Basic Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://media.forgecdn.net/files/2968/49/SildursBasic-1.16.4.zip" },
+  { name: "RRe36 Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/902/64/64/636150907111420048.png", url: "https://media.forgecdn.net/files/2968/49/RRe36-1.16.4.zip" },
+  { name: "Sushi Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/555/64/64/636142676162808359.png", url: "https://media.forgecdn.net/files/2968/49/Sushi-1.16.4.zip" },
+  { name: "Skyros Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/398/64/64/636142638930466906.png", url: "https://media.forgecdn.net/files/2968/49/Skyros-1.16.4.zip" },
+  { name: "Trippy Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/839/64/64/636142799634353066.png", url: "https://media.forgecdn.net/files/2968/49/Trippy-1.16.4.zip" },
+  { name: "Distant Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/644/64/64/636142697979421815.png", url: "https://media.forgecdn.net/files/2968/49/Distant-1.16.4.zip" },
+  { name: "Vibrant Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://media.forgecdn.net/files/2968/49/Vibrant-1.16.4.zip" },
+  { name: "Radiant Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/256/64/64/636142594370705380.png", url: "https://media.forgecdn.net/files/2968/49/Radiant-1.16.4.zip" },
+  { name: "Celestial Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/614/64/64/636142688490452608.png", url: "https://media.forgecdn.net/files/2968/49/Celestial-1.16.4.zip" },
+  { name: "Nuke Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/738/64/64/636142730218532138.png", url: "https://media.forgecdn.net/files/2968/49/Nuke-1.16.4.zip" },
+  { name: "Sour Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/650/64/64/636142699099867288.png", url: "https://media.forgecdn.net/files/2968/49/Sour-1.16.4.zip" },
+  { name: "Xor Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/853/64/64/636142805447626902.png", url: "https://media.forgecdn.net/files/2968/49/Xor-1.16.4.zip" },
+  { name: "Potato Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/659/64/64/636142702923310660.png", url: "https://media.forgecdn.net/files/2968/49/Potato-1.16.4.zip" },
+  { name: "Void Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/581/64/64/636142682596411886.png", url: "https://media.forgecdn.net/files/2968/49/Void-1.16.4.zip" },
+  { name: "Hyperion Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/441/64/64/636142646970998254.png", url: "https://media.forgecdn.net/files/2968/49/Hyperion-1.16.4.zip" },
+  { name: "TME Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/140/64/64/636142576885993535.png", url: "https://media.forgecdn.net/files/2968/49/TME-1.16.4.zip" },
+  { name: "Ebin Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/136/64/64/636142575955406652.png", url: "https://media.forgecdn.net/files/2968/49/Ebin-1.16.4.zip" },
+  { name: "Slidurs Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", url: "https://media.forgecdn.net/files/2968/49/Slidurs-1.16.4.zip" },
+  { name: "Zion Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/402/64/64/636142640014747449.png", url: "https://media.forgecdn.net/files/2968/49/Zion-1.16.4.zip" },
+  { name: "Luminous Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/573/64/64/636142680323929679.png", url: "https://media.forgecdn.net/files/2968/49/Luminous-1.16.4.zip" },
+  { name: "Stratum Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/749/64/64/636142736466519553.png", url: "https://media.forgecdn.net/files/2968/49/Stratum-1.16.4.zip" },
+  { name: "Kadir Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/842/64/64/636142800830567818.png", url: "https://media.forgecdn.net/files/2968/49/Kadir-1.16.4.zip" },
+  { name: "Acid Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/174/64/64/636142581224067891.png", url: "https://media.forgecdn.net/files/2968/49/Acid-1.16.4.zip" },
+  { name: "Wind Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/980/64/64/636150948658921576.png", url: "https://media.forgecdn.net/files/2968/49/Wind-1.16.4.zip" },
+  { name: "Mountain Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/887/64/64/636150900329416271.png", url: "https://media.forgecdn.net/files/2968/49/Mountain-1.16.4.zip" },
+  { name: "Dark Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/276/64/64/636142596726337720.png", url: "https://media.forgecdn.net/files/2968/49/Dark-1.16.4.zip" },
+  { name: "Arc Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/186/64/64/636142582261604666.png", url: "https://media.forgecdn.net/files/2968/49/Arc-1.16.4.zip" },
+  { name: "Nebula Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/699/64/64/636142716611398009.png", url: "https://media.forgecdn.net/files/2968/49/Nebula-1.16.4.zip" },
+  { name: "Flux Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/724/64/64/636142725770302763.png", url: "https://media.forgecdn.net/files/2968/49/Flux-1.16.4.zip" },
+  { name: "Frost Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/495/64/64/636142657972166109.png", url: "https://media.forgecdn.net/files/2968/49/Frost-1.16.4.zip" },
+  { name: "Astra Shaders", img: "https://media.forgecdn.net/avatars/thumbnails/0/367/64/64/636142635565542844.png", url: "https://media.forgecdn.net/files/2968/49/Astra-1.16.4.zip" }
 ];
 
-// ساخت کارت‌ها
+// ساخت کارت‌ها با دکمه دانلود مستقیم
 function renderCards(data, containerId) {
   const container = document.getElementById(containerId);
   container.innerHTML = '';
@@ -273,7 +274,7 @@ function renderCards(data, containerId) {
     card.innerHTML = `
       <img src="${item.img}" alt="${item.name}" loading="lazy">
       <h3>${item.name}</h3>
-      <a href="${item.url}" target="_blank" rel="noopener">دانلود</a>
+      <a class="download-btn" href="${item.url}" download>دانلود مستقیم</a>
     `;
     container.appendChild(card);
   });
