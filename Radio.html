@@ -1,1 +1,310 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Radio</title>
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:#070A12;
+      color:#eaf2ff;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .card{
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:18px;
+      background:rgba(255,255,255,.06);
+      backdrop-filter: blur(10px);
+      padding:14px;
+    }
+    h1{margin:0 0 10px;font-size:20px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+    button{
+      border:0;border-radius:14px;padding:11px 14px;font-weight:900;cursor:pointer;
+      color:#07101b;background:linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85));
+      box-shadow:0 18px 55px rgba(56,189,248,.18), inset 0 0 0 1px rgba(255,255,255,.18);
+      user-select:none;
+    }
+    .ghost{background:rgba(255,255,255,.07);color:#eaf2ff;box-shadow:none;border:1px solid rgba(255,255,255,.14)}
+    .ok{background:linear-gradient(135deg, rgba(34,197,94,.95), rgba(56,189,248,.85))}
+    .danger{background:linear-gradient(135deg, rgba(248,113,113,.95), rgba(124,58,237,.85))}
+    .progressWrap{
+      width:100%;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.15);
+      border-radius:14px;
+      padding:10px;
+      margin-top:12px;
+    }
+    .barRow{display:flex;gap:10px;align-items:center}
+    input[type="range"]{width:100%}
+    .small{font-size:13px;color:rgba(234,242,255,.75)}
+    .status{font-weight:1000;opacity:.9;margin-top:6px}
+    .list{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    @media(max-width:700px){.list{grid-template-columns:1fr}}
+    .track{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      border-radius:14px;
+      padding:10px;
+      cursor:pointer;
+      transition:.15s;
+      min-height:56px;
+    }
+    .track:hover{transform:translateY(-1px);border-color:rgba(56,189,248,.5)}
+    .track .t{font-weight:1000}
+    .track .a{opacity:.75;font-size:13px;margin-top:3px}
+    .playing{
+      outline:2px solid rgba(56,189,248,.55);
+      border-color:rgba(56,189,248,.55);
+      background:rgba(56,189,248,.08);
+    }
+    audio{width:100%; margin-top:10px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1>🎧 Radio Player (Random + Playlist)</h1>
 
+    <div class="row">
+      <button id="btnPrev" class="ghost">⏮️ قبلی</button>
+      <button id="btnPlay" class="ok">▶️ Play</button>
+      <button id="btnNext" class="ghost">⏭️ بعدی</button>
+      <button id="btnRandom">🎲 Random</button>
+      <button id="btnLoop" class="ghost">🔁 Loop: Off</button>
+    </div>
+
+    <div class="progressWrap">
+      <div class="barRow">
+        <span id="curTime" class="small">00:00</span>
+        <input id="seek" type="range" min="0" max="1000" value="0" />
+        <span id="durTime" class="small">00:00</span>
+      </div>
+      <div class="status" id="status">منتظر انتخاب آهنگ...</div>
+      <audio id="audio" preload="metadata"></audio>
+    </div>
+
+    <div class="row">
+      <div class="small">برای شروع پخش ممکن است مرورگر اجازه بدهد فقط با کلیک روی Play.</div>
+    </div>
+
+    <div class="list" id="list"></div>
+  </div>
+</div>
+
+<script>
+  const tracks = [
+    { title: "Track 1 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+    { title: "Track 2 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+    { title: "Track 3 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+    { title: "Track 4 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
+    { title: "Track 5 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" },
+    { title: "Track 6 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
+    { title: "Track 7 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" },
+    { title: "Track 8 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" }
+  ];
+
+  const audio = document.getElementById("audio");
+  const listEl = document.getElementById("list");
+
+  const btnPlay = document.getElementById("btnPlay");
+  const btnPrev = document.getElementById("btnPrev");
+  const btnNext = document.getElementById("btnNext");
+  const btnRandom = document.getElementById("btnRandom");
+  const btnLoop = document.getElementById("btnLoop");
+
+  const statusEl = document.getElementById("status");
+  const seek = document.getElementById("seek");
+  const curTimeEl = document.getElementById("curTime");
+  const durTimeEl = document.getElementById("durTime");
+
+  let currentIndex = 0;
+  let isLoop = false;
+  let isSeeking = false;
+  let isPlaying = false;
+
+  function fmtTime(sec){
+    if (!Number.isFinite(sec) || sec < 0) return "00:00";
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  }
+
+  function escapeHtml(str){
+    return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
+
+  function setStatus(msg){ statusEl.textContent = msg; }
+
+  function renderList(){
+    listEl.innerHTML = "";
+    tracks.forEach((t, idx) => {
+      const div = document.createElement("div");
+      div.className = "track" + (idx === currentIndex ? " playing" : "");
+      div.dataset.idx = idx;
+      div.innerHTML = `
+        <div class="t">${escapeHtml(t.title)}</div>
+        <div class="a">${escapeHtml(t.artist)}</div>
+      `;
+      div.addEventListener("click", () => loadTrack(idx, true));
+      listEl.appendChild(div);
+    });
+  }
+
+  function updatePlayButton(){
+    btnPlay.textContent = audio.paused ? "▶️ Play" : "⏸ Pause";
+  }
+
+  async function tryPlay(){
+    try{
+      await audio.play();
+      return true;
+    }catch(e){
+      isPlaying = false;
+      btnPlay.textContent = "▶️ Play";
+      setStatus("برای پخش باید روی Play کلیک کنی (اجازه مرورگر).");
+      return false;
+    }
+  }
+
+  async function loadTrack(index, autoplay){
+    if (index < 0 || index >= tracks.length) return;
+    currentIndex = index;
+    renderList();
+
+    const t = tracks[currentIndex];
+    setStatus("آماده‌سازی: " + t.title + " — " + t.artist);
+
+    audio.pause();
+    audio.currentTime = 0;
+    audio.src = t.url;
+    isPlaying = false;
+    updatePlayButton();
+
+    if (autoplay){
+      const ok = await tryPlay();
+      if (!ok){
+        setStatus("آهنگ لود شد. برای پخش دوباره روی Play بزن: " + t.title);
+      }
+    }else{
+      setStatus("لود شد: " + t.title + " — برای پخش ▶️ بزن");
+    }
+  }
+
+  async function nextTrack(){
+    if (isLoop){
+      setStatus("Loop: همین آهنگ دوباره از اول");
+      audio.currentTime = 0;
+      await tryPlay();
+      return;
+    }
+    const next = (currentIndex + 1) % tracks.length;
+    await loadTrack(next, isPlaying);
+    if (!isPlaying) setStatus("لود شد: " + tracks[next].title + " — برای پخش ▶️ بزن");
+  }
+
+  async function prevTrack(){
+    if (isLoop){
+      setStatus("Loop: همین آهنگ دوباره از اول");
+      audio.currentTime = 0;
+      await tryPlay();
+      return;
+    }
+    const prev = (currentIndex - 1 + tracks.length) % tracks.length;
+    await loadTrack(prev, isPlaying);
+    if (!isPlaying) setStatus("لود شد: " + tracks[prev].title + " — برای پخش ▶️ بزن");
+  }
+
+  async function playPause(){
+    if (!audio.src){
+      await loadTrack(currentIndex, true);
+      return;
+    }
+    if (audio.paused){
+      await tryPlay();
+    }else{
+      audio.pause();
+    }
+  }
+
+  function randomPick(){
+    if (tracks.length < 2) return currentIndex;
+    let idx = Math.floor(Math.random() * tracks.length);
+    if (idx === currentIndex) idx = (idx + 1) % tracks.length;
+    return idx;
+  }
+
+  // Buttons
+  btnPlay.addEventListener("click", playPause);
+  btnPrev.addEventListener("click", prevTrack);
+  btnNext.addEventListener("click", nextTrack);
+
+  btnRandom.addEventListener("click", async () => {
+    const idx = randomPick();
+    await loadTrack(idx, true);
+  });
+
+  btnLoop.addEventListener("click", () => {
+    isLoop = !isLoop;
+    btnLoop.textContent = `🔁 Loop: ${isLoop ? "On" : "Off"}`;
+    setStatus(isLoop ? "Loop فعال شد" : "Loop خاموش شد");
+  });
+
+  // Seek
+  seek.addEventListener("input", () => { isSeeking = true; });
+  seek.addEventListener("change", () => {
+    if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
+    const target = (Number(seek.value) / 1000) * audio.duration;
+    audio.currentTime = target;
+    isSeeking = false;
+  });
+
+  // Audio events
+  audio.addEventListener("loadedmetadata", () => {
+    durTimeEl.textContent = fmtTime(audio.duration);
+  });
+
+  audio.addEventListener("timeupdate", () => {
+    if (isSeeking) return;
+    curTimeEl.textContent = fmtTime(audio.currentTime);
+    if (Number.isFinite(audio.duration) && audio.duration > 0){
+      seek.value = String(Math.round((audio.currentTime / audio.duration) * 1000));
+    }
+  });
+
+  audio.addEventListener("play", () => {
+    isPlaying = true;
+    updatePlayButton();
+    setStatus("در حال پخش: " + tracks[currentIndex].title);
+  });
+
+  audio.addEventListener("pause", () => {
+    isPlaying = false;
+    updatePlayButton();
+    if (audio.currentTime > 0) setStatus("Pause");
+    else setStatus("آماده‌ست");
+  });
+
+  audio.addEventListener("ended", () => nextTrack);
+
+  audio.addEventListener("error", () => {
+    isPlaying = false;
+    updatePlayButton();
+    setStatus("خطا در پخش آهنگ. لینک را بررسی کن.");
+  });
+
+  // Init
+  renderList();
+  loadTrack(0, false);
+</script>
+</body>
+</html>
