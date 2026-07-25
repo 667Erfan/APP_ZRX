@@ -1,49 +1,338 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href='https://fonts.googleapis.com/css?family=Inter' rel='stylesheet'>
-    <link rel="stylesheet" href="src/styles.css" />
-    <title>Chat room and messages Demo</title>
-  </head>
-  <body class="font-inter">
-    <div id="chat-room-messages" class="container">
-      <div class="flex-1 p:2 pl-4 sm:p-12 justify-between flex flex-col h-screen uk-text-primary">
-        <div
-          id="messages"
-          class="w-80 flex flex-auto flex-col space-y-2 p-3 overflow-y-auto scrollbar-thumb-blue scrollbar-thumb-rounded scrollbar-track-blue-lighter scrollbar-w-2 scrolling-touch"
-        >
-        </div>
-        <div class="border-t-2 border-gray-200 px-4 pt-4 mb-2 sm:mb-0">
-          <form class="flex" onsubmit="event.preventDefault(); handleSubmit();">
-            <input
-              type="text"
-              name="message"
-              placeholder="Type something..."
-              class="uk-input uk-width-1-1"
-              autoFocus
-            />
-            <div class="items-center inset-y-0 flex ml-2">
-              <button
-                type="submit"
-                class="uk-btn uk-btn-sm uk-btn-primary mb-1 rounded-[1998px] w-full hover:uk-btn-primary+1 active:uk-btn-primary+2"
-              >
-                Send
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  class="h-6 w-6 ml-2 transform rotate-90"
-                >
-                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
-                </svg>
-              </button>
-            </div>
-          </form>
-        </div>
-     </div>
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Voice Rooms - chat.html</title>
+  <style>
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;background:#070A12;color:#eaf2ff}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .card{border:1px solid rgba(255,255,255,.14);border-radius:18px;background:rgba(255,255,255,.06);backdrop-filter:blur(10px);padding:14px}
+    h1{margin:0 0 10px;font-size:20px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
+    input{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.15);color:#eaf2ff;outline:none;min-width:240px}
+    button{
+      border:0;border-radius:14px;padding:11px 14px;font-weight:900;cursor:pointer;user-select:none;
+      color:#07101b;background:linear-gradient(135deg, rgba(124,58,237,.95), rgba(56,189,248,.85));
+      box-shadow:0 18px 55px rgba(56,189,248,.18), inset 0 0 0 1px rgba(255,255,255,.18);
+    }
+    .ghost{background:rgba(255,255,255,.07);color:#eaf2ff;box-shadow:none;border:1px solid rgba(255,255,255,.14)}
+    .ok{background:linear-gradient(135deg, rgba(34,197,94,.95), rgba(56,189,248,.85))}
+    .danger{background:linear-gradient(135deg, rgba(248,113,113,.95), rgba(124,58,237,.85))}
+    .log{margin-top:12px;white-space:pre-wrap;line-height:1.5;font-weight:800;color:rgba(234,242,255,.86)}
+    .peers{margin-top:10px;display:flex;gap:10px;flex-wrap:wrap}
+    .peerTag{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.15);font-weight:900}
+    .right{margin-left:auto}
+    .status{font-weight:1000;color:rgba(234,242,255,.75)}
+    audio{display:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>ویس‌چت آنلاین (Room + Play + Mic)</h1>
+
+      <div class="row">
+        <button id="btnCreate">ساخت روم</button>
+        <span class="status" id="roomIdLabel">روم: —</span>
+      </div>
+
+      <div class="row">
+        <input id="roomInput" placeholder="Room ID برای ورود (مثلاً abcd1234)"/>
+        <button id="btnJoin" class="ghost">ورود به روم</button>
+      </div>
+
+      <div class="row">
+        <button id="btnMic" class="ok">🎙️ Mic: خاموش</button>
+        <button id="btnPlay" class="ghost">▶️ Play</button>
+        <button id="btnLeave" class="danger ghost">خروج</button>
+      </div>
+
+      <div class="row">
+        <div class="right status">وضعیت: <span id="connStatus">—</span></div>
+      </div>
+
+      <div class="peers" id="peers"></div>
+      <div class="log" id="log"></div>
     </div>
-    <script type="module" src="src/script.ts"></script>
-  </body>
+  </div>
+
+  <!-- Socket.IO -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // ====== CONFIG ======
+    const socket = io(); // باید سرور روی همون دامنه/پورت اجرا باشه
+
+    const logEl = document.getElementById("log");
+    const peersEl = document.getElementById("peers");
+    const roomInput = document.getElementById("roomInput");
+    const roomIdLabel = document.getElementById("roomIdLabel");
+    const connStatus = document.getElementById("connStatus");
+
+    const btnCreate = document.getElementById("btnCreate");
+    const btnJoin = document.getElementById("btnJoin");
+    const btnMic = document.getElementById("btnMic");
+    const btnPlay = document.getElementById("btnPlay");
+    const btnLeave = document.getElementById("btnLeave");
+
+    function log(...a){
+      logEl.textContent += a.map(x => (typeof x === "string" ? x : JSON.stringify(x))).join(" ") + "\n";
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function randRoom(){
+      return Math.random().toString(36).slice(2,10);
+    }
+
+    let roomId = null;
+
+    let localStream = null;
+    let micOn = false;
+
+    let playing = false;
+
+    // peerId -> { pc, remoteStream, audio }
+    const peers = new Map();
+
+    function setConnStatus(s){ connStatus.textContent = s; }
+
+    function updatePeersUI(){
+      peersEl.innerHTML = "";
+      for (const [id] of peers.entries()){
+        const el = document.createElement("div");
+        el.className = "peerTag";
+        el.textContent = id === socket.id ? id + " (تو)" : id;
+        peersEl.appendChild(el);
+      }
+    }
+
+    function setMicUI(on){
+      micOn = on;
+      btnMic.textContent = on ? "🎙️ Mic: روشن" : "🎙️ Mic: خاموش";
+      btnMic.classList.toggle("ok", !on);
+      btnMic.classList.toggle("danger", on);
+    }
+
+    function setPlayUI(on){
+      playing = on;
+      btnPlay.textContent = on ? "⏸ Pause" : "▶️ Play";
+    }
+
+    async function ensureMicStream(){
+      if(localStream) return localStream;
+      localStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      localStream.getAudioTracks().forEach(t => t.enabled = false); // شروع خاموش
+      return localStream;
+    }
+
+    function makePC(peerId){
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+      });
+
+      const remoteStream = new MediaStream();
+
+      pc.ontrack = (ev) => {
+        for(const st of ev.streams){
+          for(const tr of st.getTracks()){
+            remoteStream.addTrack(tr);
+          }
+        }
+        const obj = peers.get(peerId);
+        if(obj && obj.audio){
+          obj.audio.srcObject = remoteStream;
+          if(playing){
+            obj.audio.play().catch(()=>{});
+          }
+        }
+      };
+
+      pc.onicecandidate = (ev) => {
+        if(!ev.candidate) return;
+        socket.emit("webrtc:ice-candidate", { roomId, to: peerId, candidate: ev.candidate });
+      };
+
+      return { pc, remoteStream };
+    }
+
+    async function startPeer(peerId){
+      if(peers.has(peerId)) return;
+
+      const { pc, remoteStream } = makePC(peerId);
+
+      const audio = document.createElement("audio");
+      audio.autoplay = true;
+      audio.controls = false;
+      audio.playsInline = true;
+
+      audio.srcObject = remoteStream;
+
+      document.body.appendChild(audio);
+
+      peers.set(peerId, { pc, remoteStream, audio });
+      updatePeersUI();
+
+      if(micOn){
+        await negotiateWithPeer(peerId);
+      }
+      if(playing){
+        audio.play().catch(()=>{});
+      }
+    }
+
+    async function negotiateWithPeer(peerId){
+      const obj = peers.get(peerId);
+      if(!obj) return;
+
+      // add tracks if micOn
+      if(localStream && micOn){
+        // جلوگیری از add دوباره
+        if(obj.pc.getSenders().every(s => s.track && s.track.kind !== "audio")){
+          for(const t of localStream.getTracks()){
+            obj.pc.addTrack(t, localStream);
+          }
+        }
+      }
+
+      const offer = await obj.pc.createOffer();
+      await obj.pc.setLocalDescription(offer);
+
+      socket.emit("webrtc:offer", { roomId, to: peerId, offer });
+    }
+
+    async function stopAll(){
+      // close peers
+      for (const [id, obj] of peers.entries()){
+        try{ obj.audio?.pause(); }catch{}
+        try{ obj.pc?.close(); }catch{}
+        try{ obj.audio?.remove(); }catch{}
+      }
+      peers.clear();
+      updatePeersUI();
+
+      if(localStream){
+        localStream.getTracks().forEach(t => t.stop());
+        localStream = null;
+      }
+      setMicUI(false);
+      setPlayUI(false);
+    }
+
+    btnCreate.onclick = async () => {
+      await stopAll();
+      roomId = randRoom();
+      roomIdLabel.textContent = "روم: " + roomId;
+      setConnStatus("ساخت روم...");
+      socket.emit("room:create", roomId, () => {});
+      log("✅ Room ساخته شد:", roomId);
+      setConnStatus("آماده");
+    };
+
+    btnJoin.onclick = async () => {
+      await stopAll();
+      const r = (roomInput.value || "").trim();
+      if(!r) return alert("Room ID را وارد کن");
+      roomId = r;
+      roomIdLabel.textContent = "روم: " + roomId;
+
+      setConnStatus("در حال ورود...");
+      socket.emit("room:join", roomId, () => {});
+      log("✅ وارد شدی به روم:", roomId);
+      setConnStatus("آماده");
+    };
+
+    btnPlay.onclick = async () => {
+      setPlayUI(true);
+      log("▶️ Play");
+      // اگر هنوز میکروفن/پک برقرار نشده، فقط آماده گوش دادن می‌مونه
+      for (const [, obj] of peers.entries()){
+        try{ obj.audio.play().catch(()=>{}); }catch{}
+      }
+    };
+
+    btnMic.onclick = async () => {
+      if(!roomId) return alert("اول روم بساز یا وارد شو");
+      try{
+        const stream = await ensureMicStream();
+        const newOn = !micOn;
+        stream.getAudioTracks().forEach(t => t.enabled = newOn);
+        setMicUI(newOn);
+        log(newOn ? "🎙️ Mic روشن" : "🎙️ Mic خاموش");
+
+        if(newOn){
+          // به هر peer که هست offer بزن
+          for(const [peerId] of peers.entries()){
+            await negotiateWithPeer(peerId);
+          }
+        }
+      }catch(e){
+        alert("اجازه میکروفن داده نشد: " + (e?.message || e));
+        log("Mic error:", e?.message || e);
+      }
+    };
+
+    btnLeave.onclick = async () => {
+      if(roomId) log("خروج از روم");
+      roomId = null;
+      roomIdLabel.textContent = "روم: —";
+      setConnStatus("—");
+      await stopAll();
+      // بستن روی سرور با disconnect/یا join flow انجام میشه
+      socket.disconnect();
+      location.reload();
+    };
+
+    // ====== WebRTC signaling from server ======
+    socket.on("connect", () => {
+      setConnStatus("متصل به سرور سیگنالینگ");
+      log("socket connected:", socket.id);
+    });
+
+    socket.on("disconnect", () => {
+      setConnStatus("قطع شد");
+      log("socket disconnected");
+    });
+
+    socket.on("webrtc:offer", async ({ from, offer }) => {
+      if(!roomId) return;
+      await startPeer(from);
+
+      const obj = peers.get(from);
+      if(!obj) return;
+
+      await obj.pc.setRemoteDescription(offer);
+
+      // add tracks if micOn
+      if(localStream && micOn){
+        const senders = obj.pc.getSenders();
+        const hasAudioSender = senders.some(s => s.track && s.track.kind === "audio");
+        if(!hasAudioSender){
+          for(const t of localStream.getTracks()){
+            obj.pc.addTrack(t, localStream);
+          }
+        }
+      }
+
+      const answer = await obj.pc.createAnswer();
+      await obj.pc.setLocalDescription(answer);
+
+      socket.emit("webrtc:answer", { roomId, to: from, answer });
+    });
+
+    socket.on("webrtc:answer", async ({ from, answer }) => {
+      const obj = peers.get(from);
+      if(!obj) return;
+      await obj.pc.setRemoteDescription(answer);
+    });
+
+    socket.on("webrtc:ice-candidate", async ({ from, candidate }) => {
+      const obj = peers.get(from);
+      if(!obj) return;
+      try{
+        await obj.pc.addIceCandidate(candidate);
+      }catch(e){}
+    });
+
+  </script>
+</body>
 </html>
