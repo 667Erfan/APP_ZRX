@@ -70,7 +70,7 @@
     .b9{ background: linear-gradient(135deg, rgba(34,211,238,.95), rgba(59,130,246,.85)); }
     .b10{ background: linear-gradient(135deg, rgba(217,70,239,.95), rgba(245,158,11,.85)); }
 
-    @media (max-width: 520px){
+    max-width: 520px{
       .right-stack{ padding: 100px 10px; }
       .rb{ width:160px; }
       .top-left-text{ font-size:18px; }
@@ -251,7 +251,7 @@
     .parallax .p2{ position:absolute; inset:0; transform: translate3d(calc((var(--px) - .5) * 22px), calc((var(--py) - .5) * 16px), 0); opacity:.9; }
 
     /* Reduce motion */
-    @media (prefers-reduced-motion: reduce){
+    prefers-reduced-motion: reduce{
       .glow, .star, .scan{ animation:none !important; }
     }
   </style>
@@ -534,17 +534,17 @@
     }
 
     /* برای اینکه در Tab لگ نشه: حرکت با اشاره کم + رندر کمتر */
-    @media (hover:none) {
+    hover:none {
       .tilt{ animation: none; } /* روی تبلت بهتره تنفسی رو خاموش کنیم */
     }
 
     /* Reduce motion */
-    @media (prefers-reduced-motion: reduce){
+    prefers-reduced-motion: reduce{
       body::before, .bg-stars, .tilt, .banner{ animation:none !important; }
       .banner{ opacity:1; transform:none; }
     }
 
-    @media (max-width: 560px){
+    max-width: 560px{
       .content{ flex-direction:column; align-items:flex-start; justify-content:flex-start; }
       .stage{ width:100%; padding: 4vh 0 2vh; }
       .banner{ margin-top: 2vh; }
@@ -851,17 +851,17 @@
     }
 
     /* برای تبلت: حرکت پارالاکس غیرفعال (کم‌مصرف‌تر) */
-    @media (hover:none) {
+    hover:none {
       .tilt{ animation:none; }
     }
 
-    @media (max-width: 720px){
+    max-width: 720px{
       .content{ flex-direction:column; }
       .stage{ width:100%; padding: 4vh 0 2vh; }
       .left{ max-width: unset; }
     }
 
-    @media (prefers-reduced-motion: reduce){
+    prefers-reduced-motion: reduce{
       .bg, .tilt, .scanLite { animation:none !important; }
       .title{ opacity:1 !important; transform:none !important; }
     }
@@ -1000,7 +1000,7 @@
   }
 
   /* اگر خواستی برای کاهش حرکت */
-  @media (prefers-reduced-motion: reduce){
+  prefers-reduced-motion: reduce{
     .btn3d{ transition:none; }
     <div id="myLoader" style="position:fixed;inset:0;z-index:999999;display:grid;place-items:center;pointer-events:none;background:linear-gradient(180deg,rgba(122,162,255,.25),rgba(0,0,0,.85));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
   <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
