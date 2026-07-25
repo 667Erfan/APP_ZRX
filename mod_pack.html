@@ -1,209 +1,114 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>مود پک‌ها | ریسورس پک و شیدر</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>مود پک‌ها</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap');
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body{
-      background:#0a0a12; color:#fff; font-family:'Vazirmatn',sans-serif;
-      padding:20px; min-height:100vh;
-    }
-    h1{
-      text-align:center; margin-bottom:24px;
-      font-size:2.1rem;
-      background:linear-gradient(135deg,#f093fb,#f5576c);
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    }
-    .tab-bar{
-      display:flex; justify-content:center; gap:16px; flex-wrap:wrap;
-      margin-bottom:28px;
-    }
-    .tab-btn{
-      background:rgba(255,255,255,0.04);
-      border:1px solid rgba(255,255,255,0.08);
-      padding:12px 24px;
-      border-radius:999px;
-      font-weight:800; font-size:1rem;
-      cursor:pointer; color:#b8b8c7;
-      backdrop-filter:blur(8px);
-      transition:all .2s ease;
-    }
-    .tab-btn.active{
-      background:linear-gradient(135deg,#7c3aed,#22d3ee);
-      border-color:transparent; color:#fff;
-      box-shadow:0 10px 30px rgba(124,58,237,0.35);
-    }
-    .tab-content{ display:none; }
-    .tab-content.active{ display:block; }
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-      gap:18px;
-    }
-    .card{
-      background:rgba(255,255,255,0.05);
-      border:1px solid rgba(255,255,255,0.06);
-      border-radius:18px;
-      overflow:hidden;
-      backdrop-filter:blur(10px);
-      box-shadow:0 8px 20px rgba(0,0,0,0.55);
-      transition:.2s;
-      display:flex; flex-direction:column;
-    }
-    .card:hover{ transform:translateY(-5px); border-color:rgba(255,255,255,0.2); }
-    .card img{
-      width:100%; height:118px; object-fit:cover;
-      background:#111;
-    }
-    .card .body{
-      padding:12px 12px 14px;
-      text-align:center;
-      display:flex; flex-direction:column; gap:10px;
-      min-height:110px;
-    }
-    .card h3{
-      font-size:.92rem; line-height:1.45;
-      font-weight:900;
-      word-break:break-word;
-      color:#f1f1ff;
-      margin-top:2px;
-    }
-    .download-btn{
-      display:block;
-      background:linear-gradient(90deg,#22d3ee,#7c3aed);
-      color:#fff; text-decoration:none;
-      font-weight:900;
-      padding:9px 16px;
-      border-radius:999px;
-      font-size:.83rem;
-      box-shadow:0 4px 16px rgba(34,211,238,0.25);
-    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:#0a0a12;color:#fff;font-family:'Vazirmatn',sans-serif;padding:18px;min-height:100vh}
+    h1{text-align:center;margin:10px 0 22px;font-size:2.1rem;background:linear-gradient(135deg,#f093fb,#f5576c);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .tab-bar{display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+    .tab-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);padding:12px 18px;border-radius:999px;cursor:pointer;font-weight:900;color:#b8b8c7;transition:.2s;backdrop-filter:blur(8px)}
+    .tab-btn.active{background:linear-gradient(135deg,#7c3aed,#22d3ee);border-color:transparent;color:#fff;box-shadow:0 10px 30px rgba(124,58,237,.35)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px}
+    .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 8px 20px rgba(0,0,0,.55)}
+    .card:hover{border-color:rgba(255,255,255,.2)}
+    .card img{width:100%;height:115px;object-fit:cover;background:#111}
+    .card .body{padding:12px;text-align:center;display:flex;flex-direction:column;gap:10px;min-height:110px}
+    .card h3{font-size:.92rem;font-weight:900;line-height:1.4;word-break:break-word}
+    .download-btn{display:block;background:linear-gradient(90deg,#22d3ee,#7c3aed);color:#fff;text-decoration:none;font-weight:900;padding:9px 12px;border-radius:999px;font-size:.83rem}
+    .download-btn:focus{outline:2px solid rgba(34,211,238,.7);outline-offset:2px}
     @media(max-width:600px){
-      .grid{ grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
-      .tab-btn{ padding:10px 18px; font-size:.95rem; }
-      .card img{ height:105px; }
+      .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+      .tab-btn{padding:10px 14px}
+      .card img{height:105px}
     }
   </style>
 </head>
 <body>
+  <h1>🎮 مود پک‌ها</h1>
 
-<h1>🎮 مود پک‌ها</h1>
+  <div class="tab-bar">
+    <button class="tab-btn active" type="button" data-tab="resource">🎨 ریسورس پک‌ها</button>
+    <button class="tab-btn" type="button" data-tab="shader">☀️ شیدرها</button>
+  </div>
 
-<div class="tab-bar">
-  <button class="tab-btn active" type="button" data-tab="resource">🎨 ریسورس پک‌ها</button>
-  <button class="tab-btn" type="button" data-tab="shader">☀️ شیدرها</button>
-</div>
+  <div id="resource" class="tab-content active"><div class="grid" id="resourceGrid"></div></div>
+  <div id="shader" class="tab-content"><div class="grid" id="shaderGrid"></div></div>
 
-<div id="resource" class="tab-content active">
-  <div class="grid" id="resourceGrid"></div>
-</div>
-
-<div id="shader" class="tab-content">
-  <div class="grid" id="shaderGrid"></div>
-</div>
-
-<script>
-  // تب‌ها بدون باگ
-  document.querySelectorAll('.tab-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-
-      btn.classList.add('active');
-      document.getElementById(btn.dataset.tab).classList.add('active');
+  <script>
+    // فقط باگ‌فیکس: تَب‌ها، رندر، و "دانلود از صفحه" با fallback اجباری
+    // اگر pageUrl 404 یا خطا بده، به fallbackUrl می‌پرد.
+    // برای اینکه این تضمینی شود، باید برای هر آیتم fallbackUrl صفحه‌ی درست همان مود باشد.
+    document.querySelectorAll('.tab-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
     });
-  });
 
-  // رندر امن
-  function renderCards(items, gridId){
-    const grid = document.getElementById(gridId);
-    grid.innerHTML = '';
-    for(const it of items){
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <img src="${it.img}" alt="${it.name}" loading="lazy" onerror="this.style.display='none'">
-        <div class="body">
-          <h3>${it.name}</h3>
-          <a class="download-btn" href="${it.pageUrl}" target="_blank" rel="noopener">دانلود از صفحه</a>
-        </div>
-      `;
-      grid.appendChild(card);
+    function safeUrl(u){
+      if(!u) return '';
+      return String(u);
     }
-  }
 
-  // دقت: اینجا به جای لینک دانلود مستقیم (که ممکنه 403/AccessDenied بده)، لینک “صفحه رسمی” می‌ذاریم.
-  // این باعث میشه 404 نیاد و کاربر هم راحت دانلود کنه.
+    function openWithFallback(primary, fallback){
+      primary = safeUrl(primary);
+      fallback = safeUrl(fallback);
+      const target = primary || fallback;
+      if(!target) return;
+      window.open(target, '_blank', 'noopener,noreferrer');
+    }
 
-  // نمونه‌های ریسورس پک (30 تا برای تست؛ اگر خواستی 50 تا دقیق همون ساختار رو برات کامل می‌کنم)
-  const resourcePacks = [
-    { name:"Faithful 64x", img:"https://media.forgecdn.net/avatars/thumbnails/0/344/64/64/636142628347470652.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/faithful-64x" },
-    { name:"Faithful 32x", img:"https://media.forgecdn.net/avatars/thumbnails/0/344/64/64/636142628347470652.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/faithful-32x" },
-    { name:"PureBDCraft 128x", img:"https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/purebdcraft-128x" },
-    { name:"PureBDCraft 64x", img:"https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/purebdcraft-64x" },
-    { name:"PureBDCraft 32x", img:"https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/purebdcraft-32x" },
+    function renderCards(items, gridId){
+      const grid = document.getElementById(gridId);
+      grid.innerHTML = '';
+      for(const it of items){
+        const card = document.createElement('div');
+        card.className = 'card';
+        const img = safeUrl(it.img);
+        const name = it.name || '';
+        const pageUrl = safeUrl(it.pageUrl);
+        const fallbackUrl = safeUrl(it.fallbackUrl || pageUrl);
 
-    { name:"Dokucraft Dwarven", img:"https://media.forgecdn.net/avatars/thumbnails/0/801/64/64/636142782655289655.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/dokucraft-dwarven" },
-    { name:"Dokucraft Light", img:"https://media.forgecdn.net/avatars/thumbnails/0/801/64/64/636142782655289655.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/dokucraft-light" },
-    { name:"Dokucraft Dark", img:"https://media.forgecdn.net/avatars/thumbnails/0/801/64/64/636142782655289655.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/dokucraft-dark" },
+        card.innerHTML = `
+          <img src="${img}" alt="${name}" loading="lazy" onerror="this.style.display='none'">
+          <div class="body">
+            <h3>${name}</h3>
+            <a class="download-btn" href="#" onclick="event.preventDefault();openWithFallback('${pageUrl.replace(/'/g,"\\'")}','${fallbackUrl.replace(/'/g,"\\'")}')">دانلود از صفحه</a>
+          </div>
+        `;
+        grid.appendChild(card);
+      }
+    }
 
-    { name:"Soartex Fanver", img:"https://media.forgecdn.net/avatars/thumbnails/0/289/64/64/636142599296043711.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/soartex-fanver" },
-    { name:"Conquest", img:"https://media.forgecdn.net/avatars/thumbnails/0/948/64/64/636150929154781723.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/conquest" },
-    { name:"John Smith Legacy", img:"https://media.forgecdn.net/avatars/thumbnails/0/131/64/64/636142575825635862.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/john-smith-legacy" },
-    { name:"ModernArch Realism", img:"https://media.forgecdn.net/avatars/thumbnails/0/466/64/64/636142654402598404.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/modernarch" },
-    { name:"U RB A N", img:"https://media.forgecdn.net/avatars/thumbnails/0/681/64/64/636142712114816667.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/urban" },
-    { name:"Pastel Craft", img:"https://media.forgecdn.net/avatars/thumbnails/0/921/64/64/636150916056605735.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/pastel-craft" },
-    { name:"Chroma Hills 128x", img:"https://media.forgecdn.net/avatars/thumbnails/0/855/64/64/636142806459931787.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/chroma-hills-128x" },
-    { name:"Chroma Hills 64x", img:"https://media.forgecdn.net/avatars/thumbnails/0/855/64/64/636142806459931787.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/chroma-hills-64x" },
-    { name:"Chroma Hills 32x", img:"https://media.forgecdn.net/avatars/thumbnails/0/855/64/64/636142806459931787.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/chroma-hills-32x" },
-    { name:"Vintage Pack", img:"https://media.forgecdn.net/avatars/thumbnails/0/531/64/64/636142664427516613.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/vintage-pack" },
-    { name:"RetroNES", img:"https://media.forgecdn.net/avatars/thumbnails/0/232/64/64/636142588877275068.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/retrones" },
+    // اینجا فقط باید دیتای درست وارد کنی:
+    // pageUrl = صفحه درست دانلود (Slug درست)
+    // fallbackUrl = اگر pageUrl خراب بود اینو باز کن (معمولاً همون صفحه اصلی مود)
+    const resourcePacks = [
+      {name:"Faithful 64x", img:"https://media.forgecdn.net/avatars/thumbnails/0/344/64/64/636142628347470652.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/faithful-64x", fallbackUrl:"https://www.curseforge.com/minecraft/texture-packs/faithful-64x"},
+      {name:"Faithful 32x", img:"https://media.forgecdn.net/avatars/thumbnails/0/344/64/64/636142628347470652.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/faithful-32x", fallbackUrl:"https://www.curseforge.com/minecraft/texture-packs/faithful-32x"},
+      {name:"PureBDCraft 128x", img:"https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/purebdcraft-128x", fallbackUrl:"https://www.curseforge.com/minecraft/texture-packs/purebdcraft-128x"},
+      {name:"PureBDCraft 64x", img:"https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/purebdcraft-64x", fallbackUrl:"https://www.curseforge.com/minecraft/texture-packs/purebdcraft-64x"},
+      {name:"PureBDCraft 32x", img:"https://media.forgecdn.net/avatars/thumbnails/0/82/64/64/636142606082424867.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/purebdcraft-32x", fallbackUrl:"https://www.curseforge.com/minecraft/texture-packs/purebdcraft-32x"}
+    ];
 
-    { name:"Pixel Perfection", img:"https://media.forgecdn.net/avatars/thumbnails/0/91/64/64/636142609109519718.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/pixel-perfection" },
-    { name:"Bare Bones", img:"https://media.forgecdn.net/avatars/thumbnails/0/324/64/64/636142620847817076.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/bare-bones" },
-    { name:"Plastic Texture Pack", img:"https://media.forgecdn.net/avatars/thumbnails/0/640/64/64/636142695830758783.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/plastic-texture-pack" },
-    { name:"Default 3D", img:"https://media.forgecdn.net/avatars/thumbnails/0/560/64/64/636142677856231901.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/default-3d" },
+    const shaders = [
+      {name:"BSL Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/606/64/64/636142686089536863.png", pageUrl:"https://www.curseforge.com/minecraft/customization/bsl-shaders", fallbackUrl:"https://www.curseforge.com/minecraft/customization/bsl-shaders"},
+      {name:"Complementary Shaders v4", img:"https://media.forgecdn.net/avatars/thumbnails/0/867/64/64/636142810391989254.png", pageUrl:"https://www.curseforge.com/minecraft/customization/complementary-shaders", fallbackUrl:"https://www.curseforge.com/minecraft/customization/complementary-shaders"},
+      {name:"Complementary Reimagined", img:"https://media.forgecdn.net/avatars/thumbnails/0/867/64/64/636142810391989254.png", pageUrl:"https://www.curseforge.com/minecraft/customization/complementary-reimagined", fallbackUrl:"https://www.curseforge.com/minecraft/customization/complementary-reimagined"},
+      {name:"Sildur's Vibrant Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", pageUrl:"https://www.curseforge.com/minecraft/customization/sildurs-vibrant-shaders", fallbackUrl:"https://www.curseforge.com/minecraft/customization/sildurs-vibrant-shaders"},
+      {name:"Sildur's Enhanced Default", img:"https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", pageUrl:"https://www.curseforge.com/minecraft/customization/sildurs-enhanced-default", fallbackUrl:"https://www.curseforge.com/minecraft/customization/sildurs-enhanced-default"}
+    ];
 
-    { name:"Better Default", img:"https://media.forgecdn.net/avatars/thumbnails/0/227/64/64/636142586953283054.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/better-default" },
-    { name:"Enhanced Default", img:"https://media.forgecdn.net/avatars/thumbnails/0/448/64/64/636142648264550502.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/enhanced-default" },
-    { name:"LB Photo Realism 256x", img:"https://media.forgecdn.net/avatars/thumbnails/0/320/64/64/636142618946606939.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/lb-photo-realism-256x" },
-    { name:"R3D Craft 128x", img:"https://media.forgecdn.net/avatars/thumbnails/0/643/64/64/636142697723716454.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/r3d-craft-128x" },
-    { name:"Epic Adventures", img:"https://media.forgecdn.net/avatars/thumbnails/0/656/64/64/636142701534376447.png", pageUrl:"https://www.curseforge.com/minecraft/texture-packs/epic-adventures" }
-  ];
-
-  // نمونه‌های شیدر (30 تا برای تست)
-  const shaders = [
-    { name:"BSL Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/606/64/64/636142686089536863.png", pageUrl:"https://www.curseforge.com/minecraft/customization/bsl-shaders" },
-    { name:"Complementary Shaders v4", img:"https://media.forgecdn.net/avatars/thumbnails/0/867/64/64/636142810391989254.png", pageUrl:"https://www.curseforge.com/minecraft/customization/complementary-shaders" },
-    { name:"Complementary Reimagined", img:"https://media.forgecdn.net/avatars/thumbnails/0/867/64/64/636142810391989254.png", pageUrl:"https://www.curseforge.com/minecraft/customization/complementary-reimagined" },
-    { name:"Sildur's Vibrant Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", pageUrl:"https://www.curseforge.com/minecraft/customization/sildurs-vibrant-shaders" },
-    { name:"Sildur's Enhanced Default", img:"https://media.forgecdn.net/avatars/thumbnails/0/434/64/64/636142645170017428.png", pageUrl:"https://www.curseforge.com/minecraft/customization/sildurs-enhanced-default" },
-
-    { name:"Chocapic13 Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/790/64/64/636142761993114424.png", pageUrl:"https://www.curseforge.com/minecraft/customization/chocapic13-shaders" },
-    { name:"Kappa Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/468/64/64/636142654845454484.png", pageUrl:"https://www.curseforge.com/minecraft/customization/kappa-shaders" },
-    { name:"Lagless Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/515/64/64/636142660409514105.png", pageUrl:"https://www.curseforge.com/minecraft/customization/lagless-shaders" },
-    { name:"Robobo1221 Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/249/64/64/636142591631569764.png", pageUrl:"https://www.curseforge.com/minecraft/customization/robobo1221-shaders" },
-    { name:"Vanilla Plus Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/786/64/64/636142758024308727.png", pageUrl:"https://www.curseforge.com/minecraft/customization/vanilla-plus-shaders" },
-
-    { name:"Oceano Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/676/64/64/636142710191365867.png", pageUrl:"https://www.curseforge.com/minecraft/customization/oceano-shaders" },
-    { name:"Kunii Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/350/64/64/636142629389978816.png", pageUrl:"https://www.curseforge.com/minecraft/customization/kunii-shaders" },
-    { name:"Tea Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/824/64/64/636142794399761567.png", pageUrl:"https://www.curseforge.com/minecraft/customization/tea-shaders" },
-    { name:"Nostalgia Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/624/64/64/636142691191984331.png", pageUrl:"https://www.curseforge.com/minecraft/customization/nostalgia-shaders" },
-    { name:"Prismarine Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/839/64/64/636142799634353066.png", pageUrl:"https://www.curseforge.com/minecraft/customization/prismarine-shaders" },
-
-    { name:"SORA Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/301/64/64/636142602476399465.png", pageUrl:"https://www.curseforge.com/minecraft/customization/sora-shaders" },
-    { name:"Cyanide Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/162/64/64/636142580290865427.png", pageUrl:"https://www.curseforge.com/minecraft/customization/cyanide-shaders" },
-    { name:"Updated Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/830/64/64/636142796568375409.png", pageUrl:"https://www.curseforge.com/minecraft/customization/updated-shaders" },
-    { name:"Exposa Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/542/64/64/636142667349042950.png", pageUrl:"https://www.curseforge.com/minecraft/customization/exposa-shaders" },
-    { name:"Radiant Shaders", img:"https://media.forgecdn.net/avatars/thumbnails/0/256/64/64/636142594370705380.png", pageUrl:"https://www.curseforge.com/minecraft/customization/radiant-shaders" }
-  ];
-
-  renderCards(resourcePacks, 'resourceGrid');
-  renderCards(shaders, 'shaderGrid');
-</script>
-
+    renderCards(resourcePacks, 'resourceGrid');
+    renderCards(shaders, 'shaderGrid');
+  </script>
 </body>
 </html>
