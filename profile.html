@@ -1,1 +1,498 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>پروفایل</title>
+  <style>
+    :root{
+      --bg:#070A12;
+      --card: rgba(255,255,255,.04);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(235,244,255,.96);
+      --muted: rgba(234,240,255,.7);
+      --p1: #7c3aed;
+      --p2: #06b6d4;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background: var(--bg);
+      color: var(--text);
+      padding: 18px;
+      min-height:100vh;
+    }
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      display:flex;
+      gap: 16px;
+      align-items:flex-start;
+    }
+    .panel{
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 18px 55px rgba(0,0,0,.35);
+    }
+    .panel h2{
+      margin: 0 0 10px 0;
+      font-size: 18px;
+      font-weight: 950;
+      letter-spacing:.2px;
+    }
+    label{
+      display:block;
+      margin-top: 10px;
+      font-weight: 900;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    input[type="text"]{
+      width:100%;
+      margin-top: 6px;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--stroke);
+      background: rgba(7,10,18,.7);
+      color: var(--text);
+      outline:none;
+      font-weight: 900;
+      direction: rtl;
+      text-align: right;
+    }
+    input[type="file"]{
+      margin-top: 8px;
+      width:100%;
+      color: var(--muted);
+    }
+    button{
+      border:0;
+      cursor:pointer;
+      border-radius: 14px;
+      padding: 11px 14px;
+      font-weight: 950;
+      color:#fff;
+      background: linear-gradient(135deg, rgba(124,58,237,.95), rgba(6,182,212,.85));
+      transition: transform .12s ease, filter .15s ease;
+    }
+    button:hover{ filter: brightness(1.08) saturate(1.1); }
+    button:active{ transform: translateY(1px); }
+    .row{display:flex; gap:10px; align-items:center; margin-top:12px; flex-wrap:wrap;}
+    .secondary{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--stroke);
+      color: var(--text);
+    }
+    .danger{
+      background: rgba(239,68,68,.15);
+      border:1px solid rgba(239,68,68,.35);
+      color: rgba(255,210,210,.95);
+    }
+    .accounts{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .acc{
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      padding: 10px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: rgba(255,255,255,.03);
+    }
+    .avatar{
+      width:48px; height:48px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      display:grid; place-items:center;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .acc .meta{flex:1;}
+    .acc .name{font-weight:950}
+    .acc .badge{
+      font-size:12px;
+      color: var(--muted);
+      margin-top:4px;
+    }
+    .acc .actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;}
+    .smallBtn{
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-weight: 950;
+      font-size: 13px;
+    }
+    .err{
+      margin-top:10px;
+      color:#fecaca;
+      font-weight:900;
+      display:none;
+    }
+    .hint{
+      color: var(--muted);
+      font-size: 13px;
+      line-height:1.7;
+      margin-top:6px;
+    }
+    .previewRow{
+      display:flex; gap:12px; align-items:center; margin-top: 10px;
+    }
+    .previewAvatar{
+      width:64px; height:64px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      overflow:hidden;
+      display:grid; place-items:center;
+    }
+    .previewAvatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+    .activeBar{
+      display:flex; gap:12px; align-items:center;
+      padding: 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(124,58,237,.35);
+      background: rgba(124,58,237,.12);
+      margin-bottom: 12px;
+    }
+    .activeBar .t{
+      font-weight:950;
+      font-size: 14px;
+    }
 
+    /* باکس بالا سمت راست */
+    #topRightProfile{
+      position:fixed;
+      top:14px;
+      right:14px;
+      z-index:9999;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(8px);
+      border-radius:16px;
+      padding:10px 12px;
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- بالا سمت راست -->
+  <div id="topRightProfile">
+    <div style="
+      width:40px; height:40px; border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.05);
+      overflow:hidden; display:grid; place-items:center;">
+      <span id="topRightLetter" style="font-weight:950; opacity:.85;">?</span>
+      <img id="topRightImg" alt="" style="width:100%; height:100%; object-fit:cover; display:none;" />
+    </div>
+    <div style="text-align:right;">
+      <div id="topRightName" style="font-weight:950; font-size:13px; opacity:.95;">—</div>
+      <div id="topRightRole" style="font-weight:900; font-size:12px; opacity:.7;">اکانت فعال</div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="panel" style="max-width:420px;">
+      <h2>ساخت اکانت</h2>
+
+      <div class="activeBar">
+        <div class="avatar" style="width:44px;height:44px;border-radius:14px;">
+          <img id="activeImg" alt="avatar"/>
+        </div>
+        <div>
+          <div class="t">اکانت فعال:</div>
+          <div id="activeName" style="font-weight:950; margin-top:4px;">—</div>
+        </div>
+      </div>
+
+      <label>نام اکانت</label>
+      <input id="nameInput" type="text" maxlength="24" placeholder="مثلاً: علی" />
+
+      <label>عکس اکانت (اختیاری)</label>
+      <input id="fileInput" type="file" accept="image/*" />
+
+      <div class="previewRow">
+        <div class="previewAvatar">
+          <span id="previewLetter" style="font-weight:950;opacity:.85;">?</span>
+          <img id="previewImg" alt="preview" style="display:none;" />
+        </div>
+        <div class="hint">عکس فقط در همین مرورگر ذخیره می‌شود.</div>
+      </div>
+
+      <div class="row">
+        <button id="createBtn" type="button">ساخت</button>
+        <button id="clearAllBtn" type="button" class="secondary">حذف همه</button>
+      </div>
+
+      <div id="err" class="err"></div>
+    </div>
+
+    <div class="panel">
+      <h2>اکانت‌های من</h2>
+      <div id="accounts" class="accounts"></div>
+      <div id="empty" class="hint" style="display:none;">
+        هنوز هیچ اکانتی ندارید. اول یک اکانت بسازید.
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const KEY_LIST = "zrx_profiles_list_v1";
+  const KEY_ACTIVE = "zrx_profiles_active_v1";
+
+  const nameInput = document.getElementById("nameInput");
+  const fileInput = document.getElementById("fileInput");
+  const createBtn = document.getElementById("createBtn");
+  const accountsEl = document.getElementById("accounts");
+  const emptyEl = document.getElementById("empty");
+  const errEl = document.getElementById("err");
+
+  const activeNameEl = document.getElementById("activeName");
+  const activeImgEl = document.getElementById("activeImg");
+
+  const previewImg = document.getElementById("previewImg");
+  const previewLetter = document.getElementById("previewLetter");
+
+  // بالا سمت راست
+  const topRightName = document.getElementById("topRightName");
+  const topRightLetter = document.getElementById("topRightLetter");
+  const topRightImg = document.getElementById("topRightImg");
+
+  const clearAllBtn = document.getElementById("clearAllBtn");
+
+  let previewDataUrl = null;
+
+  function loadList(){
+    try{
+      const raw = localStorage.getItem(KEY_LIST);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    } catch { return []; }
+  }
+
+  function saveList(list){
+    localStorage.setItem(KEY_LIST, JSON.stringify(list));
+  }
+
+  function loadActiveId(){
+    return localStorage.getItem(KEY_ACTIVE);
+  }
+  function saveActiveId(id){
+    localStorage.setItem(KEY_ACTIVE, id);
+  }
+
+  function escapeHtml(s){
+    return (s ?? "").replace(/[&<>"']/g, (c)=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+
+  function setErr(msg){
+    errEl.textContent = msg || "";
+    errEl.style.display = msg ? "block" : "none";
+  }
+
+  function toDataUrl(file){
+    return new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+  }
+
+  fileInput.addEventListener("change", async () => {
+    const file = fileInput.files && fileInput.files[0];
+    if(!file){
+      previewDataUrl = null;
+      previewImg.style.display = "none";
+      previewLetter.style.display = "inline";
+      return;
+    }
+    try{
+      previewDataUrl = await toDataUrl(file);
+      previewLetter.style.display = "none";
+      previewImg.src = previewDataUrl;
+      previewImg.style.display = "block";
+    }catch(e){
+      setErr("آپلود عکس ناموفق بود.");
+    }
+  });
+
+  function makeId(){
+    return "p_" + Math.random().toString(16).slice(2) + "_" + Date.now();
+  }
+
+  async function createAccount(){
+    setErr("");
+    const name = (nameInput.value || "").trim();
+    if(!name){
+      setErr("لطفاً نام اکانت را وارد کنید.");
+      return;
+    }
+
+    const accounts = loadList();
+    const id = makeId();
+
+    const account = {
+      id,
+      name: name.slice(0,24),
+      avatar: previewDataUrl || null,
+      createdAt: Date.now()
+    };
+
+    accounts.push(account);
+    saveList(accounts);
+
+    saveActiveId(id);
+
+    nameInput.value = "";
+    fileInput.value = "";
+    previewDataUrl = null;
+    previewImg.style.display = "none";
+    previewLetter.style.display = "inline";
+    previewLetter.textContent = "?";
+
+    render();
+  }
+
+  createBtn.addEventListener("click", createAccount);
+  nameInput.addEventListener("keydown", (e) => {
+    if(e.key === "Enter") createAccount();
+  });
+
+  function deleteAccount(id){
+    const accounts = loadList();
+    const next = accounts.filter(a => a.id !== id);
+    saveList(next);
+
+    const activeId = loadActiveId();
+    if(activeId === id){
+      localStorage.removeItem(KEY_ACTIVE);
+    }
+    if(next.length === 0){
+      localStorage.removeItem(KEY_ACTIVE);
+    }
+    render();
+  }
+
+  clearAllBtn.addEventListener("click", () => {
+    const ok = confirm("همه اکانت‌ها حذف شوند؟");
+    if(!ok) return;
+    localStorage.removeItem(KEY_LIST);
+    localStorage.removeItem(KEY_ACTIVE);
+    nameInput.value = "";
+    fileInput.value = "";
+    previewDataUrl = null;
+    previewImg.style.display = "none";
+    previewLetter.style.display = "inline";
+    previewLetter.textContent = "?";
+    setErr("");
+    render();
+  });
+
+  function render(){
+    const accounts = loadList();
+    const activeId = loadActiveId();
+    const activeAcc = accounts.find(a => a.id === activeId) || accounts[0] || null;
+
+    if(!activeAcc){
+      activeNameEl.textContent = "—";
+      activeImgEl.src = "";
+
+      topRightName.textContent = "—";
+      topRightLetter.style.display = "inline";
+      topRightLetter.textContent = "?";
+      topRightImg.style.display = "none";
+      topRightImg.src = "";
+
+      accountsEl.innerHTML = "";
+      emptyEl.style.display = "block";
+      return;
+    }
+
+    if(activeAcc && activeAcc.id !== activeId){
+      saveActiveId(activeAcc.id);
+    }
+
+    activeNameEl.textContent = activeAcc.name;
+    if(activeAcc.avatar){
+      activeImgEl.src = activeAcc.avatar;
+    } else {
+      activeImgEl.src = "";
+    }
+
+    // بالا سمت راست
+    topRightName.textContent = activeAcc.name;
+    topRightLetter.style.display = "inline";
+    if(activeAcc.avatar){
+      topRightLetter.style.display = "none";
+      topRightImg.style.display = "block";
+      topRightImg.src = activeAcc.avatar;
+    }else{
+      topRightImg.style.display = "none";
+      topRightImg.src = "";
+      topRightLetter.textContent = activeAcc.name[0] || "?";
+    }
+
+    emptyEl.style.display = "none";
+    accountsEl.innerHTML = "";
+
+    accounts
+      .sort((a,b)=> b.createdAt - a.createdAt)
+      .forEach((acc) => {
+        const card = document.createElement("div");
+        card.className = "acc";
+
+        const avatarHtml = acc.avatar
+          ? `<img src="${acc.avatar}" alt="">`
+          : `<span style="font-weight:950;opacity:.85;">${escapeHtml(acc.name[0] || "?")}</span>`;
+
+        const isActive = acc.id === loadActiveId();
+
+        card.innerHTML = `
+          <div class="avatar">${avatarHtml}</div>
+          <div class="meta">
+            <div class="name">${escapeHtml(acc.name)}</div>
+            <div class="badge">${isActive ? "فعال" : "ساخته شده"}</div>
+          </div>
+          <div class="actions">
+            <button class="smallBtn secondary" data-action="select" data-id="${acc.id}" type="button">انتخاب</button>
+            <button class="smallBtn danger" data-action="delete" data-id="${acc.id}" type="button">حذف</button>
+          </div>
+        `;
+        accountsEl.appendChild(card);
+      });
+
+    accountsEl.querySelectorAll("button[data-action]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-id");
+        const action = btn.getAttribute("data-action");
+        if(action === "select"){
+          saveActiveId(id);
+          render();
+        } else if(action === "delete"){
+          deleteAccount(id);
+        }
+      });
+    });
+  }
+
+  previewLetter.textContent = "?";
+  render();
+})();
+</script>
+</body>
+</html>
