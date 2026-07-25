@@ -1,1 +1,217 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ticket_me</title>
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:#070A12;
+      color:#eaf2ff;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .card{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      backdrop-filter: blur(10px);
+      border-radius:18px;
+      padding:14px;
+      margin-top:14px;
+    }
+    h2{margin:0 0 10px;font-size:18px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input[type="text"]{
+      width:100%;
+      border-radius:14px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.15);
+      color:#eaf2ff;
+      outline:none;
+    }
+    button{
+      border:0;
+      border-radius:14px;
+      padding:11px 14px;
+      font-weight:900;
+      cursor:pointer;
+      color:#07101b;
+      background:linear-gradient(135deg, rgba(56,189,248,.95), rgba(124,58,237,.95));
+      box-shadow:0 18px 55px rgba(56,189,248,.18);
+      user-select:none;
+    }
+    .small{font-size:13px;opacity:.75;margin-top:6px}
+    .ticketList{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .ticket{
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      padding:10px 12px;
+    }
+    .head{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+      justify-content:space-between;
+      margin-bottom:6px;
+    }
+    .who{font-weight:1000}
+    .time{opacity:.7;font-size:12px}
+    .body{white-space:pre-wrap;opacity:.95}
+    .replyTitle{font-weight:1000;opacity:.9;margin-top:8px}
+    .imgWrap{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .thumb{
+      width:120px;
+      max-width:38vw;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.04);
+      overflow:hidden;
+    }
+    .thumb img{
+      width:100%;
+      height:100px;
+      object-fit:cover;
+      display:block;
+    }
+    .hidden{display:none}
+    .replyBox{
+      margin-top:10px;
+      background:rgba(56,189,248,.10);
+      border:1px solid rgba(56,189,248,.22);
+      padding:10px;
+      border-radius:12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h2>📩 تیکت‌های من</h2>
+      <div class="small">نامی که موقع ارسال تیکت وارد می‌کردی را بنویس تا تیکت‌ها نمایش داده شوند.</div>
 
+      <div class="row" style="margin-top:12px">
+        <div style="flex:1 1 320px">
+          <div class="small">نام</div>
+          <input id="myName" type="text" placeholder="مثلاً: ممد" />
+        </div>
+        <button id="btnFilter" style="flex:0 0 auto">🔍 نمایش</button>
+      </div>
+
+      <div id="emptyState" class="small" style="margin-top:12px;opacity:.85">فعلاً تیکتی برای این نام پیدا نشده است.</div>
+
+      <div id="ticketList" class="ticketList"></div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "ticket_messages_v2_reply";
+
+    const myNameEl = document.getElementById("myName");
+    const btnFilter = document.getElementById("btnFilter");
+    const ticketListEl = document.getElementById("ticketList");
+    const emptyStateEl = document.getElementById("emptyState");
+
+    function loadTickets(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      }catch{
+        return [];
+      }
+    }
+
+    function formatTime(ts){
+      const d = new Date(ts);
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      return `${y}/${m}/${day} - ${hh}:${mm}`;
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    function render(){
+      const myName = (myNameEl.value || "").trim();
+      const all = loadTickets();
+
+      const filtered = !myName
+        ? []
+        : all.filter(t => (t.name || "").trim() === myName);
+
+      ticketListEl.innerHTML = "";
+      if (!filtered.length){
+        emptyStateEl.classList.remove("hidden");
+        return;
+      }
+      emptyStateEl.classList.add("hidden");
+
+      const sorted = [...filtered].sort((a,b) => b.createdAt - a.createdAt);
+
+      for (const t of sorted){
+        const div = document.createElement("div");
+        div.className = "ticket";
+
+        const imgs = Array.isArray(t.images) ? t.images : [];
+        let imgsHtml = "";
+        if (imgs.length){
+          imgsHtml = `
+            <div class="imgWrap">
+              ${imgs.map(im => `
+                <div class="thumb">
+                  <img alt="${escapeHtml(im.name || 'image')}" src="${im.dataUrl}">
+                </div>
+              `).join("")}
+            </div>
+          `;
+        }
+
+        const hasReply = !!(t.adminReply && String(t.adminReply).trim().length > 0);
+
+        div.innerHTML = `
+          <div class="head">
+            <div class="who">👤 ${escapeHtml(t.name || "کاربر")}</div>
+            <div class="time">${formatTime(t.createdAt)}</div>
+          </div>
+
+          <div class="body">📝 ${escapeHtml(t.text || "")}</div>
+          ${imgsHtml}
+
+          ${
+            hasReply
+              ? `
+                <div class="replyTitle">✅ جواب داده شد (${formatTime(t.repliedAt)})</div>
+                <div class="replyBox">${escapeHtml(t.adminReply)}</div>
+              `
+              : `<div class="small" style="margin-top:10px;opacity:.8">هنوز جوابی داده نشده.</div>`
+          }
+        `;
+
+        ticketListEl.appendChild(div);
+      }
+    }
+
+    btnFilter.addEventListener("click", render);
+
+    // auto load if you type before
+    myNameEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") render();
+    });
+  </script>
+</body>
+</html>
