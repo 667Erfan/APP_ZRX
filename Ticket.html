@@ -195,7 +195,6 @@
           </div>
           <div class="row" style="margin-top:10px">
             <button id="btnAdminLogin">🔐 ورود</button>
-            <button id="btnAdminClearAll" class="ghost" type="button" title="فقط بعد از ورود فعال می‌شود">🧹 پاک کردن همه تیکت‌ها</button>
           </div>
           <div id="adminMsg" class="msg hidden"></div>
         </div>
@@ -214,7 +213,7 @@
   </div>
 
   <script>
-    const ADMIN_CODE = "1234";
+    const ADMIN_CODE = "hG@p)_S<.{f'(~/@&/wv8Wl8U2]TGZ,~hj!\"s#8u9R)($6F7i/";
     const STORAGE_KEY = "ticket_messages_v2";
 
     const userNameEl = document.getElementById("userName");
@@ -232,7 +231,6 @@
     const adminCodeEl = document.getElementById("adminCode");
     const btnAdminLogin = document.getElementById("btnAdminLogin");
     const btnAdminLogout = document.getElementById("btnAdminLogout");
-    const btnAdminClearAll = document.getElementById("btnAdminClearAll");
     const adminMsg = document.getElementById("adminMsg");
     const adminState = document.getElementById("adminState");
 
@@ -383,7 +381,6 @@
       previewRow.innerHTML = "";
 
       setMsg(userMsg, "✅ تیکت شما ارسال شد و در کنسول ادمین نمایش داده می‌شود.", true);
-
       renderAdminList();
     });
 
@@ -401,15 +398,11 @@
         adminLoginEl.classList.add("hidden");
         adminPanelEl.classList.remove("hidden");
         adminState.textContent = "وارد شد ✅";
-        btnAdminClearAll.disabled = false;
-        btnAdminClearAll.style.opacity = 1;
         renderAdminList();
       } else {
         adminLoginEl.classList.remove("hidden");
         adminPanelEl.classList.add("hidden");
         adminState.textContent = "وارد نشده";
-        btnAdminClearAll.disabled = true;
-        btnAdminClearAll.style.opacity = .6;
         ticketListEl.innerHTML = "";
       }
     }
@@ -433,14 +426,6 @@
       adminCodeEl.value = "";
       clearMsg(adminMsg);
       showAdmin(false);
-    });
-
-    btnAdminClearAll.addEventListener("click", () => {
-      if (!isAdminAuthed()) return;
-      const ok = confirm("همه تیکت‌ها پاک شوند؟");
-      if (!ok) return;
-      saveTickets([]);
-      renderAdminList();
     });
 
     function renderAdminList(){
@@ -485,9 +470,6 @@
     }
 
     // init
-    btnAdminClearAll.disabled = !isAdminAuthed();
-    btnAdminClearAll.style.opacity = btnAdminClearAll.disabled ? .6 : 1;
-
     showAdmin(isAdminAuthed());
     clearMsg(userMsg);
     clearMsg(adminMsg);
