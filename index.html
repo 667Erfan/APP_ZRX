@@ -1009,3 +1009,18 @@
   </div>
   <div class="loader-text">Loading...</div>
 </div>
+<script>
+  // مطمئن می‌شیم المنت هست
+  document.addEventListener("DOMContentLoaded", () => {
+    const loader = document.getElementById("loader");
+    if (!loader) return;
+
+    // خودِ DOMLOAD نشون داده میشه؛ وقتی همه چیز لود شد، مخفی میشه
+    window.addEventListener("load", () => {
+      loader.style.transition = "opacity .25s ease, transform .25s ease";
+      loader.style.opacity = "0";
+      loader.style.transform = "scale(0.98)";
+      setTimeout(() => loader.remove(), 300);
+    });
+  });
+</script>
