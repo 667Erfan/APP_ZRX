@@ -92,7 +92,48 @@
     .ticket .who{font-weight:1000}
     .ticket .time{opacity:.7;font-size:12px}
     .ticket .body{white-space:pre-wrap;opacity:.95}
+
+    .imgWrap{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .thumb{
+      width:120px;
+      max-width:38vw;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.04);
+      overflow:hidden;
+    }
+    .thumb img{
+      width:100%;
+      height:100px;
+      object-fit:cover;
+      display:block;
+    }
+
     .hidden{display:none}
+    .fileRow{
+      border:1px dashed rgba(255,255,255,.22);
+      border-radius:14px;
+      padding:10px;
+      background:rgba(0,0,0,.12);
+      margin-top:10px;
+    }
+    .previewRow{
+      margin-top:10px;
+      display:flex;gap:10px;flex-wrap:wrap;
+    }
+    .previewOne{
+      width:130px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      overflow:hidden;
+      background:rgba(255,255,255,.04);
+    }
+    .previewOne img{width:100%;height:110px;object-fit:cover;display:block}
   </style>
 </head>
 <body>
@@ -115,6 +156,23 @@
           <textarea id="ticketText" placeholder="مشکل/درخواست خود را بنویسید..."></textarea>
         </div>
 
+        <!-- Upload Image -->
+        <div class="fileRow">
+          <div class="small">آپلود عکس (حداکثر 2 تا) — اختیاری</div>
+          <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <label class="ghost" style="display:inline-flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;border-radius:14px">
+              📷 انتخاب عکس
+              <input id="ticketImages" type="file" accept="image/*" multiple style="display:none" />
+            </label>
+            <button id="btnRemovePreview" class="ghost" type="button">🗑️ حذف عکس‌های انتخاب‌شده</button>
+          </div>
+
+          <div class="previewRow" id="previewRow"></div>
+          <div class="small" style="margin-top:8px">
+            حجم زیاد ممکن است ذخیره‌سازی را کند کند. (حداکثر 1MB برای هر عکس توصیه می‌شود)
+          </div>
+        </div>
+
         <div class="row" style="margin-top:12px">
           <button id="btnSubmit">✅ ارسال</button>
           <button id="btnClear" class="ghost" type="button">پاک کردن</button>
@@ -131,7 +189,7 @@
         </div>
 
         <div id="adminLogin">
-          <div class="small">برای ورود به کنسول، کد را وارد کنید  <b>Ticket.html1234</b></div>
+          <div class="small">برای ورود به کنسول، کد را وارد کنید (کد: <b>1234</b>)</div>
           <div style="margin-top:10px">
             <input id="adminCode" type="text" placeholder="کد ادمین..." />
           </div>
@@ -149,7 +207,6 @@
           </div>
 
           <div id="ticketList" class="ticketList"></div>
-
           <div id="emptyState" class="small" style="margin-top:10px;opacity:.8">هنوز تیکتی ارسال نشده است.</div>
         </div>
       </div>
@@ -158,13 +215,17 @@
 
   <script>
     const ADMIN_CODE = "1234";
-    const STORAGE_KEY = "ticket_messages_v1";
+    const STORAGE_KEY = "ticket_messages_v2";
 
     const userNameEl = document.getElementById("userName");
     const ticketTextEl = document.getElementById("ticketText");
     const btnSubmit = document.getElementById("btnSubmit");
     const btnClear = document.getElementById("btnClear");
     const userMsg = document.getElementById("userMsg");
+
+    const ticketImagesEl = document.getElementById("ticketImages");
+    const previewRow = document.getElementById("previewRow");
+    const btnRemovePreview = document.getElementById("btnRemovePreview");
 
     const adminLoginEl = document.getElementById("adminLogin");
     const adminPanelEl = document.getElementById("adminPanel");
@@ -178,7 +239,9 @@
     const ticketListEl = document.getElementById("ticketList");
     const emptyStateEl = document.getElementById("emptyState");
 
-    // ===== Storage helpers =====
+    const ADMIN_AUTH_KEY = "ticket_admin_auth_v2";
+
+    // ===== Storage =====
     function loadTickets(){
       try{
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -193,6 +256,7 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
     }
 
+    // ===== UI helpers =====
     function formatTime(ts){
       const d = new Date(ts);
       const y = d.getFullYear();
@@ -201,6 +265,15 @@
       const hh = String(d.getHours()).padStart(2,'0');
       const mm = String(d.getMinutes()).padStart(2,'0');
       return `${y}/${m}/${day} - ${hh}:${mm}`;
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
     }
 
     function setMsg(el, text, isOk){
@@ -215,8 +288,78 @@
       el.textContent = "";
     }
 
+    function isAdminAuthed(){
+      return localStorage.getItem(ADMIN_AUTH_KEY) === "1";
+    }
+    function setAdminAuthed(v){
+      if (v) localStorage.setItem(ADMIN_AUTH_KEY, "1");
+      else localStorage.removeItem(ADMIN_AUTH_KEY);
+    }
+
+    // ===== Image selection + preview (without bugs) =====
+    // imagesPreview holds {name, dataUrl, size}
+    let imagesPreview = [];
+
+    function renderPreviews(){
+      previewRow.innerHTML = "";
+      if (!imagesPreview.length) return;
+
+      for (const im of imagesPreview){
+        const div = document.createElement("div");
+        div.className = "previewOne";
+        div.innerHTML = `<img alt="preview" src="${im.dataUrl}">`;
+        previewRow.appendChild(div);
+      }
+    }
+
+    async function fileToDataUrl(file){
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error("read_error"));
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    ticketImagesEl.addEventListener("change", async () => {
+      const files = Array.from(ticketImagesEl.files || []);
+      if (!files.length){
+        imagesPreview = [];
+        renderPreviews();
+        return;
+      }
+
+      // limit to 2
+      const selected = files.slice(0, 2);
+
+      // basic size check (recommendation); still allow but warn by not blocking
+      // if you want hard block, tell me.
+      imagesPreview = [];
+
+      try{
+        for (const f of selected){
+          if (!f.type.startsWith("image/")) continue;
+          const dataUrl = await fileToDataUrl(f);
+          imagesPreview.push({ name: f.name, dataUrl, size: f.size });
+        }
+      }catch{
+        setMsg(userMsg, "❌ خطا در خواندن عکس‌ها.", false);
+        return;
+      }
+
+      renderPreviews();
+      clearMsg(userMsg);
+    });
+
+    btnRemovePreview.addEventListener("click", () => {
+      imagesPreview = [];
+      ticketImagesEl.value = "";
+      previewRow.innerHTML = "";
+      clearMsg(userMsg);
+    });
+
     // ===== User Submit =====
-    btnSubmit.addEventListener("click", () => {
+    btnSubmit.addEventListener("click", async () => {
       const name = (userNameEl.value || "").trim();
       const text = (ticketTextEl.value || "").trim();
 
@@ -225,40 +368,43 @@
         return;
       }
 
+      // prepare images payload
+      const images = imagesPreview.map(x => ({
+        name: x.name,
+        dataUrl: x.dataUrl
+      }));
+
       const tickets = loadTickets();
       tickets.push({
-        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2),
+        id: crypto.randomUUID ? crypto.randomUUID() : (Date.now() + "_" + Math.random().toString(16).slice(2)),
         name: name || "کاربر",
         text,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        images // array (may be empty)
       });
+
       saveTickets(tickets);
 
       ticketTextEl.value = "";
+      imagesPreview = [];
+      ticketImagesEl.value = "";
+      previewRow.innerHTML = "";
+
       setMsg(userMsg, "✅ تیکت شما ارسال شد و در کنسول ادمین نمایش داده می‌شود.", true);
 
-      // اگر ادمین همین الان وارد شده باشد، لیست را آپدیت کن
       renderAdminList();
     });
 
     btnClear.addEventListener("click", () => {
       userNameEl.value = "";
       ticketTextEl.value = "";
+      imagesPreview = [];
+      ticketImagesEl.value = "";
+      previewRow.innerHTML = "";
       clearMsg(userMsg);
     });
 
-    // ===== Admin Login (local) =====
-    const ADMIN_AUTH_KEY = "ticket_admin_auth_v1";
-
-    function isAdminAuthed(){
-      return localStorage.getItem(ADMIN_AUTH_KEY) === "1";
-    }
-
-    function setAdminAuthed(v){
-      if (v) localStorage.setItem(ADMIN_AUTH_KEY, "1");
-      else localStorage.removeItem(ADMIN_AUTH_KEY);
-    }
-
+    // ===== Admin =====
     function showAdmin(isAuthed){
       if (isAuthed){
         adminLoginEl.classList.add("hidden");
@@ -285,7 +431,6 @@
         setMsg(adminMsg, "❌ کد اشتباه است.", false);
         return;
       }
-
       setAdminAuthed(true);
       showAdmin(true);
       setMsg(adminMsg, "✅ وارد شدید. تیکت‌ها نمایش داده می‌شوند.", true);
@@ -298,13 +443,10 @@
       showAdmin(false);
     });
 
-    // پاک کردن همه تیکت‌ها (بعد از ورود فعال می‌شود)
     btnAdminClearAll.addEventListener("click", () => {
       if (!isAdminAuthed()) return;
-
       const ok = confirm("همه تیکت‌ها پاک شوند؟");
       if (!ok) return;
-
       saveTickets([]);
       renderAdminList();
     });
@@ -314,33 +456,38 @@
 
       ticketListEl.innerHTML = "";
       emptyStateEl.style.display = tickets.length ? "none" : "block";
-
       if (!tickets.length) return;
 
-      // جدیدترین اول
       const sorted = [...tickets].sort((a,b) => b.createdAt - a.createdAt);
 
-      sorted.forEach(t => {
+      for (const t of sorted){
         const div = document.createElement("div");
         div.className = "ticket";
+
+        const imgs = Array.isArray(t.images) ? t.images : [];
+        let imgsHtml = "";
+        if (imgs.length){
+          imgsHtml = `
+            <div class="imgWrap">
+              ${imgs.map(im => `
+                <div class="thumb">
+                  <img alt="${escapeHtml(im.name || 'image')}" src="${im.dataUrl}">
+                </div>
+              `).join("")}
+            </div>
+          `;
+        }
+
         div.innerHTML = `
           <div class="head">
-            <div class="who">👤 ${escapeHtml(t.name)}</div>
+            <div class="who">👤 ${escapeHtml(t.name || "کاربر")}</div>
             <div class="time">${formatTime(t.createdAt)}</div>
           </div>
-          <div class="body">${escapeHtml(t.text)}</div>
+          <div class="body">${escapeHtml(t.text || "")}</div>
+          ${imgsHtml}
         `;
         ticketListEl.appendChild(div);
-      });
-    }
-
-    function escapeHtml(str){
-      return String(str)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
+      }
     }
 
     // init
