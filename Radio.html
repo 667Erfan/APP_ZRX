@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Radio</title>
+  <title>Radio Player (Upload + Playlist)</title>
   <style>
     body{
       margin:0;
@@ -67,12 +67,20 @@
       background:rgba(56,189,248,.08);
     }
     audio{width:100%; margin-top:10px}
+    .fileRow{
+      display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+      margin-top:12px;
+    }
+    input[type="file"]{
+      max-width:100%;
+      color:rgba(234,242,255,.9);
+    }
   </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
-    <h1>🎧 Radio Player (Random + Playlist)</h1>
+    <h1>🎧 Radio Player (Random + Upload)</h1>
 
     <div class="row">
       <button id="btnPrev" class="ghost">⏮️ قبلی</button>
@@ -80,6 +88,14 @@
       <button id="btnNext" class="ghost">⏭️ بعدی</button>
       <button id="btnRandom">🎲 Random</button>
       <button id="btnLoop" class="ghost">🔁 Loop: Off</button>
+    </div>
+
+    <div class="fileRow">
+      <label class="ghost" style="display:inline-flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer">
+        ⬆️ آپلود آهنگ
+        <input id="fileInput" type="file" accept="audio/*" multiple style="display:none" />
+      </label>
+      <span class="small">فرمت‌های رایج: mp3 / wav / ogg. (محلی داخل مرورگر پخش می‌شود)</span>
     </div>
 
     <div class="progressWrap">
@@ -92,8 +108,8 @@
       <audio id="audio" preload="metadata"></audio>
     </div>
 
-    <div class="row">
-      <div class="small">برای شروع پخش ممکن است مرورگر اجازه بدهد فقط با کلیک روی Play.</div>
+    <div class="small" style="margin-top:10px">
+      اگر پخش نشد، روی دکمه <b>Play</b> بزن (محدودیت autoplay مرورگر).
     </div>
 
     <div class="list" id="list"></div>
@@ -101,17 +117,6 @@
 </div>
 
 <script>
-  const tracks = [
-    { title: "Track 1 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
-    { title: "Track 2 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-    { title: "Track 3 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
-    { title: "Track 4 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
-    { title: "Track 5 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" },
-    { title: "Track 6 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
-    { title: "Track 7 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" },
-    { title: "Track 8 - Demo", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" }
-  ];
-
   const audio = document.getElementById("audio");
   const listEl = document.getElementById("list");
 
@@ -126,51 +131,86 @@
   const curTimeEl = document.getElementById("curTime");
   const durTimeEl = document.getElementById("durTime");
 
-  let currentIndex = 0;
-  let isLoop = false;
-  let isSeeking = false;
-  let isPlaying = false;
+  const fileInput = document.getElementById("fileInput");
 
+  function escapeHtml(str){
+    return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  }
   function fmtTime(sec){
     if (!Number.isFinite(sec) || sec < 0) return "00:00";
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
   }
-
-  function escapeHtml(str){
-    return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;")
-      .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  function setStatus(msg){ statusEl.textContent = msg; }
+  function updatePlayButton(){
+    btnPlay.textContent = audio.paused ? "▶️ Play" : "⏸ Pause";
   }
 
-  function setStatus(msg){ statusEl.textContent = msg; }
+  // --------- پیشفرض: 20 آهنگ نمونه (قابل تغییر) ----------
+  // اگر لینک‌ها برای شما باز نشد، فقط لینک‌های mp3 واقعی خودت رو بده تا جایگزین کنم.
+  const defaultTracks = [
+    { title: "Song 1",  artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+    { title: "Song 2",  artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+    { title: "Song 3",  artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+    { title: "Song 4",  artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" },
+    { title: "Song 5",  artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" },
+    { title: "Song 6",  artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
+    { title: "Song 7",  artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" },
+    { title: "Song 8",  artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" },
+    { title: "Song 9",  artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3" },
+    { title: "Song 10", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3" },
+    { title: "Song 11", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3" },
+    { title: "Song 12", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3" },
+    { title: "Song 13", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3" },
+    { title: "Song 14", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3" },
+    { title: "Song 15", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" },
+    { title: "Song 16", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3" },
+    { title: "Song 17", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" },
+    { title: "Song 18", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-18.mp3" },
+    { title: "Song 19", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-19.mp3" },
+    { title: "Song 20", artist: "Radio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-20.mp3" }
+  ];
 
+  // --------- State ----------
+  // track object: {title, artist, url, isUpload?, fileName?, objectUrl?}
+  const tracks = [...defaultTracks];
+
+  let currentIndex = 0;
+  let isLoop = false;
+  let isPlaying = false;
+  let isSeeking = false;
+
+  // برای آپلود: باید objectURLها رو آزاد کنیم تا مموری نره
+  const uploadedObjectUrls = new Set();
+
+  // --------- UI ----------
   function renderList(){
     listEl.innerHTML = "";
     tracks.forEach((t, idx) => {
       const div = document.createElement("div");
       div.className = "track" + (idx === currentIndex ? " playing" : "");
-      div.dataset.idx = idx;
+      div.dataset.idx = String(idx);
       div.innerHTML = `
         <div class="t">${escapeHtml(t.title)}</div>
-        <div class="a">${escapeHtml(t.artist)}</div>
+        <div class="a">${escapeHtml(t.artist || "—")}</div>
       `;
-      div.addEventListener("click", () => loadTrack(idx, true));
+      div.addEventListener("click", async () => {
+        await loadTrack(idx, true);
+      });
       listEl.appendChild(div);
     });
   }
 
-  function updatePlayButton(){
-    btnPlay.textContent = audio.paused ? "▶️ Play" : "⏸ Pause";
-  }
-
+  // --------- Player core ----------
   async function tryPlay(){
     try{
       await audio.play();
       return true;
     }catch(e){
       isPlaying = false;
-      btnPlay.textContent = "▶️ Play";
+      updatePlayButton();
       setStatus("برای پخش باید روی Play کلیک کنی (اجازه مرورگر).");
       return false;
     }
@@ -182,29 +222,32 @@
     renderList();
 
     const t = tracks[currentIndex];
-    setStatus("آماده‌سازی: " + t.title + " — " + t.artist);
+    setStatus("در حال آماده‌سازی: " + t.title + " — " + (t.artist || "—"));
 
+    // تنظیم src با pause مطمئن
     audio.pause();
-    audio.currentTime = 0;
+    audio.removeAttribute("src");
+    audio.load();
+
     audio.src = t.url;
+    audio.currentTime = 0;
     isPlaying = false;
     updatePlayButton();
 
     if (autoplay){
-      const ok = await tryPlay();
-      if (!ok){
-        setStatus("آهنگ لود شد. برای پخش دوباره روی Play بزن: " + t.title);
-      }
-    }else{
+      await new Promise(r => setTimeout(r, 20));
+      await tryPlay();
+    } else {
       setStatus("لود شد: " + t.title + " — برای پخش ▶️ بزن");
     }
   }
 
   async function nextTrack(){
+    if (!tracks.length) return;
     if (isLoop){
-      setStatus("Loop: همین آهنگ دوباره از اول");
       audio.currentTime = 0;
       await tryPlay();
+      setStatus("Loop: همین آهنگ دوباره از اول");
       return;
     }
     const next = (currentIndex + 1) % tracks.length;
@@ -213,10 +256,11 @@
   }
 
   async function prevTrack(){
+    if (!tracks.length) return;
     if (isLoop){
-      setStatus("Loop: همین آهنگ دوباره از اول");
       audio.currentTime = 0;
       await tryPlay();
+      setStatus("Loop: همین آهنگ دوباره از اول");
       return;
     }
     const prev = (currentIndex - 1 + tracks.length) % tracks.length;
@@ -231,7 +275,7 @@
     }
     if (audio.paused){
       await tryPlay();
-    }else{
+    } else {
       audio.pause();
     }
   }
@@ -243,12 +287,13 @@
     return idx;
   }
 
-  // Buttons
+  // --------- Events UI ----------
   btnPlay.addEventListener("click", playPause);
   btnPrev.addEventListener("click", prevTrack);
   btnNext.addEventListener("click", nextTrack);
 
   btnRandom.addEventListener("click", async () => {
+    if (!tracks.length) return;
     const idx = randomPick();
     await loadTrack(idx, true);
   });
@@ -259,7 +304,7 @@
     setStatus(isLoop ? "Loop فعال شد" : "Loop خاموش شد");
   });
 
-  // Seek
+  // --------- Seek ----------
   seek.addEventListener("input", () => { isSeeking = true; });
   seek.addEventListener("change", () => {
     if (!Number.isFinite(audio.duration) || audio.duration <= 0) return;
@@ -268,7 +313,7 @@
     isSeeking = false;
   });
 
-  // Audio events
+  // --------- Audio events ----------
   audio.addEventListener("loadedmetadata", () => {
     durTimeEl.textContent = fmtTime(audio.duration);
   });
@@ -284,7 +329,8 @@
   audio.addEventListener("play", () => {
     isPlaying = true;
     updatePlayButton();
-    setStatus("در حال پخش: " + tracks[currentIndex].title);
+    const t = tracks[currentIndex];
+    setStatus("در حال پخش: " + t.title + " — " + (t.artist || "—"));
   });
 
   audio.addEventListener("pause", () => {
@@ -294,12 +340,59 @@
     else setStatus("آماده‌ست");
   });
 
-  audio.addEventListener("ended", () => nextTrack);
+  audio.addEventListener("ended", () => nextTrack());
 
   audio.addEventListener("error", () => {
     isPlaying = false;
     updatePlayButton();
-    setStatus("خطا در پخش آهنگ. لینک را بررسی کن.");
+    setStatus("خطا در پخش آهنگ. ممکن است لینک خراب باشد یا فرمت پشتیبانی نشود.");
+  });
+
+  // --------- Upload ----------
+  fileInput.addEventListener("change", async () => {
+    const files = Array.from(fileInput.files || []);
+    if (!files.length) return;
+
+    // فقط آهنگ‌های معتبر
+    const audioFiles = files.filter(f => f.type.startsWith("audio/"));
+    if (!audioFiles.length){
+      alert("فایل صوتی انتخاب نشده!");
+      return;
+    }
+
+    setStatus("در حال آپلود/آماده‌سازی فایل‌ها...");
+    let added = 0;
+
+    for (const f of audioFiles){
+      const objectUrl = URL.createObjectURL(f);
+      uploadedObjectUrls.add(objectUrl);
+
+      tracks.push({
+        title: f.name.replace(/\.[^/.]+$/, ""),
+        artist: "Uploaded",
+        url: objectUrl,
+        isUpload: true,
+        objectUrl
+      });
+      added++;
+    }
+
+    // رندر و پخش آهنگ آخر آپلود شده
+    renderList();
+    setStatus(`${added} آهنگ اضافه شد. در حال پخش آهنگ آخر...`);
+    const lastIndex = tracks.length - 1;
+    await loadTrack(lastIndex, true);
+
+    // پاک کردن ورودی برای اینکه آپلود تکراری هم درست کار کنه
+    fileInput.value = "";
+  });
+
+  // آزادسازی مموری objectURLها
+  window.addEventListener("beforeunload", () => {
+    for (const u of uploadedObjectUrls){
+      try{ URL.revokeObjectURL(u); }catch{}
+    }
+    uploadedObjectUrls.clear();
   });
 
   // Init
