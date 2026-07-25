@@ -14,6 +14,7 @@
       align-items:center;
       justify-content:center;
       height:100vh;
+      overflow:hidden;
     }
     .box{
       text-align:center;
@@ -25,10 +26,7 @@
       width:min(520px, 92vw);
     }
     .spinner{
-      width:58px;
-      height:58px;
-      margin:0 auto 14px;
-      border-radius:50%;
+      width:58px;height:58px;margin:0 auto 14px;border-radius:50%;
       border:6px solid rgba(255,255,255,.15);
       border-top-color: rgba(56,189,248,.95);
       animation: spin 1s linear infinite;
@@ -37,16 +35,11 @@
     .t{font-weight:900;font-size:18px;margin-bottom:6px}
     .sub{color:rgba(234,242,255,.75);font-size:14px}
     .bar{
-      height:10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.12);
-      overflow:hidden;
-      margin-top:16px;
+      height:10px;border-radius:999px;border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.12);overflow:hidden;margin-top:16px;
     }
     .fill{
-      height:100%;
-      width:0%;
+      height:100%;width:0%;
       background:linear-gradient(90deg, rgba(56,189,248,.95), rgba(124,58,237,.95));
       transition: width .2s linear;
     }
@@ -61,26 +54,32 @@
   </div>
 
   <script>
-    const targetPage = "index.html"; // صفحه اصلی
+    // مقصد: index.html (هم‌پوشه)
+    const targetPage = "./index.html";
 
-    let remaining = 5;
+    const total = 5;
+    let remaining = total;
     const secEl = document.getElementById("sec");
     const fillEl = document.getElementById("fill");
 
-    const total = 5;
-    let elapsed = 0;
+    function go(){
+      // اینجا صریح می‌ریم روی index
+      window.location.replace(targetPage);
+    }
+
+    // Fallback: حتی اگر تایمر مشکل داشت، بعد از 7 ثانیه حتماً برو
+    const fallbackTimer = setTimeout(go, (total + 2) * 1000);
 
     const timer = setInterval(() => {
       remaining--;
-      elapsed++;
       secEl.textContent = remaining + " ثانیه تا شروع";
-
-      const percent = Math.min(100, Math.round((elapsed / total) * 100));
+      const percent = Math.max(0, Math.min(100, Math.round(((total-remaining)/total)*100)));
       fillEl.style.width = percent + "%";
 
       if (remaining <= 0) {
         clearInterval(timer);
-        window.location.href = targetPage;
+        clearTimeout(fallbackTimer);
+        go();
       }
     }, 1000);
   </script>
