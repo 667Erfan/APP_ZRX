@@ -1,1 +1,356 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ticket</title>
+  <style>
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background:#070A12;
+      color:#eaf2ff;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:820px){.grid{grid-template-columns:1fr}}
+    .card{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      backdrop-filter: blur(10px);
+      border-radius:18px;
+      padding:14px;
+    }
+    h2{margin:0 0 10px;font-size:18px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    textarea{
+      width:100%;
+      min-height:120px;
+      resize:vertical;
+      border-radius:14px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.15);
+      color:#eaf2ff;
+      outline:none;
+    }
+    input[type="text"]{
+      width:100%;
+      border-radius:14px;
+      padding:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.15);
+      color:#eaf2ff;
+      outline:none;
+    }
+    button{
+      border:0;
+      border-radius:14px;
+      padding:11px 14px;
+      font-weight:900;
+      cursor:pointer;
+      color:#07101b;
+      background:linear-gradient(135deg, rgba(56,189,248,.95), rgba(124,58,237,.95));
+      box-shadow:0 18px 55px rgba(56,189,248,.18);
+      user-select:none;
+    }
+    .ghost{
+      background:rgba(255,255,255,.07);
+      color:#eaf2ff;
+      border:1px solid rgba(255,255,255,.14);
+      box-shadow:none;
+    }
+    .small{font-size:13px;opacity:.75;margin-top:6px}
+    .msg{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+    }
+    .badge{
+      display:inline-block;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(56,189,248,.15);
+      border:1px solid rgba(56,189,248,.35);
+      font-weight:900;
+      font-size:12px;
+    }
+    .ticketList{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+    .ticket{
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.18);
+      padding:10px 12px;
+    }
+    .ticket .head{
+      display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+      justify-content:space-between;
+      margin-bottom:6px;
+    }
+    .ticket .who{font-weight:1000}
+    .ticket .time{opacity:.7;font-size:12px}
+    .ticket .body{white-space:pre-wrap;opacity:.95}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="grid">
+      <!-- User Ticket -->
+      <div class="card">
+        <h2>📝 ارسال تیکت</h2>
+        <div class="small">تیکت شما در بخش کنسول ادمین نمایش داده می‌شود.</div>
 
+        <div class="row" style="margin-top:12px">
+          <div style="flex:1 1 220px">
+            <div class="small">نام (اختیاری)</div>
+            <input id="userName" type="text" placeholder="مثلاً: علی" />
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
+          <div class="small">متن تیکت</div>
+          <textarea id="ticketText" placeholder="مشکل/درخواست خود را بنویسید..."></textarea>
+        </div>
+
+        <div class="row" style="margin-top:12px">
+          <button id="btnSubmit">✅ ارسال</button>
+          <button id="btnClear" class="ghost" type="button">پاک کردن</button>
+        </div>
+
+        <div id="userMsg" class="msg hidden"></div>
+      </div>
+
+      <!-- Admin Console -->
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <h2>🛠️ کنسول ادمین</h2>
+          <span class="badge" id="adminState">وارد نشده</span>
+        </div>
+
+        <div id="adminLogin">
+          <div class="small">برای ورود به کنسول، کد را وارد کنید (کد: <b>1234</b>)</div>
+          <div style="margin-top:10px">
+            <input id="adminCode" type="text" placeholder="کد ادمین..." />
+          </div>
+          <div class="row" style="margin-top:10px">
+            <button id="btnAdminLogin">🔐 ورود</button>
+            <button id="btnAdminClearAll" class="ghost" type="button" title="فقط بعد از ورود فعال می‌شود">🧹 پاک کردن همه تیکت‌ها</button>
+          </div>
+          <div id="adminMsg" class="msg hidden"></div>
+        </div>
+
+        <div id="adminPanel" class="hidden">
+          <div class="row" style="margin-top:8px;justify-content:space-between">
+            <div class="small">تیکت‌های ثبت‌شده:</div>
+            <button id="btnAdminLogout" class="ghost" type="button">خروج</button>
+          </div>
+
+          <div id="ticketList" class="ticketList"></div>
+
+          <div id="emptyState" class="small" style="margin-top:10px;opacity:.8">هنوز تیکتی ارسال نشده است.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_CODE = "1234";
+    const STORAGE_KEY = "ticket_messages_v1";
+
+    const userNameEl = document.getElementById("userName");
+    const ticketTextEl = document.getElementById("ticketText");
+    const btnSubmit = document.getElementById("btnSubmit");
+    const btnClear = document.getElementById("btnClear");
+    const userMsg = document.getElementById("userMsg");
+
+    const adminLoginEl = document.getElementById("adminLogin");
+    const adminPanelEl = document.getElementById("adminPanel");
+    const adminCodeEl = document.getElementById("adminCode");
+    const btnAdminLogin = document.getElementById("btnAdminLogin");
+    const btnAdminLogout = document.getElementById("btnAdminLogout");
+    const btnAdminClearAll = document.getElementById("btnAdminClearAll");
+    const adminMsg = document.getElementById("adminMsg");
+    const adminState = document.getElementById("adminState");
+
+    const ticketListEl = document.getElementById("ticketList");
+    const emptyStateEl = document.getElementById("emptyState");
+
+    // ===== Storage helpers =====
+    function loadTickets(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      }catch{
+        return [];
+      }
+    }
+
+    function saveTickets(arr){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    }
+
+    function formatTime(ts){
+      const d = new Date(ts);
+      const y = d.getFullYear();
+      const m = String(d.getMonth()+1).padStart(2,'0');
+      const day = String(d.getDate()).padStart(2,'0');
+      const hh = String(d.getHours()).padStart(2,'0');
+      const mm = String(d.getMinutes()).padStart(2,'0');
+      return `${y}/${m}/${day} - ${hh}:${mm}`;
+    }
+
+    function setMsg(el, text, isOk){
+      el.classList.remove("hidden");
+      el.style.borderColor = isOk ? "rgba(34,197,94,.5)" : "rgba(239,68,68,.5)";
+      el.style.background = isOk ? "rgba(34,197,94,.12)" : "rgba(239,68,68,.12)";
+      el.textContent = text;
+    }
+
+    function clearMsg(el){
+      el.classList.add("hidden");
+      el.textContent = "";
+    }
+
+    // ===== User Submit =====
+    btnSubmit.addEventListener("click", () => {
+      const name = (userNameEl.value || "").trim();
+      const text = (ticketTextEl.value || "").trim();
+
+      if (!text){
+        setMsg(userMsg, "لطفاً متن تیکت را وارد کنید.", false);
+        return;
+      }
+
+      const tickets = loadTickets();
+      tickets.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "_" + Math.random().toString(16).slice(2),
+        name: name || "کاربر",
+        text,
+        createdAt: Date.now()
+      });
+      saveTickets(tickets);
+
+      ticketTextEl.value = "";
+      setMsg(userMsg, "✅ تیکت شما ارسال شد و در کنسول ادمین نمایش داده می‌شود.", true);
+
+      // اگر ادمین همین الان وارد شده باشد، لیست را آپدیت کن
+      renderAdminList();
+    });
+
+    btnClear.addEventListener("click", () => {
+      userNameEl.value = "";
+      ticketTextEl.value = "";
+      clearMsg(userMsg);
+    });
+
+    // ===== Admin Login (local) =====
+    const ADMIN_AUTH_KEY = "ticket_admin_auth_v1";
+
+    function isAdminAuthed(){
+      return localStorage.getItem(ADMIN_AUTH_KEY) === "1";
+    }
+
+    function setAdminAuthed(v){
+      if (v) localStorage.setItem(ADMIN_AUTH_KEY, "1");
+      else localStorage.removeItem(ADMIN_AUTH_KEY);
+    }
+
+    function showAdmin(isAuthed){
+      if (isAuthed){
+        adminLoginEl.classList.add("hidden");
+        adminPanelEl.classList.remove("hidden");
+        adminState.textContent = "وارد شد ✅";
+        btnAdminClearAll.disabled = false;
+        btnAdminClearAll.style.opacity = 1;
+        renderAdminList();
+      } else {
+        adminLoginEl.classList.remove("hidden");
+        adminPanelEl.classList.add("hidden");
+        adminState.textContent = "وارد نشده";
+        btnAdminClearAll.disabled = true;
+        btnAdminClearAll.style.opacity = .6;
+        ticketListEl.innerHTML = "";
+      }
+    }
+
+    btnAdminLogin.addEventListener("click", () => {
+      clearMsg(adminMsg);
+      const code = (adminCodeEl.value || "").trim();
+
+      if (code !== ADMIN_CODE){
+        setMsg(adminMsg, "❌ کد اشتباه است.", false);
+        return;
+      }
+
+      setAdminAuthed(true);
+      showAdmin(true);
+      setMsg(adminMsg, "✅ وارد شدید. تیکت‌ها نمایش داده می‌شوند.", true);
+    });
+
+    btnAdminLogout.addEventListener("click", () => {
+      setAdminAuthed(false);
+      adminCodeEl.value = "";
+      clearMsg(adminMsg);
+      showAdmin(false);
+    });
+
+    // پاک کردن همه تیکت‌ها (بعد از ورود فعال می‌شود)
+    btnAdminClearAll.addEventListener("click", () => {
+      if (!isAdminAuthed()) return;
+
+      const ok = confirm("همه تیکت‌ها پاک شوند؟");
+      if (!ok) return;
+
+      saveTickets([]);
+      renderAdminList();
+    });
+
+    function renderAdminList(){
+      const tickets = loadTickets();
+
+      ticketListEl.innerHTML = "";
+      emptyStateEl.style.display = tickets.length ? "none" : "block";
+
+      if (!tickets.length) return;
+
+      // جدیدترین اول
+      const sorted = [...tickets].sort((a,b) => b.createdAt - a.createdAt);
+
+      sorted.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "ticket";
+        div.innerHTML = `
+          <div class="head">
+            <div class="who">👤 ${escapeHtml(t.name)}</div>
+            <div class="time">${formatTime(t.createdAt)}</div>
+          </div>
+          <div class="body">${escapeHtml(t.text)}</div>
+        `;
+        ticketListEl.appendChild(div);
+      });
+    }
+
+    function escapeHtml(str){
+      return String(str)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+
+    // init
+    btnAdminClearAll.disabled = !isAdminAuthed();
+    btnAdminClearAll.style.opacity = btnAdminClearAll.disabled ? .6 : 1;
+
+    showAdmin(isAdminAuthed());
+    clearMsg(userMsg);
+    clearMsg(adminMsg);
+    renderAdminList();
+  </script>
+</body>
+</html>
