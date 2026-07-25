@@ -79,6 +79,68 @@
 </head>
 <body>
 
+  <script>
+(() => {
+  const KEY_LIST = "zrx_profiles_list_v1";
+  const KEY_ACTIVE = "zrx_profiles_active_v1";
+
+  const nameEl = document.getElementById("topRightNameIndex");
+  const letterEl = document.getElementById("topRightLetterIndex");
+  const imgEl = document.getElementById("topRightImgIndex");
+
+  function loadList(){
+    try{
+      const raw = localStorage.getItem(KEY_LIST);
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list : [];
+    }catch{
+      return [];
+    }
+  }
+
+  function loadActiveId(){
+    return localStorage.getItem(KEY_ACTIVE);
+  }
+
+  function render(){
+    if(!nameEl || !letterEl || !imgEl) return;
+
+    const accounts = loadList();
+    const activeId = loadActiveId();
+
+    const activeAcc =
+      accounts.find(a => String(a.id) === String(activeId)) ||
+      accounts[0] ||
+      null;
+
+    if(!activeAcc){
+      nameEl.textContent = "—";
+      letterEl.textContent = "?";
+      imgEl.style.display = "none";
+      return;
+    }
+
+    nameEl.textContent = activeAcc.name || "—";
+
+    if(activeAcc.avatar){
+      letterEl.style.display = "none";
+      imgEl.style.display = "block";
+      imgEl.src = activeAcc.avatar;
+    }else{
+      imgEl.style.display = "none";
+      imgEl.src = "";
+      letterEl.style.display = "inline";
+      letterEl.textContent = (activeAcc.name && activeAcc.name[0]) ? activeAcc.name[0] : "?";
+    }
+  }
+
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", render);
+  }else{
+    render();
+  }
+})();
+</script>
   <div class="top-left-text">Zrx_MINE</div>
 
   <div class="right-stack">
