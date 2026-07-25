@@ -204,3 +204,27 @@ body{
   position:relative;
   min-height:100vh; /* به جای height:100% فقط */
 }
+/* وقتی کاربر "کاهش حرکت" خواسته باشد، انیمیشن‌ها کم می‌شوند */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+body.reduced-motion *, 
+body.reduced-motion *::before, 
+body.reduced-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+<script>
+  // برای تست: همیشه فعال کن
+  document.body.classList.add('reduced-motion');
+
+  // اگر خواستی بعداً غیر فعال کنی:
+  // document.body.classList.remove('reduced-motion');
+</script>
