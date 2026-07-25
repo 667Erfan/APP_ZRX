@@ -9,10 +9,30 @@
     .wrap{max-width:520px;margin:16px auto;padding:0 12px}
     h1{font-size:18px;margin:0 0 12px}
     .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:14px}
+
     .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-    .item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03}
-    .avatar{width:44px;height:44px;border-radius:16px;border:1px solid rgba(255,255,255,.14);display:grid;place-items:center;background:rgba(255,255,255,.04);overflow:hidden}
-    .avatar img{width:100%;height:100%;object-fit:cover;display:none}
+
+    .item{
+      display:flex;align-items:center;gap:10px;
+      padding:12px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+    }
+
+    /* آواتار کوچک و کراپ‌شده */
+    .avatar{
+      width:48px;height:48px;border-radius:16px;
+      overflow:hidden;border:1px solid rgba(255,255,255,.14);
+      display:grid;place-items:center;background:rgba(255,255,255,.04);
+      flex:0 0 auto;
+    }
+    .avatar img{
+      width:100% !important;
+      height:100% !important;
+      object-fit:cover;      /* کراپ */
+      display:block;
+    }
+
     .letter{font-weight:950;opacity:.85}
     .name{font-weight:900}
     .sub{font-size:12px;opacity:.7;margin-top:2px}
@@ -28,8 +48,7 @@
 
   <script>
     (() => {
-      const KEY_LIST = "zrx_profiles_list_v1"; // کلید لیست اکانت‌ها (در profile.html باید همین باشد)
-
+      const KEY_LIST = "zrx_profiles_list_v1"; // اگر کلیدت فرق دارد بگو تا اصلاح کنم
       const listEl = document.getElementById("list");
 
       function loadList() {
@@ -54,7 +73,8 @@
         const role = acc.role || "اکانت";
         const id = acc.id ?? "";
         const letter = name && name[0] ? name[0] : "?";
-        const avatar = acc.avatar ? `<img src="${acc.avatar}" alt="" style="display:block">` : "";
+        const avatar = acc.avatar ? `<img src="${acc.avatar}" alt="">` : "";
+
         return `
           <div class="item">
             <div class="avatar">
