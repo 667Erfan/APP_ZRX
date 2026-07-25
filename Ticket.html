@@ -186,7 +186,7 @@
               📷 انتخاب عکس
               <input id="ticketImages" type="file" accept="image/*" multiple style="display:none" />
             </label>
-            <button id="btnRemovePreview" class="ghost" type="button">🗑️ حذف عکس‌های انتخاب‌شده</button>
+            <button id="btnRemovePreview" class="ghost" type="button">🗑️ حذف عکس‌های انتخاب‌ شده</button>
           </div>
 
           <div class="previewRow" id="previewRow"></div>
@@ -201,7 +201,7 @@
         <div id="userMsg" class="msg hidden"></div>
 
         <div class="sep"></div>
-        <div class="small">برای دیدن جواب تیکت: فایل <b>Ticket_me.html</b> را باز کن.</div>
+        <div class="small">برای دیدن جواب تیکت : بخش <b>تیکت های من</b> را باز کن.</div>
       </div>
 
       <!-- Admin Console -->
@@ -212,7 +212,7 @@
         </div>
 
         <div id="adminLogin">
-          <div class="small">برای ورود به کنسول، کد را وارد کنید.</div>
+          <div class="small">برای ورود به کنسول، کد را وارد کنید</div>
           <div style="margin-top:10px">
             <input id="adminCode" type="password" placeholder="کد ادمین..." autocomplete="off" />
           </div>
@@ -224,7 +224,7 @@
 
         <div id="adminPanel" class="hidden">
           <div class="row" style="margin-top:8px;justify-content:space-between">
-            <div class="small">تیکت‌های ثبت‌شده:</div>
+            <div class="small">تیکت‌های ثبت‌ شده:</div>
             <button id="btnAdminLogout" class="ghost" type="button">خروج</button>
           </div>
 
@@ -408,7 +408,7 @@
       ticketImagesEl.value = "";
       previewRow.innerHTML = "";
 
-      setMsg(userMsg, "✅ تیکت ارسال شد. جواب در Ticket_me.html نمایش داده می‌شود.", true);
+      setMsg(userMsg, "✅ تیکت ارسال شد. جواب در تیکت های من نمایش داده می‌شود.", true);
       renderAdminList();
     });
 
