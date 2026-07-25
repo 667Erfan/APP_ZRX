@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>اکانت‌های من</title>
+  <style>
+    body{margin:0;font-family:system-ui;background:#0b0b10;color:#fff}
+    .wrap{max-width:520px;margin:16px auto;padding:0 12px}
+    h1{font-size:18px;margin:0 0 12px}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:14px}
+    .list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+    .item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03}
+    .avatar{width:44px;height:44px;border-radius:16px;border:1px solid rgba(255,255,255,.14);display:grid;place-items:center;background:rgba(255,255,255,.04);overflow:hidden}
+    .avatar img{width:100%;height:100%;object-fit:cover;display:none}
+    .letter{font-weight:950;opacity:.85}
+    .name{font-weight:900}
+    .sub{font-size:12px;opacity:.7;margin-top:2px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>اکانت های ساخته شده من</h1>
+      <div class="list" id="list"></div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const KEY_LIST = "zrx_profiles_list_v1"; // کلید لیست اکانت‌ها (در profile.html باید همین باشد)
+
+      const listEl = document.getElementById("list");
+
+      function loadList() {
+        try {
+          const raw = localStorage.getItem(KEY_LIST);
+          const arr = raw ? JSON.parse(raw) : [];
+          return Array.isArray(arr) ? arr : [];
+        } catch {
+          return [];
+        }
+      }
+
+      const accounts = loadList();
+
+      if (!accounts.length) {
+        listEl.innerHTML = `<div style="opacity:.7;padding:10px 0">اکانتی پیدا نشد.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = accounts.map(acc => {
+        const name = acc.name || "—";
+        const role = acc.role || "اکانت";
+        const id = acc.id ?? "";
+        const letter = name && name[0] ? name[0] : "?";
+        const avatar = acc.avatar ? `<img src="${acc.avatar}" alt="" style="display:block">` : "";
+        return `
+          <div class="item">
+            <div class="avatar">
+              <span class="letter">${letter}</span>
+              ${avatar}
+            </div>
+            <div style="min-width:0;flex:1">
+              <div class="name">${name}</div>
+              <div class="sub">${role} ${id ? `• ID: ${id}` : ""}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    })();
+  </script>
+</body>
+</html>
