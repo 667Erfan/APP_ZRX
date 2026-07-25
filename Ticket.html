@@ -105,6 +105,13 @@
       min-height:72px;
       padding:10px;
       margin-top:8px;
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(0,0,0,.15);
+      color:#eaf2ff;
+      outline:none;
+      resize:vertical;
     }
 
     .fileRow{
@@ -114,7 +121,6 @@
       background:rgba(0,0,0,.12);
       margin-top:10px;
     }
-
     .previewRow{
       margin-top:10px;
       display:flex;gap:10px;flex-wrap:wrap;
@@ -151,7 +157,6 @@
 
     .hidden{display:none}
     .sep{height:1px;background:rgba(255,255,255,.12;margin:10px 0}
-    .replyTitle{font-weight:1000;opacity:.9;margin-top:8px}
   </style>
 </head>
 <body>
@@ -160,11 +165,11 @@
       <!-- User Ticket -->
       <div class="card">
         <h2>📝 ارسال تیکت</h2>
-        <div class="small">تیکت شما در بخش کنسول ادمین نمایش داده می‌شود.</div>
+        <div class="small">اسم لازم نیست. تیکت‌ها به همان دستگاه/مرورگر شما وصل می‌شوند.</div>
 
         <div class="row" style="margin-top:12px">
           <div style="flex:1 1 220px">
-            <div class="small">نام (اختیاری ولی برای نمایش در Ticket_me لازم است)</div>
+            <div class="small">نام (اختیاری برای نمایش در کنسول)</div>
             <input id="userName" type="text" placeholder="مثلاً: ممد" />
           </div>
         </div>
@@ -174,7 +179,6 @@
           <textarea id="ticketText" placeholder="مشکل/درخواست خود را بنویسید..."></textarea>
         </div>
 
-        <!-- Upload Image -->
         <div class="fileRow">
           <div class="small">آپلود عکس (حداکثر 2 تا) — اختیاری</div>
           <div style="margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -197,7 +201,7 @@
         <div id="userMsg" class="msg hidden"></div>
 
         <div class="sep"></div>
-        <div class="small">برای دیدن جواب تیکت، فایل <b>تیکت های من </b>  را باز کن و باز کردی اسم تیکت بنیویس و پیداش کن.</div>
+        <div class="small">برای دیدن جواب تیکت: فایل <b>Ticket_me.html</b> را باز کن.</div>
       </div>
 
       <!-- Admin Console -->
@@ -233,7 +237,11 @@
 
   <script>
     const ADMIN_CODE = "hG@p)_S<.{f'(~/@&/wv8Wl8U2]TGZ,~hj!\"s#8u9R)($6F7i/";
-    const STORAGE_KEY = "ticket_messages_v2_reply";
+    const STORAGE_KEY = "ticket_messages_v3";
+    const ADMIN_AUTH_KEY = "ticket_admin_auth_v3";
+
+    // شناسه مخصوص همین مرورگر (برای اینکه لازم نباشه اسم بدی)
+    const OWNER_ID_KEY = "ticket_owner_id_v3";
 
     const userNameEl = document.getElementById("userName");
     const ticketTextEl = document.getElementById("ticketText");
@@ -256,7 +264,14 @@
     const ticketListEl = document.getElementById("ticketList");
     const emptyStateEl = document.getElementById("emptyState");
 
-    const ADMIN_AUTH_KEY = "ticket_admin_auth_v2_reply";
+    function getOwnerId(){
+      let id = localStorage.getItem(OWNER_ID_KEY);
+      if (!id){
+        id = (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + "_" + Math.random().toString(16).slice(2)));
+        localStorage.setItem(OWNER_ID_KEY, id);
+      }
+      return id;
+    }
 
     function loadTickets(){
       try{
@@ -311,7 +326,6 @@
 
     // ===== Image selection + preview =====
     let imagesPreview = [];
-
     function renderPreviews(){
       previewRow.innerHTML = "";
       if (!imagesPreview.length) return;
@@ -322,7 +336,6 @@
         previewRow.appendChild(div);
       }
     }
-
     function fileToDataUrl(file){
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -339,10 +352,8 @@
         renderPreviews();
         return;
       }
-
       const selected = files.slice(0, 2);
       imagesPreview = [];
-
       try{
         for (const f of selected){
           if (!f.type || !f.type.startsWith("image/")) continue;
@@ -353,7 +364,6 @@
         setMsg(userMsg, "❌ خطا در خواندن عکس‌ها.", false);
         return;
       }
-
       renderPreviews();
       clearMsg(userMsg);
     });
@@ -365,7 +375,6 @@
       clearMsg(userMsg);
     });
 
-    // ===== User Submit =====
     btnSubmit.addEventListener("click", async () => {
       const name = (userNameEl.value || "").trim();
       const text = (ticketTextEl.value || "").trim();
@@ -375,23 +384,21 @@
         return;
       }
 
-      const images = imagesPreview.map(x => ({
-        name: x.name,
-        dataUrl: x.dataUrl
-      }));
+      const images = imagesPreview.map(x => ({ name: x.name, dataUrl: x.dataUrl }));
+      const ownerId = getOwnerId();
 
       const tickets = loadTickets();
       const id = crypto.randomUUID ? crypto.randomUUID() : (Date.now() + "_" + Math.random().toString(16).slice(2));
 
       tickets.push({
         id,
+        ownerId,
         name: name || "کاربر",
         text,
         createdAt: Date.now(),
         images,
-        // reply fields
-        repliedAt: null,
-        adminReply: ""
+        adminReply: "",
+        repliedAt: null
       });
 
       saveTickets(tickets);
@@ -401,8 +408,7 @@
       ticketImagesEl.value = "";
       previewRow.innerHTML = "";
 
-      setMsg(userMsg, "✅ تیکت ارسال شد. اگر جواب داده شود در Ticket_me.html نمایش داده می‌شود.", true);
-
+      setMsg(userMsg, "✅ تیکت ارسال شد. جواب در Ticket_me.html نمایش داده می‌شود.", true);
       renderAdminList();
     });
 
@@ -432,12 +438,10 @@
     btnAdminLogin.addEventListener("click", () => {
       clearMsg(adminMsg);
       const code = (adminCodeEl.value || "").trim();
-
       if (code !== ADMIN_CODE){
         setMsg(adminMsg, "❌ کد اشتباه است.", false);
         return;
       }
-
       setAdminAuthed(true);
       showAdmin(true);
       setMsg(adminMsg, "✅ وارد شدید. تیکت‌ها نمایش داده می‌شوند.", true);
@@ -488,8 +492,11 @@
 
           <div class="replyBox">
             <div class="small" style="margin-top:0">پاسخ ادمین</div>
+
             ${hasReply ? `
-              <div class="replyTitle">✅ جواب داده شد (${formatTime(t.repliedAt)})</div>
+              <div class="replyTitle" style="font-weight:1000;opacity:.9;margin-top:8px">
+                ✅ جواب داده شد (${formatTime(t.repliedAt)})
+              </div>
               <div class="body" style="margin-top:6px;opacity:.98;background:rgba(56,189,248,.10);border:1px solid rgba(56,189,248,.22);padding:10px;border-radius:12px;">
                 ${escapeHtml(t.adminReply)}
               </div>
@@ -497,7 +504,9 @@
             ` : `
               <div class="small" style="margin-top:8px;opacity:.9">هنوز جوابی ثبت نشده است.</div>
             `}
-            <textarea id="reply_${t.id}" placeholder="متن پاسخ..." ${hasReply ? "" : ""}></textarea>
+
+            <textarea id="reply_${t.id}" placeholder="متن پاسخ..."></textarea>
+
             <div class="row" style="margin-top:10px">
               <button type="button" id="saveReply_${t.id}" style="padding:9px 12px">💾 ثبت جواب</button>
             </div>
@@ -507,7 +516,6 @@
         div.querySelector(`#saveReply_${t.id}`).addEventListener("click", () => {
           const ta = div.querySelector(`#reply_${t.id}`);
           const replyText = (ta.value || "").trim();
-
           if (!replyText){
             alert("لطفاً متن جواب را بنویسید.");
             return;
@@ -519,7 +527,6 @@
 
           all[idx].adminReply = replyText;
           all[idx].repliedAt = Date.now();
-
           saveTickets(all);
           renderAdminList();
         });
@@ -528,7 +535,6 @@
       }
     }
 
-    // init
     showAdmin(isAdminAuthed());
     clearMsg(userMsg);
     clearMsg(adminMsg);
