@@ -21,27 +21,6 @@
       margin-top:14px;
     }
     h2{margin:0 0 10px;font-size:18px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    input[type="text"]{
-      width:100%;
-      border-radius:14px;
-      padding:12px;
-      border:1px solid rgba(255,255,255,.16);
-      background:rgba(0,0,0,.15);
-      color:#eaf2ff;
-      outline:none;
-    }
-    button{
-      border:0;
-      border-radius:14px;
-      padding:11px 14px;
-      font-weight:900;
-      cursor:pointer;
-      color:#07101b;
-      background:linear-gradient(135deg, rgba(56,189,248,.95), rgba(124,58,237,.95));
-      box-shadow:0 18px 55px rgba(56,189,248,.18);
-      user-select:none;
-    }
     .small{font-size:13px;opacity:.75;margin-top:6px}
     .ticketList{display:flex;flex-direction:column;gap:10px;margin-top:12px}
     .ticket{
@@ -58,7 +37,13 @@
     .who{font-weight:1000}
     .time{opacity:.7;font-size:12px}
     .body{white-space:pre-wrap;opacity:.95}
-    .replyTitle{font-weight:1000;opacity:.9;margin-top:8px}
+    .replyBox{
+      margin-top:10px;
+      background:rgba(56,189,248,.10);
+      border:1px solid rgba(56,189,248,.22);
+      padding:10px;
+      border-radius:12px;
+    }
     .imgWrap{
       margin-top:10px;
       display:flex;
@@ -80,42 +65,26 @@
       display:block;
     }
     .hidden{display:none}
-    .replyBox{
-      margin-top:10px;
-      background:rgba(56,189,248,.10);
-      border:1px solid rgba(56,189,248,.22);
-      padding:10px;
-      border-radius:12px;
-    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
       <h2>📩 تیکت‌های من</h2>
-      <div class="small">نامی که موقع ارسال تیکت وارد می‌کردی را بنویس تا تیکت‌ها نمایش داده شوند.</div>
+      <div class="small">بدون نیاز به اسم. فقط تیکت‌های همان مرورگر/دستگاه نمایش داده می‌شود.</div>
 
-      <div class="row" style="margin-top:12px">
-        <div style="flex:1 1 320px">
-          <div class="small">نام</div>
-          <input id="myName" type="text" placeholder="مثلاً: ممد" />
-        </div>
-        <button id="btnFilter" style="flex:0 0 auto">🔍 نمایش</button>
-      </div>
-
-      <div id="emptyState" class="small" style="margin-top:12px;opacity:.85">فعلاً تیکتی برای این نام پیدا نشده است.</div>
-
+      <div id="emptyState" class="small" style="margin-top:12px;opacity:.85">فعلاً تیکتی برای شما پیدا نشده است.</div>
       <div id="ticketList" class="ticketList"></div>
     </div>
   </div>
 
   <script>
-    const STORAGE_KEY = "ticket_messages_v2_reply";
+    const STORAGE_KEY = "ticket_messages_v3";
+    const OWNER_ID_KEY = "ticket_owner_id_v3";
 
-    const myNameEl = document.getElementById("myName");
-    const btnFilter = document.getElementById("btnFilter");
-    const ticketListEl = document.getElementById("ticketList");
-    const emptyStateEl = document.getElementById("emptyState");
+    function getOwnerId(){
+      return localStorage.getItem(OWNER_ID_KEY) || "";
+    }
 
     function loadTickets(){
       try{
@@ -147,18 +116,27 @@
     }
 
     function render(){
-      const myName = (myNameEl.value || "").trim();
+      const ownerId = getOwnerId();
       const all = loadTickets();
 
-      const filtered = !myName
-        ? []
-        : all.filter(t => (t.name || "").trim() === myName);
+      const ticketListEl = document.getElementById("ticketList");
+      const emptyStateEl = document.getElementById("emptyState");
 
       ticketListEl.innerHTML = "";
+
+      if (!ownerId){
+        emptyStateEl.classList.remove("hidden");
+        emptyStateEl.textContent = "اول یک تیکت در Ticket.html ثبت کن تا اینجا نمایش داده شود.";
+        return;
+      }
+
+      const filtered = all.filter(t => (t.ownerId || "") === ownerId);
+
       if (!filtered.length){
         emptyStateEl.classList.remove("hidden");
         return;
       }
+
       emptyStateEl.classList.add("hidden");
 
       const sorted = [...filtered].sort((a,b) => b.createdAt - a.createdAt);
@@ -194,24 +172,18 @@
 
           ${
             hasReply
-              ? `
-                <div class="replyTitle">✅ جواب داده شد (${formatTime(t.repliedAt)})</div>
-                <div class="replyBox">${escapeHtml(t.adminReply)}</div>
-              `
+              ? `<div class="replyBox">
+                  <div style="font-weight:1000;opacity:.95">✅ جواب داده شد (${formatTime(t.repliedAt)})</div>
+                  <div class="body" style="margin-top:6px">${escapeHtml(t.adminReply)}</div>
+                </div>`
               : `<div class="small" style="margin-top:10px;opacity:.8">هنوز جوابی داده نشده.</div>`
           }
         `;
-
         ticketListEl.appendChild(div);
       }
     }
 
-    btnFilter.addEventListener("click", render);
-
-    // auto load if you type before
-    myNameEl.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") render();
-    });
+    render();
   </script>
 </body>
 </html>
