@@ -997,54 +997,7 @@
   /* اگر خواستی برای کاهش حرکت */
   @media (prefers-reduced-motion: reduce){
     .btn3d{ transition:none; }
-  }
-</style>
-<div class="loader-overlay" id="loader">
-  <div class="loader">
-    <span></span><span></span><span></span>
-  </div>
-  <div class="loader-text">Loading...</div>
-</div>
-<div class="loader-overlay" id="loader">
-  <div class="loader" aria-label="Loading">
-    <span></span><span></span><span></span>
-  </div>
-  <div class="loader-text">Loading...</div>
-</div>
-<script>
-  // مطمئن می‌شیم المنت هست
-  document.addEventListener("DOMContentLoaded", () => {
-    const loader = document.getElementById("loader");
-    if (!loader) return;
-
-    // خودِ DOMLOAD نشون داده میشه؛ وقتی همه چیز لود شد، مخفی میشه
-    window.addEventListener("load", () => {
-      loader.style.transition = "opacity .25s ease, transform .25s ease";
-      loader.style.opacity = "0";
-      loader.style.transform = "scale(0.98)";
-      setTimeout(() => loader.remove(), 300);
-    });
-  });
-</script>
-<div style="position:fixed;inset:0;z-index:999999;display:grid;place-items:center;pointer-events:none;background:linear-gradient(180deg,rgba(122,162,255,.25),rgba(0,0,0,.85));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
-  <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
-    <div style="width:64px;height:64px;border-radius:50%;background:conic-gradient(from 90deg,#7aa2ff,rgba(122,162,255,.2),#a78bfa,rgba(167,139,250,.15),#7aa2ff);-webkit-mask:radial-gradient(farthest-side,transparent 62%,#000 63%);mask:radial-gradient(farthest-side,transparent 62%,#000 63%);animation:sp 1.05s linear infinite;filter:drop-shadow(0 10px 20px rgba(122,162,255,.25));"></div>
-    <div style="font:600 13px/1 system-ui,-apple-system,Segoe UI,Roboto,Arial;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);opacity:.75;animation:tx 1s ease-in-out infinite;">Loading</div>
-  </div>
-  <style>@keyframes sp{to{transform:rotate(360deg)}}@keyframes tx{0%,100%{opacity:.65;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}</style>
-</div>
-
-<script>
-window.addEventListener('load',function(){
-  var el=document.currentScript.previousElementSibling;
-  if(!el) return;
-  el.style.transition='opacity .3s ease, transform .3s ease';
-  el.style.opacity='0';
-  el.style.transform='scale(.99)';
-  setTimeout(function(){ if(el&&el.parentNode) el.parentNode.removeChild(el); },320);
-});
-</script>
-<div id="myLoader" style="position:fixed;inset:0;z-index:999999;display:grid;place-items:center;pointer-events:none;background:linear-gradient(180deg,rgba(122,162,255,.25),rgba(0,0,0,.85));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
+    <div id="myLoader" style="position:fixed;inset:0;z-index:999999;display:grid;place-items:center;pointer-events:none;background:linear-gradient(180deg,rgba(122,162,255,.25),rgba(0,0,0,.85));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
   <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
     <div style="width:64px;height:64px;border-radius:50%;background:conic-gradient(from 90deg,#7aa2ff,rgba(122,162,255,.2),#a78bfa,rgba(167,139,250,.15),#7aa2ff);-webkit-mask:radial-gradient(farthest-side,transparent 62%,#000 63%);mask:radial-gradient(farthest-side,transparent 62%,#000 63%);animation:sp 1.05s linear infinite;filter:drop-shadow(0 10px 20px rgba(122,162,255,.25));"></div>
     <div style="font:600 13px/1 system-ui,-apple-system,Segoe UI,Roboto,Arial;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.85);opacity:.75;animation:tx 1s ease-in-out infinite;">Loading</div>
@@ -1054,6 +1007,14 @@ window.addEventListener('load',function(){
 
 <script>
 setTimeout(function(){
+  var el=document.getElementById('myLoader');
+  if(!el) return;
+  el.style.transition='opacity .3s ease, transform .3s ease';
+  el.style.opacity='0';
+  el.style.transform='scale(.99)';
+  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 320);
+}, 3000);
+</script>
   var el=document.getElementById('myLoader');
   if(!el) return;
   el.style.transition='opacity .3s ease, transform .3s ease';
