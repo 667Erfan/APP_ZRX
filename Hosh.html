@@ -3,88 +3,94 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ساخت تصویر</title>
+  <title>سازنده تصویر</title>
   <style>
     body{font-family:sans-serif;margin:20px}
     textarea{width:100%;height:110px;padding:10px;font-size:16px}
     button{padding:10px 14px;font-size:16px;cursor:pointer}
-    .log{margin-top:14px;padding:12px;border:1px solid #ddd;border-radius:10px;min-height:90px}
-    .log p{margin:6px 0}
-    .preview{margin-top:14px;display:none;border:1px solid #ddd;border-radius:10px;padding:10px}
-    img{max-width:100%;border-radius:8px}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .log{margin-top:12px;border:1px solid #ddd;border-radius:10px;padding:12px;min-height:90px}
+    .log div{margin:6px 0}
+    img{max-width:100%;margin-top:14px;border-radius:10px;border:1px solid #ddd;padding:10px;display:none}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
   </style>
 </head>
 <body>
   <h2>ساخت تصویر (همان صفحه)</h2>
 
-  <textarea id="prompt" placeholder="مثلاً: یک مرد شیک با مانتو، پس‌زمینه استودیو"></textarea>
+  <textarea id="prompt" placeholder="متن عکس..."></textarea>
 
-  <div class="row" style="margin-top:10px">
+  <div class="row">
     <button id="btn">ساخت تصویر</button>
+    <span id="status"></span>
   </div>
 
   <div class="log" id="log"></div>
-
-  <div class="preview" id="preview">
-    <img id="img" alt="preview" />
-  </div>
+  <img id="out" alt="output" />
 
   <script>
     const btn = document.getElementById("btn");
     const promptEl = document.getElementById("prompt");
     const logEl = document.getElementById("log");
-    const previewEl = document.getElementById("preview");
-    const imgEl = document.getElementById("img");
+    const statusEl = document.getElementById("status");
+    const outEl = document.getElementById("out");
 
-    function add(text){
-      const p = document.createElement("p");
-      p.textContent = text;
-      logEl.appendChild(p);
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const add = (t) => {
+      const d = document.createElement("div");
+      d.textContent = t;
+      logEl.appendChild(d);
       logEl.scrollTop = logEl.scrollHeight;
-    }
+    };
 
     btn.addEventListener("click", async () => {
-      const p = (promptEl.value || "").trim();
+      const prompt = (promptEl.value || "").trim();
+      if (!prompt) return statusEl.textContent = "Prompt وارد کن.";
+
+      btn.disabled = true;
+      statusEl.textContent = "در حال ساخت...";
       logEl.innerHTML = "";
-      previewEl.style.display = "none";
-      imgEl.src = "";
+      outEl.style.display = "none";
+      outEl.src = "";
 
-      if(!p){ add("لطفاً یک توضیح (Prompt) وارد کن."); return; }
-
-      // متن‌های نمایشی طبق چیزی که گفتی
       add("مانتو رفت تو سایت...");
-      await new Promise(r => setTimeout(r, 600));
-
+      await sleep(600);
       add("مرد وارد شد...");
-      await new Promise(r => setTimeout(r, 600));
-
-      add("متن عکس: " + p);
-      await new Promise(r => setTimeout(r, 700));
-
+      await sleep(600);
+      add("متن عکس: " + prompt);
+      await sleep(600);
       add("ساخت تصویر...");
-      await new Promise(r => setTimeout(r, 1200));
+      await sleep(400);
 
-      // ⚠️ اینجا بدون API/مدل واقعی، نمی‌تونم تصویر تولید کنم.
-      // برای نمایش «تصویر» فعلاً یک placeholder می‌گذارم:
-      previewEl.style.display = "block";
-      imgEl.src =
-        "data:image/svg+xml;charset=utf-8," +
-        encodeURIComponent(
-          `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600">
-            <rect width="100%" height="100%" fill="#f6f7fb"/>
-            <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle"
-              font-family="sans-serif" font-size="26" fill="#333">
-              تولید واقعی تصویر نیاز به سرویس/مدل دارد
-            </text>
-            <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
-              font-family="sans-serif" font-size="18" fill="#666">
-              Prompt: ${p.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
-            </text>
-          </svg>`
-        );
+      // این endpoint باید در backend ساخته بشه (بدون اینکه کاربر سایت ثالثی ببینه)
+      const res = await fetch("/generate-image", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({ prompt })
+      });
 
+      if (!res.ok) {
+        const msg = await res.text();
+        statusEl.textContent = "خطا: " + msg;
+        btn.disabled = false;
+        return;
+      }
+
+      const data = await res.json();
+      // انتظار: { imageUrl: "..." } یا { imageBase64: "..." }
+      if (data.imageUrl) {
+        outEl.src = data.imageUrl;
+      } else if (data.imageBase64) {
+        outEl.src = "data:image/png;base64," + data.imageBase64;
+      } else {
+        statusEl.textContent = "خروجی برنگشت.";
+        btn.disabled = false;
+        return;
+      }
+
+      outEl.style.display = "block";
+      statusEl.textContent = "انجام شد ✅";
       add("انجام شد ✅");
+      btn.disabled = false;
     });
   </script>
 </body>
