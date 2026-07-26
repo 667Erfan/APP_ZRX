@@ -1,80 +1,184 @@
-<!doctype html>
+// app.js (single-file full stack)
+// Usage:
+//   1) npm init -y
+//   2) npm i express
+//   3) set OPENAI_API_KEY=YOUR_KEY   (Windows)
+//      export OPENAI_API_KEY=YOUR_KEY  (Linux/Mac)
+//   4) node app.js
+//
+// Then open: http://localhost:3000
+
+import express from "express";
+
+const app = express();
+app.use(express.json());
+
+// ---- config ----
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+if (!OPENAI_API_KEY) {
+  console.warn("⚠️ OPENAI_API_KEY is not set. Please set it in your environment.");
+}
+
+// ---- API route ----
+app.post("/chat", async (req, res) => {
+  try {
+    const { messages } = req.body || {};
+    if (!Array.isArray(messages)) return res.status(400).json({ error: "messages must be an array" });
+
+    // OpenAI Chat Completions
+    // (اگر مدل/endpointت فرق دارد می‌توانم عوض کنم)
+    const r = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "gpt-4.1-mini",
+        messages,
+        temperature: 0.7
+      })
+    });
+
+    const data = await r.json();
+    if (!r.ok) return res.status(500).json({ error: data });
+
+    const reply = data?.choices?.[0]?.message?.content ?? "";
+    res.json({ reply });
+  } catch (e) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// ---- UI route (serves the whole page) ----
+app.get("/", (req, res) => {
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(`<!doctype html>
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>متن → آهنگ</title>
+  <title>چت هوش مصنوعی</title>
   <style>
-    body{font-family:sans-serif;margin:20px}
-    textarea{width:100%;height:140px;padding:10px;font-size:16px}
-    button{padding:10px 14px;font-size:16px;cursor:pointer;margin-top:10px}
-    .box{margin-top:12px;border:1px solid #ddd;border-radius:10px;padding:12px}
-    a{display:inline-block;margin-top:10px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .status{margin-top:10px;color:#333}
+    body{font-family:sans-serif;margin:0;background:#f6f7fb}
+    .wrap{max-width:900px;margin:0 auto;padding:18px}
+    .card{background:#fff;border:1px solid #e9e9ef;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,.03)}
+    .head{padding:14px 16px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center}
+    .head b{font-size:16px}
+    .pill{font-size:12px;color:#555;background:#f2f3f7;border:1px solid #e8e8ef;padding:6px 10px;border-radius:999px}
+    #log{height:62vh;overflow:auto;padding:14px 16px;white-space:pre-wrap}
+    .msg{margin:10px 0}
+    .role{font-size:12px;opacity:.7;margin-bottom:4px}
+    .bubble{display:inline-block;padding:10px 12px;border-radius:14px;max-width:80%}
+    .user .bubble{background:#e8f1ff;border:1px solid #cfe2ff;float:right}
+    .ai .bubble{background:#f4f5f9;border:1px solid #e6e6f0;float:left}
+    .clear{clear:both}
+    .foot{padding:14px 16px;border-top:1px solid #eee;display:flex;gap:10px;align-items:flex-end}
+    textarea{flex:1;min-height:54px;max-height:160px;resize:vertical;padding:10px 12px;font-size:15px;border:1px solid #e6e6f0;border-radius:12px;outline:none}
+    button{padding:12px 14px;font-size:15px;border-radius:12px;border:0;cursor:pointer;background:#2563eb;color:#fff}
+    button:disabled{opacity:.6;cursor:not-allowed}
+    .err{color:#b00020;margin:8px 16px 0 16px}
   </style>
 </head>
 <body>
-  <h2>تبدیل متن به آهنگ (نسخه API)</h2>
+  <div class="wrap">
+    <div class="card">
+      <div class="head">
+        <b>چت هوش مصنوعی</b>
+        <span class="pill">single-file demo</span>
+      </div>
 
-  <textarea id="lyrics" placeholder="اینجا متن/لیرکس را بنویس..."></textarea>
-  <div class="row">
-    <button id="btn">ساخت آهنگ</button>
-    <button id="cancel" disabled>لغو/ریست</button>
+      <div id="log"></div>
+      <div class="err" id="err"></div>
+
+      <div class="foot">
+        <textarea id="inp" placeholder="پیام بده..."></textarea>
+        <button id="send">ارسال</button>
+      </div>
+    </div>
   </div>
 
-  <div class="status" id="status"></div>
-  <div class="box" id="result" style="display:none"></div>
-
 <script>
-const statusEl = document.getElementById("status");
-const resultEl = document.getElementById("result");
-const btn = document.getElementById("btn");
-const cancelBtn = document.getElementById("cancel");
-let ctrl = null;
+  const log = document.getElementById("log");
+  const errEl = document.getElementById("err");
+  const inp = document.getElementById("inp");
+  const send = document.getElementById("send");
 
-btn.onclick = async () => {
-  const text = document.getElementById("lyrics").value.trim();
-  if (!text) return statusEl.textContent = "لطفاً متن را وارد کن.";
+  // messages حافظه‌دار در همین صفحه (می‌توانی بعداً ذخیره هم بکنی)
+  let messages = [
+    { role: "system", content: "تو یک دستیار فارسی هستی. کوتاه، مفید و دقیق جواب بده." }
+  ];
 
-  btn.disabled = true;
-  cancelBtn.disabled = false;
-  resultEl.style.display = "none";
-  resultEl.innerHTML = "";
-  statusEl.textContent = "در حال ساخت...";
+  function add(role, text){
+    const wrap = document.createElement("div");
+    wrap.className = "msg " + (role === "user" ? "user" : "ai");
 
-  ctrl = new AbortController();
-  try {
-    const res = await fetch("/api/text-to-song", {
+    const roleEl = document.createElement("div");
+    roleEl.className = "role";
+    roleEl.textContent = role === "user" ? "تو" : "AI";
+
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+    bubble.textContent = text;
+
+    wrap.appendChild(roleEl);
+    wrap.appendChild(bubble);
+
+    const clear = document.createElement("div");
+    clear.className = "clear";
+
+    wrap.appendChild(clear);
+
+    log.appendChild(wrap);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  async function chat(text){
+    send.disabled = true;
+    errEl.textContent = "";
+
+    add("user", text);
+    messages.push({ role: "user", content: text });
+
+    const resp = await fetch("/chat", {
       method: "POST",
       headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({ text }),
-      signal: ctrl.signal
+      body: JSON.stringify({ messages })
     });
 
-    if (!res.ok) throw new Error(await res.text());
-    const data = await res.json();
+    if (!resp.ok){
+      const t = await resp.text().catch(()=> "");
+      throw new Error("Server error: " + t);
+    }
 
-    // انتظار: { downloadUrl, jobId }
-    statusEl.textContent = "آهنگ آماده شد ✅";
-    resultEl.style.display = "block";
-    resultEl.innerHTML = `
-      <div>jobId: <b>${data.jobId || "-"}</b></div>
-      <a href="${data.downloadUrl}" download>دانلود آهنگ</a>
-    `;
-  } catch (e) {
-    statusEl.textContent = "خطا: " + (e?.message || e);
-  } finally {
-    btn.disabled = false;
-    cancelBtn.disabled = true;
-    ctrl = null;
+    const data = await resp.json();
+    const reply = data.reply || "";
+    add("assistant", reply);
+    messages.push({ role: "assistant", content: reply });
   }
-};
 
-cancelBtn.onclick = () => {
-  if (ctrl) ctrl.abort();
-  statusEl.textContent = "لغو شد.";
-};
+  send.onclick = async () => {
+    const text = inp.value.trim();
+    if (!text) return;
+    inp.value = "";
+    try{
+      await chat(text);
+    }catch(e){
+      errEl.textContent = String(e?.message || e);
+    }finally{
+      send.disabled = false;
+    }
+  };
+
+  inp.addEventListener("keydown", (e)=>{
+    if (e.key === "Enter" && !e.shiftKey){
+      e.preventDefault();
+      send.click();
+    }
+  });
 </script>
 </body>
-</html>
+</html>`);
+});
+
+app.listen(3000, () => console.log("✅ http://localhost:3000"));
