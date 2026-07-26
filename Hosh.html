@@ -1,72 +1,222 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>بخش هوش مصنوعی Zrx</title>
-  <style>
-    /* تنظیمات پایه */
-    body, html {
-      height: 100%;
-      margin: 0;
-      font-family: "Vazirmatn", sans-serif, Tahoma;
-      background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
-      background-size: cover;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      direction: rtl;
-    }
-
-    .wrapper {
-      background: rgba(0, 0, 0, 0.65);
-      padding: 30px 40px;
-      border-radius: 20px;
-      box-shadow: 0 0 40px rgba(0, 255, 255, 0.7);
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-      width: 300px;
-      text-align: center;
-    }
-
-    button {
-      background: linear-gradient(135deg, #00f0ff 0%, #0077ff 100%);
-      border: none;
-      border-radius: 15px;
-      padding: 16px 0;
-      color: #fff;
-      font-size: 1.2rem;
-      font-weight: 700;
-      cursor: pointer;
-      box-shadow:
-        0 0 10px #00f0ff,
-        0 0 20px #0077ff;
-      transition: all 0.3s ease;
-      user-select: none;
-    }
-
-    button:hover {
-      background: linear-gradient(135deg, #0077ff 0%, #00f0ff 100%);
-      box-shadow:
-        0 0 15px #00f0ff,
-        0 0 30px #0077ff;
-      transform: scale(1.05);
-      color: #fff;
-    }
-
-    button:active {
-      transform: scale(0.95);
-      box-shadow: none;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>چت هوش مصنوعی با ۱۰۰۰ دستور</title>
+<style>
+  body {
+    font-family: Tahoma, sans-serif;
+    background: #121212;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    height: 100vh;
+    margin: 0;
+  }
+  h1 {
+    margin-bottom: 15px;
+  }
+  #chatBox {
+    width: 100%;
+    max-width: 600px;
+    height: 400px;
+    background: #222;
+    border-radius: 10px;
+    padding: 15px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    border: 1px solid #444;
+  }
+  .msg {
+    margin-bottom: 12px;
+    max-width: 80%;
+    padding: 10px 15px;
+    border-radius: 15px;
+    line-height: 1.4;
+  }
+  .user {
+    background: #0084ff;
+    align-self: flex-end;
+    color: white;
+    border-bottom-right-radius: 0;
+  }
+  .ai {
+    background: #333;
+    align-self: flex-start;
+    color: #ccc;
+    border-bottom-left-radius: 0;
+  }
+  #inputArea {
+    margin-top: 15px;
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+  }
+  #inputText {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px 0 0 10px;
+    border: none;
+    font-size: 16px;
+    outline: none;
+    background: #222;
+    color: #eee;
+    border: 1px solid #444;
+    border-right: none;
+  }
+  #sendBtn {
+    padding: 0 20px;
+    border: none;
+    background: #0084ff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 0 10px 10px 0;
+    transition: background 0.3s ease;
+  }
+  #sendBtn:hover {
+    background: #006fcc;
+  }
+  #sendBtn:disabled {
+    background: #004a80;
+    cursor: not-allowed;
+  }
+</style>
 </head>
 <body>
-  <div class="wrapper" role="main" aria-label="بخش دکمه‌ها">
-    <button id="btnChat">گفتگو هوش مصنوعی خصوصی Zrx</button>
-    <button id="btnVideo">ساخت ویدیو</button>
-    <button id="btnImage">ساخت عکس</button>
-    <button id="btnMusic">ساخت موزیک</button>
-  </div>
+
+<h1>چت هوش مصنوعی با ۱۰۰۰ دستور</h1>
+
+<div id="chatBox" aria-live="polite" aria-label="پنجره گفتگو"></div>
+
+<div id="inputArea">
+  <input type="text" id="inputText" placeholder="پیام خود را وارد کنید..." aria-label="متن پیام" autocomplete="off" />
+  <button id="sendBtn" aria-label="ارسال پیام">ارسال</button>
+</div>
+
+<script>
+  const chatBox = document.getElementById("chatBox");
+  const inputText = document.getElementById("inputText");
+  const sendBtn = document.getElementById("sendBtn");
+
+  // لیست سوالات و جواب‌ها (۲۰ نمونه اصلی)
+  const baseCommands = {
+    "/help": "برای دیدن دستورات، این پیام را بفرستید.",
+    "سلام": "سلام! چطور می‌تونم کمکت کنم؟",
+    "خوبی؟": "من خوبم، ممنون! شما چطورید؟",
+    "حالت چطوره؟": "حالم عالیه، ممنون از پرسشت!",
+    "اسم تو چیه؟": "من یک هوش مصنوعی ساده هستم.",
+    "چه کار می‌کنی؟": "دارم با تو گفتگو می‌کنم!",
+    "دستورات": "برای دیدن لیست دستورات، /help را ارسال کن.",
+    "وقت چنده؟": () => {
+      const now = new Date();
+      return `الان ساعت ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} هست.`;
+    },
+    "امروز چندمه؟": () => {
+      const now = new Date();
+      return `امروز ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} هست.`;
+    },
+    "خداحافظ": "خداحافظ! امیدوارم دوباره ببینمت.",
+    "تشکر": "خواهش می‌کنم!",
+    "تو کی ساخته شدی؟": "من همین الان ساخته شدم!",
+    "چی کار بلدی؟": "می‌تونم به سوالات ساده جواب بدم و کمی شوخی کنم.",
+    "جوک بگو": "چرا کامپیوتر همیشه خسته‌اس؟ چون همیشه کار می‌کنه!",
+    "هوش مصنوعی چیه؟": "هوش مصنوعی یعنی کامپیوترها بتوانند مثل انسان فکر کنند.",
+    "چطوری؟": "ممنونم، تو چطوری؟",
+    "فیلم خوب داری؟": "فیلم‌های علمی-تخیلی رو خیلی دوست دارم!",
+    "موسیقی چی؟": "موسیقی آرامش‌بخشه، نظرت چیه؟",
+    "کتاب پیشنهاد بده": "کتاب‌های داستانی و علمی-تخیلی عالی هستند.",
+    "بازی دوست داری؟": "من همیشه آماده بازی هستم!",
+  };
+
+  // شبیه‌سازی ۱۰۰۰ دستور: 980 مورد دیگر با جواب‌های ساده
+  // این کار فقط جهت نمونه است
+  const largeCommands = {...baseCommands};
+  for(let i=1; i<=980; i++) {
+    largeCommands[`سوال تستی شماره ${i}`] = `پاسخ تستی شماره ${i}`;
+  }
+
+  // تابع ساده فاصله لوونشتاین (Levenshtein) برای شباهت (اختیاری)
+  // چون حجم بالاست، از جستجوی ساده با includes استفاده می‌کنیم
+
+  function findBestMatch(input) {
+    input = input.trim().toLowerCase();
+    if (input === "") return null;
+
+    // اول چک می‌کنیم اگر دقیقا وجود دارد
+    if (largeCommands.hasOwnProperty(input)) return input;
+
+    // بعد جستجوی includes ساده
+    for (const key in largeCommands) {
+      if (key.toLowerCase().includes(input) || input.includes(key.toLowerCase())) {
+        return key;
+      }
+    }
+
+    // اگر پیدا نکردیم null برمیگردونیم
+    return null;
+  }
+
+  function addMessage(text, sender = "user") {
+    const div = document.createElement("div");
+    div.classList.add("msg", sender);
+    div.textContent = text;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  function processInput(text) {
+    text = text.trim();
+
+    if (text === "/help") {
+      // نمایش تا 50 دستور اول
+      let keys = Object.keys(largeCommands).slice(0, 50);
+      let helpText = "دستورات موجود:\n";
+      keys.forEach(k => {
+        helpText += `- ${k}\n`;
+      });
+      return helpText.trim();
+    }
+
+    const key = findBestMatch(text);
+    if (key) {
+      const val = largeCommands[key];
+      if (typeof val === "function") return val();
+      return val;
+    }
+
+    // اگر سوال داشت علامت ؟ یا ؟ فارسی
+    if (text.includes("?") || text.includes("؟")) {
+      return "سؤال خوبی پرسیدی! اما من هنوز یاد نگرفتم جواب بدم.";
+    }
+
+    return "متوجه نشدم، لطفا /help را برای دستورات ببین.";
+  }
+
+  sendBtn.addEventListener("click", () => {
+    const userText = inputText.value.trim();
+    if (!userText) return;
+    addMessage(userText, "user");
+    inputText.value = "";
+
+    setTimeout(() => {
+      const reply = processInput(userText);
+      addMessage(reply, "ai");
+    }, 300);
+  });
+
+  inputText.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+
+  addMessage("سلام! من آماده‌ام با تو صحبت کنم. برای دیدن دستورات /help را ارسال کن.", "ai");
+</script>
+
 </body>
 </html>
