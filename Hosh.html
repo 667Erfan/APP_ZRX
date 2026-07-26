@@ -3,21 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>پنل هوش مصنوعی</title>
+  <title>بخش دکمه‌ها</title>
   <style>
-    /* ریست ساده */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      user-select: none;
-    }
-
+    /* تنظیمات پایه */
     body, html {
       height: 100%;
-      width: 100%;
-      overflow: hidden;
+      margin: 0;
+      font-family: "Vazirmatn", sans-serif, Tahoma;
       background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
       background-size: cover;
       display: flex;
@@ -26,117 +18,55 @@
       direction: rtl;
     }
 
-    .container {
-      background: rgba(0, 0, 0, 0.6);
-      padding: 40px 50px;
-      border-radius: 25px;
+    .wrapper {
+      background: rgba(0, 0, 0, 0.65);
+      padding: 30px 40px;
+      border-radius: 20px;
       box-shadow: 0 0 40px rgba(0, 255, 255, 0.7);
       display: flex;
       flex-direction: column;
-      gap: 30px;
-      width: 320px;
+      gap: 25px;
+      width: 300px;
       text-align: center;
     }
 
-    h1 {
-      color: #00ffff;
-      margin-bottom: 20px;
-      text-shadow: 0 0 10px #00ffff;
-      font-weight: 900;
-      font-size: 2.2rem;
-    }
-
     button {
-      background: linear-gradient(135deg, #00fff7, #00c6ff);
+      background: linear-gradient(135deg, #00f0ff 0%, #0077ff 100%);
       border: none;
       border-radius: 15px;
-      color: #000;
-      font-weight: 700;
-      font-size: 1.1rem;
       padding: 16px 0;
+      color: #fff;
+      font-size: 1.2rem;
+      font-weight: 700;
       cursor: pointer;
       box-shadow:
-        0 0 10px #00fff7,
-        0 0 20px #00c6ff,
-        0 0 30px #00fff7;
+        0 0 10px #00f0ff,
+        0 0 20px #0077ff;
       transition: all 0.3s ease;
       user-select: none;
     }
 
     button:hover {
-      background: linear-gradient(135deg, #00c6ff, #00fff7);
+      background: linear-gradient(135deg, #0077ff 0%, #00f0ff 100%);
       box-shadow:
-        0 0 15px #00fff7,
-        0 0 30px #00c6ff,
-        0 0 45px #00fff7;
+        0 0 15px #00f0ff,
+        0 0 30px #0077ff;
       transform: scale(1.05);
-      color: #000;
+      color: #fff;
     }
 
     button:active {
       transform: scale(0.95);
       box-shadow: none;
     }
-
-    /* دکمه ها به صورت ستونی و با فاصله */
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
-
-    /* افکت پس‌زمینه متحرک */
-    @keyframes bgShift {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    body {
-      background: linear-gradient(-45deg, #0ff, #00aaff, #00ffaa, #0088ff);
-      background-size: 400% 400%;
-      animation: bgShift 20s ease infinite;
-    }
   </style>
 </head>
 <body>
-  <div class="container" role="main" aria-label="پنل هوش مصنوعی">
-    <h1>پنل هوش مصنوعی</h1>
-    <div class="btn-group">
-      <button id="chatBtn" aria-label="گفتگو هوش مصنوعی خصوصی Zrx">گفتگو هوش مصنوعی خصوصی Zrx</button>
-      <button id="videoBtn" aria-label="ساخت ویدیو">ساخت ویدیو</button>
-      <button id="imageBtn" aria-label="ساخت عکس">ساخت عکس</button>
-      <button id="musicBtn" aria-label="ساخت موزیک">ساخت موزیک</button>
-    </div>
+  <div class="wrapper" role="main" aria-label="بخش دکمه‌ها">
+    <button id="btnChat">گفتگو هوش مصنوعی خصوصی Zrx</button>
+    <button id="btnVideo">ساخت ویدیو</button>
+    <button id="btnImage">ساخت عکس</button>
+    <button id="btnMusic">ساخت موزیک</button>
   </div>
-
-  <script>
-    // اینجا میتونی برای هر دکمه event listener بزاری
-    document.getElementById('chatBtn').addEventListener('click', () => {
-      alert('گفتگو هوش مصنوعی خصوصی Zrx فعال شد.');
-      // اینجا میتونی به صفحه یا API مورد نظرت بره
-    });
-
-    document.getElementById('videoBtn').addEventListener('click', () => {
-      alert('ساخت ویدیو شروع شد.');
-      // اینجا میتونی کد ساخت ویدیو یا لینک به صفحه ویدیو قرار بدی
-    });
-
-    document.getElementById('imageBtn').addEventListener('click', () => {
-      alert('ساخت عکس شروع شد.');
-      // اینجا کد ساخت عکس یا لینک قرار بده
-    });
-
-    document.getElementById('musicBtn').addEventListener('click', () => {
-      alert('ساخت موزیک شروع شد.');
-      // اینجا کد ساخت موزیک یا لینک قرار بده
-    });
-  </script>
 </body>
 </html>
