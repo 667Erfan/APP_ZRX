@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>NEON RUN - game.html</title>
+  <style>
+    :root{
+      --bg0:#05060a;
+      --bg1:#070a1a;
+      --neon1:#7c5cff;
+      --neon2:#19d3ff;
+      --neon3:#2ee59d;
+      --danger:#ff4d6d;
+      --text:#eaf0ff;
+      --muted:rgba(234,240,255,.7);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: Tahoma, Arial, sans-serif;
+      color:var(--text);
+      background: radial-gradient(1000px 700px at 20% 10%, rgba(124,92,255,.30), transparent 55%),
+                  radial-gradient(900px 650px at 85% 20%, rgba(25,211,255,.25), transparent 60%),
+                  linear-gradient(180deg, var(--bg0), var(--bg1));
+      overflow:hidden;
+      height:100vh;
+    }
+
+    /* Canvas */
+    #c{
+      position:fixed;
+      inset:0;
+      width:100%;
+      height:100%;
+      display:block;
+      background: transparent;
+    }
+
+    /* UI Layers */
+    .ui{
+      position:fixed;
+      inset:0;
+      pointer-events:none;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding:14px;
+      gap:10px;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+    }
+
+    .panel{
+      pointer-events:auto;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      box-shadow: 0 18px 70px rgba(0,0,0,.35);
+      backdrop-filter: blur(6px);
+      padding:10px 12px;
+    }
+
+    .hud{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .chip{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      font-weight:900;
+      letter-spacing:.2px;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: rgba(255,255,255,.25);
+      border:1px solid rgba(255,255,255,.2);
+      box-shadow: 0 0 18px rgba(255,255,255,.18);
+    }
+    .dot.p1{background: rgba(124,92,255,.9); border-color: rgba(124,92,255,.5); box-shadow: 0 0 22px rgba(124,92,255,.5);}
+    .dot.p2{background: rgba(25,211,255,.9); border-color: rgba(25,211,255,.5); box-shadow: 0 0 22px rgba(25,211,255,.5);}
+    .dot.p3{background: rgba(46,229,157,.9); border-color: rgba(46,229,157,.5); box-shadow: 0 0 22px rgba(46,229,157,.5);}
+
+    /* Center modal */
+    .center{
+      align-items:center;
+      justify-content:center;
+      display:flex;
+      flex:1;
+    }
+    .modal{
+      pointer-events:auto;
+      width:min(720px, 96vw);
+      padding:18px 18px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.05));
+      box-shadow: 0 40px 150px rgba(0,0,0,.55);
+      position:relative;
+      overflow:hidden;
+    }
+    .modal::before{
+      content:"";
+      position:absolute;
+      inset:-2px;
+      background:
+        radial-gradient(800px 260px at 30% 0%, rgba(124,92,255,.22), transparent 60%),
+        radial-gradient(700px 260px at 80% 30%, rgba(25,211,255,.18), transparent 60%);
+      pointer-events:none;
+      opacity:.9;
+    }
+    .modal > *{position:relative}
+    .title{
+      font-size:22px;
+      font-weight:1000;
+      letter-spacing:.4px;
+      margin-bottom:6px;
+    }
+    .subtitle{color:var(--muted); line-height:1.7; font-size:13px; margin:0 0 12px;}
+    .btnrow{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; justify-content:center;}
+    button{
+      pointer-events:auto;
+      cursor:pointer;
+      border:0;
+      border-radius:14px;
+      padding:12px 16px;
+      font-weight:1000;
+      letter-spacing:.3px;
+      color:#071018;
+      background: linear-gradient(135deg, var(--neon1), var(--neon2));
+      box-shadow: 0 14px 40px rgba(124,92,255,.30);
+      transition: transform .07s ease, filter .2s ease;
+    }
+    button:active{transform:scale(.98)}
+    .ghost{
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,.14);
+      box-shadow:none;
+    }
+    .kbd{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:28px;
+      padding:4px 8px;
+      border-radius:10px;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:1000;
+      font-size:12px;
+    }
+
+    .bottom{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-end;
+      gap:10px;
+      pointer-events:none;
+    }
+    .help{
+      pointer-events:auto;
+      max-width:520px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.8;
+    }
+    .help strong{color:var(--text)}
+    .bar{
+      pointer-events:auto;
+      width: min(420px, 86vw);
+      padding:10px 12px;
+    }
+    .meter{
+      height:10px; border-radius:999px;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      position:relative;
+    }
+    .meter > span{
+      position:absolute; inset:0;
+      width:50%;
+      background: linear-gradient(90deg, rgba(124,92,255,.9), rgba(25,211,255,.9));
+      box-shadow: 0 0 26px rgba(124,92,255,.35);
+    }
+
+    /* Mobile hint */
+    .touchHint{display:none}
+    @media (max-width: 720px){
+      .touchHint{display:block}
+      .help{max-width: 65vw}
+    }
+  </style>
+</head>
+<body>
+  <canvas id="c"></canvas>
+
+  <div class="ui">
+    <div class="topbar">
+      <div class="panel hud">
+        <div class="chip"><span class="dot p1"></span> <span id="score">0</span> امتیاز</div>
+        <div class="chip"><span class="dot p2"></span> <span id="coins">0</span> پولک</div>
+        <div class="chip"><span class="dot p3"></span> <span id="level">1</span> لول</div>
+      </div>
+
+      <div class="panel hud">
+        <div class="chip"><span class="dot bad"></span> جان: <span id="hp">3</span></div>
+        <div class="chip">وضعیت: <span id="stateTxt">آماده</span></div>
+      </div>
+    </div>
+
+    <div class="center" id="modalWrap">
+      <div class="modal" id="modal">
+        <div class="title">NEON RUN</div>
+        <p class="subtitle">
+          هدف: <strong>جمع کردن پولک‌های نئونی</strong> و دور شدن از موانع. هر لول سریع‌تر و سخت‌تر می‌شود.
+        </p>
+        <p class="subtitle" style="margin-top:0">
+          کنترل‌ها: <span class="kbd">W</span> <span class="kbd">A</span> <span class="kbd">S</span> <span class="kbd">D</span>
+          یا ماوس. <span class="kbd">Space</span> پرش.
+          <span class="touchHint">برای لمس، روی صفحه بکش</span>
+        </p>
+        <div class="btnrow">
+          <button id="startBtn">شروع بازی</button>
+          <button class="ghost" id="toggleSound" title="این نسخه صدا ندارد، فقط UI است">افکت‌ها</button>
+        </div>
+        <div class="subtitle" style="margin-top:10px; color:rgba(234,240,255,.55)">
+          نکته: این بازی فقط برای پس‌زمینه/حال خفن و ساختار کامل UI است—می‌تونی بعداً قسمت‌های بیشتری بهش اضافه کنیم.
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="help panel" id="helpBox">
+        <strong>ترفند:</strong> به پولک‌ها بخواب (جمع‌شدن با گیرایی نئونی). موانع با موج‌های رنگی میاد.
+        <br/>لول بعدی وقتی میاد که پولک کافی جمع کنی.
+      </div>
+      <div class="bar panel">
+        <div style="display:flex; justify-content:space-between; margin-bottom:8px; color:var(--muted); font-size:12px;">
+          <span>پیشرفت لول</span>
+          <span id="progTxt">0/0</span>
+        </div>
+        <div class="meter"><span id="progBar"></span></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  const scoreEl = document.getElementById('score');
+  const coinsEl = document.getElementById('coins');
+  const levelEl = document.getElementById('level');
+  const hpEl = document.getElementById('hp');
+  const stateTxt = document.getElementById('stateTxt');
+  const progBar = document.getElementById('progBar');
+  const progTxt = document.getElementById('progTxt');
+
+  const startBtn = document.getElementById('startBtn');
+  const modalWrap = document.getElementById('modalWrap');
+
+  // Resize
+  let W=0,H=0,dpr=1;
+  function resize(){
+    dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    W = Math.floor(window.innerWidth);
+    H = Math.floor(window.innerHeight);
+    canvas.width = Math.floor(W*dpr);
+    canvas.height = Math.floor(H*dpr);
+    canvas.style.width = W+'px';
+    canvas.style.height = H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+
+  // ---------- Helpers ----------
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const rand = (a,b)=>a+Math.random()*(b-a);
+  const lerp = (a,b,t)=>a+(b-a)*t;
+
+  function glowLine(x1,y1,x2,y2,color,th=2){
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = th;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function circle(x,y,r,fill,stroke,sw=2){
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    if(fill){
+      ctx.fillStyle = fill;
+      ctx.fill();
+    }
+    if(stroke){
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = sw;
+      ctx.shadowColor = stroke;
+      ctx.shadowBlur = 18;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+  }
+
+  // ---------- World ----------
+  let running=false;
+  let lastT=0;
+
+  const game = {
+    time:0,
+    cameraY:0,
+    score:0,
+    coins:0,
+    level:1,
+    hp:3,
+    needCoins(){ return 10 + (this.level-1)*6; },
+    progress(){ return {cur:this.coins%this.needCoins(), total:this.needCoins()}; },
+    speed: 220,
+    jumpCooldown:0
+  };
+
+  const player = {
+    x:0, y:0,
+    r:14,
+    vx:0, vy:0,
+    targetX:0,
+    onGround:true,
+    jumpForce:520,
+    speed:540,
+    invuln:0
+  };
+
+  const atoms = {
+    coins: [],
+    obstacles: [],
+    particles: [],
+    sparks: []
+  };
+
+  function reset(){
+    game.time=0; game.cameraY=0; game.score=0; game.coins=0; game.level=1; game.hp=3;
+    game.speed = 220;
+    player.x = W/2;
+    player.y = H*0.72;
+    player.vx = player.vy = 0;
+    player.onGround = true;
+    player.invuln = 0;
+    atoms.coins.length=0;
+    atoms.obstacles.length=0;
+    atoms.particles.length=0;
+    atoms.sparks.length=0;
+
+    // spawn initial coins
+    for(let i=0;i<16;i++) spawnCoin(true);
+    for(let i=0;i<10;i++) spawnObstacle(true);
+
+    updateUI();
+  }
+
+  function spawnCoin(initial=false){
+    const margin=30;
+    const x = rand(margin, W-margin);
+    const y = initial ? rand(H*0.05, H*0.75) : -30 - rand(0, H*0.55);
+    const r = rand(10, 13);
+    const hue = Math.random()<0.5 ? 260 : 195; // violet/cyan
+    atoms.coins.push({
+      x,y,r,
+      vy:0,
+      hue,
+      rot: rand(0, Math.PI*2),
+      wob: rand(0, Math.PI*2),
+      alive:true
+    });
+  }
+
+  function spawnObstacle(initial=false){
+    const margin=30;
+    const x = rand(margin, W-margin);
+    const y = initial ? rand(H*0.1, H*0.75) : -60 - rand(0, H*0.65);
+    const w = rand(26, 46);
+    const h = rand(18, 34);
+    const kind = Math.random()<0.5 ? "bar" : "block";
+    const danger = kind==="bar" ? 'danger' : 'danger2';
+    const phase = rand(0, Math.PI*2);
+
+    atoms.obstacles.push({
+      x,y,w,h,kind,
+      baseSpeed: game.speed * rand(0.78, 1.08),
+      phase,
+      alive:true,
+      hitCooldown:0
+    });
+  }
+
+  // Background particles (ambient)
+  const bg = {
+    stars: [],
+  };
+  function initBg(){
+    bg.stars.length=0;
+    const count = Math.floor((W*H)/45000);
+    for(let i=0;i<count;i++){
+      bg.stars.push({
+        x: rand(0,W),
+        y: rand(0,H),
+        r: rand(0.6, 2.2),
+        a: rand(0.05, 0.22),
+        vx: rand(-0.15,0.15),
+        vy: rand(0.3, 1.0),
+        hue: Math.random()<0.5 ? 260 : 195
+      });
+    }
+  }
+
+  function stepBg(dt){
+    for(const s of bg.stars){
+      s.x += s.vx*dt;
+      s.y += (s.vy*game.speed/220)*dt;
+      if(s.y>H+10){ s.y=-10; s.x=rand(0,W); s.vx=rand(-0.15,0.15); }
+      if(s.x< -10) s.x=W+10;
+      if(s.x> W+10) s.x=-10;
+    }
+  }
+
+  // ---------- Input ----------
+  const keys = {w:false,a:false,s:false,d:false,space:false};
+  let pointer = {down:false, x:0, y:0};
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.code==='KeyW') keys.w=true;
+    if(e.code==='KeyA') keys.a=true;
+    if(e.code==='KeyS') keys.s=true;
+    if(e.code==='KeyD') keys.d=true;
+    if(e.code==='Space') keys.space=true;
+  });
+  window.addEventListener('keyup', (e)=>{
+    if(e.code==='KeyW') keys.w=false;
+    if(e.code==='KeyA') keys.a=false;
+    if(e.code==='KeyS') keys.s=false;
+    if(e.code==='KeyD') keys.d=false;
+    if(e.code==='Space') keys.space=false;
+  });
+
+  window.addEventListener('mousemove', (e)=>{
+    pointer.x = e.clientX;
+    pointer.y = e.clientY;
+    if(running){
+      player.targetX = pointer.x;
+    }
+  });
+
+  // Touch/drag
+  window.addEventListener('touchstart', (e)=>{
+    pointer.down=true;
+    const t = e.touches[0];
+    pointer.x = t.clientX; pointer.y = t.clientY;
+    if(running) player.targetX = pointer.x;
+  }, {passive:true});
+  window.addEventListener('touchmove', (e)=>{
+    const t = e.touches[0];
+    pointer.x = t.clientX; pointer.y = t.clientY;
+    if(running) player.targetX = pointer.x;
+  }, {passive:true});
+  window.addEventListener('touchend', ()=>{ pointer.down=false; });
+
+  // ---------- Effects ----------
+  function sparkBurst(x,y,baseHue,count=18){
+    for(let i=0;i<count;i++){
+      const ang = rand(0, Math.PI*2);
+      const sp = rand(60, 260);
+      atoms.sparks.push({
+        x,y,
+        vx: Math.cos(ang)*sp,
+        vy: Math.sin(ang)*sp - rand(30,120),
+        life: rand(0.25,0.65),
+        t:0,
+        hue: baseHue + rand(-20,20),
+        r: rand(1.2, 2.6)
+      });
+    }
+  }
+
+  function particle(x,y,color,count=8){
+    for(let i=0;i<count;i++){
+      const ang = rand(0, Math.PI*2);
+      const sp = rand(50, 220);
+      atoms.particles.push({
+        x,y,
+        vx: Math.cos(ang)*sp,
+        vy: Math.sin(ang)*sp,
+        life: rand(0.25,0.65),
+        t:0,
+        color,
+        r: rand(1.2,2.8),
+        grow: rand(0,1)
+      });
+    }
+  }
+
+  function lose(){
+    if(player.invuln>0) return;
+    game.hp--;
+    player.invuln = 1.2;
+    stateTxt.textContent = "برخورد!";
+
+    sparkBurst(player.x, player.y, 350, 26);
+    particle(player.x, player.y, 'rgba(255,77,109,.95)', 18);
+
+    if(game.hp<=0){
+      running=false;
+      stateTxt.textContent = "بازی تمام شد";
+      modalWrap.style.display = 'flex';
+    }
+  }
+
+  function nextLevel(){
+    game.level++;
+    game.speed = 220 + (game.level-1)*34;
+    // refill
+    for(let i=0;i<10;i++) spawnCoin();
+    for(let i=0;i<8;i++) spawnObstacle();
+    player.invuln = 0.8;
+    stateTxt.textContent = `لول ${game.level}`;
+  }
+
+  function updateUI(){
+    scoreEl.textContent = game.score;
+    coinsEl.textContent = game.coins;
+    levelEl.textContent = game.level;
+    hpEl.textContent = game.hp;
+
+    const {cur,total} = game.progress();
+    progTxt.textContent = `${cur}/${total}`;
+    const pct = total ? (cur/total)*100 : 0;
+    progBar.style.width = pct.toFixed(1)+'%';
+  }
+
+  // ---------- Game Loop ----------
+  function drawBackground(){
+    // Clear with alpha to create trails effect
+    ctx.fillStyle = 'rgba(0,0,0,.22)';
+    ctx.fillRect(0,0,W,H);
+
+    // Ambient gradient sweep
+    const g = ctx.createLinearGradient(0,0,W,H);
+    g.addColorStop(0, 'rgba(124,92,255,.08)');
+    g.addColorStop(0.55, 'rgba(25,211,255,.06)');
+    g.addColorStop(1, 'rgba(46,229,157,.04)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // Grid lines
+    const horizon = H*0.15;
+    ctx.save();
+    ctx.globalAlpha = 0.22;
+    for(let i=0;i<18;i++){
+      const y = horizon + i*(H-horizon)/18;
+      glowLine(0,y,W,y, i%2? 'rgba(25,211,255,.12)' : 'rgba(124,92,255,.12)', 1.1);
+    }
+    ctx.restore();
+
+    // Stars / particles
+    stepBg(1); // will be updated in update loop too, but keep cheap look
+    for(const s of bg.stars){
+      ctx.save();
+      ctx.globalAlpha = s.a;
+      ctx.fillStyle = s.hue===260 ? 'rgba(124,92,255,.95)' : 'rgba(25,211,255,.95)';
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function draw(){
+    // Background
+    ctx.clearRect(0,0,W,H);
+    // trails: instead of clearRect use semi transparent overlay
+    ctx.fillStyle = 'rgba(0,0,0,.26)';
+    ctx.fillRect(0,0,W,H);
+
+    // Gradient overlay
+    const g = ctx.createRadialGradient(W*0.25, H*0.15, 50, W*0.25, H*0.15, Math.max(W,H)*0.9);
+    g.addColorStop(0,'rgba(124,92,255,.18)');
+    g.addColorStop(0.35,'rgba(124,92,255,.06)');
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+    const g2 = ctx.createRadialGradient(W*0.85, H*0.25, 50, W*0.85, H*0.25, Math.max(W,H)*0.9);
+    g2.addColorStop(0,'rgba(25,211,255,.16)');
+    g2.addColorStop(0.35,'rgba(25,211,255,.05)');
+    g2.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g2; ctx.fillRect(0,0,W,H);
+
+    // Neon grid
+    const horizon = H*0.2 + Math.sin(game.time*0.6)*6;
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    for(let i=0;i<22;i++){
+      const t = i/21;
+      const y = lerp(horizon, H*0.92, t);
+      const c = (i%3===0) ? 'rgba(124,92,255,.16)' : (i%3===1 ? 'rgba(25,211,255,.14)' : 'rgba(46,229,157,.10)');
+      glowLine(-10,y,W+10,y,c,1.0);
+    }
+    ctx.restore();
+
+    // Ambient stars
+    for(const s of bg.stars){
+      ctx.save();
+      ctx.globalAlpha = s.a;
+      ctx.fillStyle = s.hue===260 ? 'rgba(124,92,255,.95)' : 'rgba(25,211,255,.95)';
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Coins
+    for(const c of atoms.coins){
+      if(!c.alive) continue;
+      const pulse = 0.6 + 0.4*Math.sin(game.time*3 + c.wob);
+      const colA = `hsla(${c.hue}, 100%, 70%, ${0.85*pulse})`;
+      const colB = `hsla(${c.hue===260?195:260}, 100%, 70%, ${0.55*pulse})`;
+      const r = c.r*(0.9 + 0.12*pulse);
+
+      // glow ring
+      ctx.save();
+      ctx.translate(c.x, c.y);
+      ctx.rotate(c.rot + Math.sin(game.time*2+c.wob)*0.2);
+      ctx.globalAlpha = 0.95;
+      ctx.shadowColor = colA;
+      ctx.shadowBlur = 26;
+
+      circle(0,0,r, `rgba(0,0,0,0)`, colA, 2.0);
+      // inner
+      ctx.shadowBlur = 0;
+      circle(0,0,r*0.55, colB, 'rgba(255,255,255,.25)', 1.2);
+
+      // little rays
+      for(let i=0;i<6;i++){
+        const ang = (Math.PI*2*i)/6;
+        glowLine(Math.cos(ang)*r*0.2, Math.sin(ang)*r*0.2, Math.cos(ang)*r*1.15, Math.sin(ang)*r*1.15, colA, 1);
+      }
+      ctx.restore();
+    }
+
+    // Obstacles
+    for(const o of atoms.obstacles){
+      if(!o.alive) continue;
+      const t = game.time*2 + o.phase;
+      const wob = Math.sin(t)*6;
+      const x = o.x + wob*0.35;
+      const y = o.y;
+
+      ctx.save();
+      ctx.translate(x, y);
+
+      const dangerCol = 'rgba(255,77,109,.9)';
+      const neonCol = 'rgba(124,92,255,.65)';
+
+      // gradient fill
+      const gg = ctx.createLinearGradient(0,0,o.w,o.h);
+      gg.addColorStop(0, 'rgba(255,77,109,.35)');
+      gg.addColorStop(0.5, 'rgba(124,92,255,.22)');
+      gg.addColorStop(1, 'rgba(25,211,255,.18)');
+
+      ctx.fillStyle = gg;
+      ctx.strokeStyle = dangerCol;
+      ctx.lineWidth = 2;
+
+      ctx.shadowColor = dangerCol;
+      ctx.shadowBlur = 28;
+
+      if(o.kind==="bar"){
+        ctx.beginPath();
+        const r = 10;
+        const w=o.w,h=o.h;
+        // rounded rect
+        ctx.moveTo(-w/2+r, -h/2);
+        ctx.arcTo(w/2, -h/2, w/2, h/2, r);
+        ctx.arcTo(w/2, h/2, -w/2, h/2, r);
+        ctx.arcTo(-w/2, h/2, -w/2, -h/2, r);
+        ctx.arcTo(-w/2, -h/2, w/2, -h/2, r);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // stripes
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 0.9;
+        for(let i=-2;i<=2;i++){
+          glowLine(-o.w/2, (i*8), o.w/2, (i*8)+o.h*0.1, neonCol, 1);
+        }
+      }else{
+        const w=o.w,h=o.h;
+        ctx.beginPath();
+        ctx.roundRect(-w/2,-h/2,w,h,10);
+        ctx.fill();
+        ctx.stroke();
+        // cross
+        ctx.shadowBlur=0;
+        glowLine(-w/2,-h/2,w/2,h/2,'rgba(255,77,109,.65)',2);
+        glowLine(w/2,-h/2,-w/2,h/2,'rgba(25,211,255,.55)',2);
+      }
+      ctx.restore();
+    }
+
+    // Player
+    ctx.save();
+    const inv = player.invuln>0;
+    const alpha = inv ? (0.4+0.6*Math.sin(game.time*20))*1 : 1;
+    ctx.globalAlpha = alpha;
+
+    const pr = player.r*(1 + 0.06*Math.sin(game.time*6));
+    const pcol = 'rgba(25,211,255,.95)';
+    const scol = 'rgba(124,92,255,.85)';
+
+    // shadow
+    ctx.save();
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle='rgba(0,0,0,.8)';
+    ctx.beginPath();
+    const sh = pr*0.9;
+    ctx.ellipse(player.x, player.y+pr*1.25, sh*1.1, sh*0.55, 0, 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // core
+    ctx.shadowColor = pcol;
+    ctx.shadowBlur = 26;
+    circle(player.x, player.y, pr, 'rgba(0,0,0,0)', pcol, 2.4);
+    circle(player.x, player.y, pr*0.62, `rgba(124,92,255,.25)`, scol, 2.0);
+
+    // visor
+    ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(234,240,255,.8)';
+    ctx.lineWidth=2;
+    glowLine(player.x-pr*0.35, player.y-pr*0.05, player.x+pr*0.35, player.y-pr*0.05, 'rgba(234,240,255,.65)', 2);
+
+    // thrusters (when moving)
+    const sp = Math.abs(player.vx);
+    if(sp>20){
+      for(let i=0;i<3;i++){
+        const rr = pr*(0.35 + i*0.12);
+        const dy = player.y + pr*(0.35 + i*0.08);
+        glowLine(player.x - rr*0.2, dy, player.x + rr*0.05, dy+rand(10,18), 'rgba(46,229,157,.5)', 1);
+      }
+    }
+    ctx.restore();
+
+    // particles & sparks
+    for(const p of atoms.particles){
+      if(p.t>=p.life) continue;
+      const k = p.t/p.life;
+      ctx.save();
+      ctx.globalAlpha = (1-k);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 16;
+      circle(p.x, p.y, p.r*(1+p.grow*k), p.color, p.color, 0);
+      ctx.restore();
+    }
+    for(const s of atoms.sparks){
+      if(s.t>=s.life) continue;
+      const k = s.t/s.life;
+      ctx.save();
+      ctx.globalAlpha = (1-k);
+      ctx.shadowColor = `hsla(${s.hue},100%,70%,.9)`;
+      ctx.shadowBlur = 18;
+      circle(s.x, s.y, s.r, `hsla(${s.hue},100%,70%,.9)`, `hsla(${s.hue},100%,70%,.9)`, 0);
+      ctx.restore();
+    }
+  }
+
+  function update(dt){
+    game.time += dt;
+
+    // background motion
+    for(const s of bg.stars){
+      s.x += s.vx*dt*60;
+      s.y += (s.vy*(game.speed/220))*dt*60;
+      if(s.y>H+10){ s.y=-10; s.x=rand(0,W); s.vx=rand(-0.15,0.15); }
+      if(s.x< -10) s.x=W+10;
+      if(s.x> W+10) s.x=-10;
+    }
+
+    // Level difficulty ramp
+    game.speed = 220 + (game.level-1)*34;
+
+    // Player controls
+    const target = player.targetX || W/2;
+    const move = (keys.a?-1:0) + (keys.d?1:0);
+    const moveY = (keys.w?-1:0) + (keys.s?1:0);
+
+    // horizontal follow: mouse has priority if not touch
+    let ax = 0;
+    if(keys.a || keys.d){
+      ax = move * player.speed;
+    }else{
+      ax = (target - player.x) * 10;
+    }
+    player.vx = lerp(player.vx, ax, clamp(dt*10,0,1));
+
+    // vertical
+    if(moveY!==0){
+      player.vy = lerp(player.vy, moveY*player.speed*0.65, clamp(dt*8,0,1));
+      player.onGround=false;
+    }
+
+    // gravity
+    const g = 1350;
+    player.vy += g*dt;
+
+    // jump
+    if(player.jumpCooldown>0) player.jumpCooldown -= dt;
+    if(keys.space && player.onGround && player.jumpCooldown<=0){
+      player.vy = -player.jumpForce;
+      player.onGround=false;
+      player.jumpCooldown = 0.33;
+      sparkBurst(player.x, player.y, 195, 14);
+    }
+
+    // integrate
+    player.x += player.vx*dt;
+    player.y += player.vy*dt;
+
+    // bounds
+    const marginX=18;
+    player.x = clamp(player.x, marginX, W-marginX);
+
+    const floor = H*0.82;
+    if(player.y > floor){
+      player.y = floor;
+      player.vy = 0;
+      player.onGround = true;
+    }
+    if(player.y < H*0.10){
+      player.y = H*0.10;
+      player.vy = 0;
+    }
+
+    // invuln timer
+    if(player.invuln>0) player.invuln -= dt;
+
+    // Spawn and move world
+    // coins/obstacles drift down with camera feel
+    const scroll = (game.speed + game.level*22) * dt;
+
+    for(const c of atoms.coins){
+      if(!c.alive) continue;
+      c.y += scroll*(0.95 + (c.r/12)*0.08);
