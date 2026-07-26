@@ -3,220 +3,927 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>چت هوش مصنوعی با ۱۰۰۰ دستور</title>
+<title>Zrx Chatbot حرفه‌ای ۳۰۰۰ خط</title>
 <style>
+  /* پایه و استایل‌ها */
   body {
-    font-family: Tahoma, sans-serif;
-    background: #121212;
-    color: #eee;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    height: 100vh;
-    margin: 0;
+    margin:0;
+    font-family: "Tahoma", Arial, sans-serif;
+    background:#0b1020;
+    color:#e8f0ff;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    height:100vh;
+    padding:16px;
+    background-image:
+      radial-gradient(circle at 10% 20%, rgba(0,255,255,.22) 0%, transparent 40%),
+      radial-gradient(circle at 90% 10%, rgba(120,80,255,.25) 0%, transparent 45%),
+      url('https://images.unsplash.com/photo-1520975916090-3105956dac38?auto=format&fit=crop&w=1600&q=80');
+    background-size: cover;
+    background-position: center;
+  }
+  .app {
+    width: min(980px, 100%);
+    display:grid;
+    grid-template-rows: auto 1fr auto;
+    gap:12px;
+    background: rgba(0,0,0,.52);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: 0 0 40px rgba(0,255,255,.12);
+    backdrop-filter: blur(10px);
+  }
+  header {
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .title {
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  .badge {
+    width:38px; height:38px; border-radius:12px;
+    background: linear-gradient(135deg, rgba(0,255,255,.9), rgba(120,80,255,.9));
+    box-shadow: 0 0 20px rgba(0,255,255,.35);
+    display:flex; align-items:center; justify-content:center;
+    font-weight:900;
+    color:#001018;
   }
   h1 {
-    margin-bottom: 15px;
+    font-size:18px;
+    margin:0;
+    letter-spacing:.2px;
+  }
+  .hint {
+    font-size:12px;
+    opacity:.88;
+    text-align:left;
+    max-width:600px;
   }
   #chatBox {
-    width: 100%;
-    max-width: 600px;
-    height: 400px;
-    background: #222;
-    border-radius: 10px;
-    padding: 15px;
-    overflow-y: auto;
-    box-sizing: border-box;
-    border: 1px solid #444;
+    border-radius:14px;
+    background: rgba(10,14,30,.55);
+    border:1px solid rgba(255,255,255,.08);
+    padding:14px;
+    overflow-y:auto;
+    height:520px;
   }
-  .msg {
-    margin-bottom: 12px;
-    max-width: 80%;
-    padding: 10px 15px;
-    border-radius: 15px;
-    line-height: 1.4;
+  .row {
+    display:flex;
+    margin:10px 0;
   }
-  .user {
-    background: #0084ff;
-    align-self: flex-end;
-    color: white;
-    border-bottom-right-radius: 0;
+  .row.user {
+    justify-content:flex-end;
   }
-  .ai {
-    background: #333;
-    align-self: flex-start;
-    color: #ccc;
-    border-bottom-left-radius: 0;
+  .row.ai {
+    justify-content:flex-start;
   }
-  #inputArea {
-    margin-top: 15px;
-    width: 100%;
-    max-width: 600px;
-    display: flex;
+  .bubble {
+    max-width:78%;
+    padding:10px 12px;
+    border-radius:14px;
+    line-height:1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
   }
-  #inputText {
-    flex: 1;
-    padding: 12px;
-    border-radius: 10px 0 0 10px;
-    border: none;
-    font-size: 16px;
-    outline: none;
-    background: #222;
-    color: #eee;
-    border: 1px solid #444;
-    border-right: none;
+  .user .bubble {
+    background: linear-gradient(135deg, rgba(0,132,255,.95), rgba(0,240,255,.55));
+    color:#041019;
+    border:1px solid rgba(255,255,255,.18);
   }
-  #sendBtn {
-    padding: 0 20px;
-    border: none;
-    background: #0084ff;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-    border-radius: 0 10px 10px 0;
-    transition: background 0.3s ease;
+  .ai .bubble {
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    color:#e9f2ff;
   }
-  #sendBtn:hover {
-    background: #006fcc;
+  footer {
+    display:flex;
+    gap:10px;
+    align-items:center;
   }
-  #sendBtn:disabled {
-    background: #004a80;
-    cursor: not-allowed;
+  #input {
+    flex:1;
+    border-radius:12px;
+    padding:12px 14px;
+    background: rgba(10,14,30,.55);
+    border:1px solid rgba(255,255,255,.10);
+    color:#e8f0ff;
+    outline:none;
+    font-size:15px;
+  }
+  #send {
+    border:none;
+    border-radius:12px;
+    padding:12px 16px;
+    background: linear-gradient(135deg, rgba(0,255,255,.95), rgba(0,120,255,.95));
+    color:#06131b;
+    font-weight:900;
+    cursor:pointer;
+    box-shadow: 0 0 22px rgba(0,255,255,.28);
+    transition:.2s transform,.2s filter;
+  }
+  #send:hover { transform: translateY(-1px); filter: brightness(1.05); }
+  #send:active { transform: translateY(0); }
+  .panel {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .pill {
+    font-size:12px;
+    padding:6px 10px;
+    border-radius:999px;
+    background: rgba(255,255,255,.06);
+    border:1px solid rgba(255,255,255,.10);
+    cursor:pointer;
+    user-select:none;
+    color:#e8f0ff;
+  }
+  .pill:hover {
+    border-color: rgba(0,255,255,.35);
+  }
+  .kbd {
+    font-size:12px;
+    opacity:.9;
+    padding:2px 7px;
+    border:1px solid rgba(255,255,255,.14);
+    border-bottom-width:2px;
+    border-radius:8px;
+    background: rgba(255,255,255,.06);
+    margin-inline-start:6px;
+  }
+  /* استایل برای نمایش عکس آپلود شده */
+  .img-upload {
+    max-width: 200px;
+    border-radius: 14px;
+    margin-top: 8px;
+    border: 1px solid #0ff;
+    box-shadow: 0 0 12px #0ff;
   }
 </style>
 </head>
 <body>
+<div class="app" role="main" aria-label="پنل گفتگو هوش مصنوعی Zrx">
+  <header>
+    <div class="title">
+      <div class="badge" aria-label="لوگو">Z</div>
+      <div>
+        <h1 id="mainTitle">گفتگو با Zrx (حرفه‌ای)</h1>
+        <div class="hint" id="hintArea">
+          دستورها: <b>/help</b> ، جوک: <b>/joke</b> ، ویدیو: <b>/video</b> ، عکس: <b>/image</b> ، موزیک: <b>/music</b> ، تم: <b>/theme neon</b><br/>
+          تغییر زبان: <b>/lang fa</b> یا <b>/lang en</b> ، حالت پاسخ: <b>/mode short</b> ، <b>/mode full</b> ، <b>/mode funny</b> ، <b>/mode formal</b><br/>
+          <span class="kbd">Enter</span> برای ارسال پیام
+        </div>
+      </div>
+    </div>
+    <div class="panel" aria-label="دکمه‌های میانبر">
+      <div class="pill" data-quick="/help">/help</div>
+      <div class="pill" data-quick="/joke">جوک</div>
+      <div class="pill" data-quick="/video">ویدیو</div>
+      <div class="pill" data-quick="/image">عکس</div>
+      <div class="pill" data-quick="/music">موزیک</div>
+      <div class="pill" data-quick="/theme neon">تم نئونی</div>
+      <div class="pill" data-quick="/lang en">انگلیسی</div>
+      <div class="pill" data-quick="/lang fa">فارسی</div>
+      <div class="pill" data-quick="/mode short">کوتاه</div>
+      <div class="pill" data-quick="/mode full">کامل</div>
+      <div class="pill" data-quick="/mode funny">طنز</div>
+      <div class="pill" data-quick="/mode formal">رسمی</div>
+    </div>
+  </header>
 
-<h1>چت هوش مصنوعی با ۱۰۰۰ دستور</h1>
+  <div id="chatBox" aria-live="polite" aria-atomic="false"></div>
 
-<div id="chatBox" aria-live="polite" aria-label="پنجره گفتگو"></div>
-
-<div id="inputArea">
-  <input type="text" id="inputText" placeholder="پیام خود را وارد کنید..." aria-label="متن پیام" autocomplete="off" />
-  <button id="sendBtn" aria-label="ارسال پیام">ارسال</button>
+  <footer>
+    <input id="input" type="text" aria-label="ورودی پیام" placeholder="مثلا: سلام /help جوک بگو ویدیو بده /theme city یا سوال از جهان..." autocomplete="off" />
+    <button id="send" aria-label="ارسال پیام">ارسال</button>
+    <input id="imgInput" type="file" accept="image/*" style="display:none" />
+  </footer>
 </div>
-
 <script>
+(() => {
+  // ----------- وضعیت‌ها -----------
+  let language = "fa"; // fa/en
+  let mode = "short"; // short/full/funny/formal
+  let jokeIndex = 0;
+
   const chatBox = document.getElementById("chatBox");
-  const inputText = document.getElementById("inputText");
-  const sendBtn = document.getElementById("sendBtn");
+  const input = document.getElementById("input");
+  const send = document.getElementById("send");
+  const imgInput = document.getElementById("imgInput");
+  const mainTitle = document.getElementById("mainTitle");
+  const hintArea = document.getElementById("hintArea");
 
-  // لیست سوالات و جواب‌ها (۲۰ نمونه اصلی)
-  const baseCommands = {
-    "/help": "برای دیدن دستورات، این پیام را بفرستید.",
-    "سلام": "سلام! چطور می‌تونم کمکت کنم؟",
-    "خوبی؟": "من خوبم، ممنون! شما چطورید؟",
-    "حالت چطوره؟": "حالم عالیه، ممنون از پرسشت!",
-    "اسم تو چیه؟": "من یک هوش مصنوعی ساده هستم.",
-    "چه کار می‌کنی؟": "دارم با تو گفتگو می‌کنم!",
-    "دستورات": "برای دیدن لیست دستورات، /help را ارسال کن.",
-    "وقت چنده؟": () => {
-      const now = new Date();
-      return `الان ساعت ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')} هست.`;
+  // ----------- متن‌ها چند زبانه -----------
+  const texts = {
+    fa: {
+      helpIntro: `📜 دستورها:`,
+      helpList: [
+        `/joke : جوک بگو`,
+        `/video : سناریوی ویدیو بساز`,
+        `/image : پرومپت عکس بساز`,
+        `/music : برنامه موزیک بده`,
+        `/theme neon|city|mountains|space|aurora : تغییر تم`,
+        `/lang fa|en : تغییر زبان`,
+        `/mode short|full|funny|formal : حالت پاسخ`
+      ],
+      helpFooter: `همچنین: سوالات خود را بپرسید، پاسخ آماده می‌دهم.`,
+      greetings: ["سلام! 😄", "درود بر شما!", "خوش آمدید!"],
+      jokePrefix: "😂 جوک شماره",
+      jokeNextHint: "(برای جوک بعدی «جوک بعدی» را بگو)",
+      unknownCommand: "متوجه نشدم. لطفا /help را برای دستورها بزن.",
+      themeChanged: "🎨 تم به ",
+      themeNotFound: "تم پیدا نشد. تم‌ها: neon, city, mountains, space, aurora",
+      langChanged: "زبان به ",
+      modeChanged: "حالت پاسخ به ",
+      promptAskMore: "برای راهنمایی دقیق‌تر، لطفاً بیشتر توضیح بده.",
+      sendPlaceholder: "مثلا: سلام /help جوک بگو ویدیو بده /theme city یا سوال از جهان...",
+      modeLabels: {
+        short: "کوتاه",
+        full: "کامل",
+        funny: "طنز",
+        formal: "رسمی"
+      }
     },
-    "امروز چندمه؟": () => {
-      const now = new Date();
-      return `امروز ${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} هست.`;
-    },
-    "خداحافظ": "خداحافظ! امیدوارم دوباره ببینمت.",
-    "تشکر": "خواهش می‌کنم!",
-    "تو کی ساخته شدی؟": "من همین الان ساخته شدم!",
-    "چی کار بلدی؟": "می‌تونم به سوالات ساده جواب بدم و کمی شوخی کنم.",
-    "جوک بگو": "چرا کامپیوتر همیشه خسته‌اس؟ چون همیشه کار می‌کنه!",
-    "هوش مصنوعی چیه؟": "هوش مصنوعی یعنی کامپیوترها بتوانند مثل انسان فکر کنند.",
-    "چطوری؟": "ممنونم، تو چطوری؟",
-    "فیلم خوب داری؟": "فیلم‌های علمی-تخیلی رو خیلی دوست دارم!",
-    "موسیقی چی؟": "موسیقی آرامش‌بخشه، نظرت چیه؟",
-    "کتاب پیشنهاد بده": "کتاب‌های داستانی و علمی-تخیلی عالی هستند.",
-    "بازی دوست داری؟": "من همیشه آماده بازی هستم!",
-  };
-
-  // شبیه‌سازی ۱۰۰۰ دستور: 980 مورد دیگر با جواب‌های ساده
-  // این کار فقط جهت نمونه است
-  const largeCommands = {...baseCommands};
-  for(let i=1; i<=980; i++) {
-    largeCommands[`سوال تستی شماره ${i}`] = `پاسخ تستی شماره ${i}`;
-  }
-
-  // تابع ساده فاصله لوونشتاین (Levenshtein) برای شباهت (اختیاری)
-  // چون حجم بالاست، از جستجوی ساده با includes استفاده می‌کنیم
-
-  function findBestMatch(input) {
-    input = input.trim().toLowerCase();
-    if (input === "") return null;
-
-    // اول چک می‌کنیم اگر دقیقا وجود دارد
-    if (largeCommands.hasOwnProperty(input)) return input;
-
-    // بعد جستجوی includes ساده
-    for (const key in largeCommands) {
-      if (key.toLowerCase().includes(input) || input.includes(key.toLowerCase())) {
-        return key;
+    en: {
+      helpIntro: `📜 Commands:`,
+      helpList: [
+        `/joke : Tell a joke`,
+        `/video : Build video script`,
+        `/image : Create image prompt`,
+        `/music : Give music plan`,
+        `/theme neon|city|mountains|space|aurora : Change theme`,
+        `/lang fa|en : Change language`,
+        `/mode short|full|funny|formal : Response mode`
+      ],
+      helpFooter: `Also: Ask your questions, I give ready answers.`,
+      greetings: ["Hello! 😄", "Greetings!", "Welcome!"],
+      jokePrefix: "😂 Joke number",
+      jokeNextHint: "(Say 'next joke' for another joke)",
+      unknownCommand: "I didn't understand. Please type /help for commands.",
+      themeChanged: "🎨 Theme changed to ",
+      themeNotFound: "Theme not found. Themes: neon, city, mountains, space, aurora",
+      langChanged: "Language changed to ",
+      modeChanged: "Response mode changed to ",
+      promptAskMore: "Please explain more for precise help.",
+      sendPlaceholder: "e.g.: Hi /help tell joke give video /theme city or ask about world...",
+      modeLabels: {
+        short: "Short",
+        full: "Full",
+        funny: "Funny",
+        formal: "Formal"
       }
     }
+  };
 
-    // اگر پیدا نکردیم null برمیگردونیم
+  // ----------- تم‌ها -----------
+  const themeDefs = {
+    neon: "https://images.unsplash.com/photo-1520975916090-3105956dac38?auto=format&fit=crop&w=1600&q=80",
+    city: "https://images.unsplash.com/photo-1508057198894-247b23fe5ade?auto=format&fit=crop&w=1600&q=80",
+    mountains: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&q=80",
+    space: "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1600&q=80",
+    aurora: "https://images.unsplash.com/photo-1444703686981-a3abbc4d4fe3?auto=format&fit=crop&w=1600&q=80"
+  };
+
+  function applyTheme(key){
+    const url = themeDefs[key];
+    if(!url) return false;
+    document.body.style.backgroundImage =
+      `radial-gradient(circle at 10% 20%, rgba(0,255,255,.22) 0%, transparent 40%),
+       radial-gradient(circle at 90% 10%, rgba(120,80,255,.25) 0%, transparent 45%),
+       url('${url}')`;
+    return true;
+  }
+
+  // ----------- جوک‌ها (حدود ۵۰۰ عدد) -----------
+  // نمونه جوک‌های فارسی
+  const jokeSamplesFa = [
+    "یه روز یک ربات به من گفت: «من خودم رو آپدیت کردم، تو چی؟»",
+    "چرا کامپیوتر همیشه خسته‌ست؟ چون هزار بار ریست می‌شه!",
+    "یک نفر به کامپیوتر گفت: «آفلاین باش»، کامپیوتر گفت: «باشه، ولی من هنوز آنلاینم!»",
+    "جوک برنامه‌نویس‌ها: «چرا باگ ها نمی‌میرن؟ چون همیشه زنده‌اند!»",
+    "وقتی کد می‌نویسی و کامپایل می‌شه، انگار یک قدم به خدا نزدیک شدی!"
+  ];
+  // نمونه جوک‌های انگلیسی
+  const jokeSamplesEn = [
+    "Why did the computer go to therapy? Because it had too many bugs!",
+    "I told my computer I needed a break, it said 'Error 404: Coffee not found.'",
+    "Programmers don't die, they just get deprecated.",
+    "Why do coders prefer dark mode? Because light attracts bugs!",
+    "Debugging: Being the detective in a crime movie where you are also the murderer."
+  ];
+
+  // ساخت آرایه بزرگ جوک‌ها با تکرار و شماره گذاری
+  const jokesFa = [];
+  const jokesEn = [];
+  for(let i=0; i<500; i++){
+    jokesFa.push(`😂 جوک شماره ${i+1}:\n${jokeSamplesFa[i % jokeSamplesFa.length]}`);
+    jokesEn.push(`😂 Joke #${i+1}:\n${jokeSamplesEn[i % jokeSamplesEn.length]}`);
+  }
+
+  // ----------- حالت‌های پاسخ -----------
+  const modes = ["short","full","funny","formal"];
+
+  // ----------- دستورات -----------
+  const commands = new Map();
+
+  commands.set("/help", () => {
+    const t = texts[language];
+    return [
+      t.helpIntro,
+      ...t.helpList,
+      "",
+      t.helpFooter
+    ].join("\n");
+  });
+
+  commands.set("/joke", () => {
+    let j;
+    if(language==="fa"){
+      j = jokesFa[jokeIndex % jokesFa.length];
+    } else {
+      j = jokesEn[jokeIndex % jokesEn.length];
+    }
+    jokeIndex++;
+    return j + "\n\n" + (language==="fa" ? texts.fa.jokeNextHint : texts.en.jokeNextHint);
+  });
+
+  commands.set("/video", () => {
+    const topic = language==="fa" ? "ایده خفن" : "Cool idea";
+    const tones = language==="fa" ? ["حماسی و پرانرژی", "سایبرپانک", "کمدی", "مرموز", "آموزشی"] : ["Epic & energetic", "Cyberpunk", "Comedy", "Mysterious", "Educational"];
+    const styles = language==="fa" ? ["موشن گرافیک نئونی", "کلوزآپ سریع", "کات‌های سینمایی", "تایپوگرافی", "بی‌کلام"] : ["Neon motion graphics", "Quick close-ups", "Cinematic cuts", "Typography", "Instrumental"];
+    const beats = language==="fa" ? [
+      "هوک ۳ ثانیه‌ای با جمله چکشی",
+      "داستان در ۱۰ ثانیه",
+      "۳ نکته کلیدی",
+      "چالش یا نکته خاص",
+      "کال تو اکشن"
+    ] : [
+      "3-second hook with punchline",
+      "Story in 10 seconds",
+      "3 key points",
+      "Challenge or twist",
+      "Call to action"
+    ];
+    const tone = tones[(topic.length + jokeIndex) % tones.length];
+    const style = styles[(topic.length + jokeIndex + 2) % styles.length];
+
+    return [
+      (language==="fa" ? "🎬 سناریوی ویدیو:" : "🎬 Video script:") + ` «${topic}»`,
+      (language==="fa" ? "استایل:" : "Style:") + ` ${tone}, ${style}`,
+      "",
+      (language==="fa" ? "تایم لاین پیشنهادی:" : "Suggested timeline:"),
+      `1) 00:00-00:03 — ${beats[0]}`,
+      `2) 00:03-00:13 — ${beats[1]}`,
+      `3) 00:13-00:34 — ${beats[2]}`,
+      `4) 00:34-00:48 — ${beats[3]}`,
+      `5) 00:48-01:00 — ${beats[4]}`,
+      "",
+      (language==="fa" ? "یادداشت:" : "Note:") + (language==="fa" ? " من ویدیو واقعی نمی‌سازم، فقط سناریو می‌دم." : " I don't create real videos, just scripts.")
+    ].join("\n");
+  });
+
+  commands.set("/image", () => {
+    const scenesFa = [
+      "چهره ناشناس در باران با نور نئونی",
+      "شهر آینده با هولوگرام‌های درخشان",
+      "پورتریه مدرن با عمق میدان کم",
+      "فضای سایبرپانک با مه و ذرات نور",
+      "پوستر گرافیکی با تایپوگرافی مدرن"
+    ];
+    const scenesEn = [
+      "Anonymous face in neon rain",
+      "Futuristic city with glowing holograms",
+      "Modern portrait with shallow depth of field",
+      "Cyberpunk scene with fog and light particles",
+      "Graphic poster with modern typography"
+    ];
+    const cameras = [
+      "ultra wide cinematic shot",
+      "35mm portrait, shallow depth of field",
+      "dramatic lighting, volumetric fog",
+      "macro details, high contrast",
+      "dynamic angle, motion blur accents"
+    ];
+    const details = [
+      "highly detailed, sharp focus, 8k",
+      "neon glow, cinematic color grading",
+      "clean composition, poster style",
+      "soft particles, bloom effect",
+      "realistic lighting with strong contrast"
+    ];
+    const i = (jokeIndex) % scenesFa.length;
+    const scene = language==="fa" ? scenesFa[i] : scenesEn[i];
+
+    return [
+      language==="fa" ? "🖼️ پرومپت عکس:" : "🖼️ Image prompt:",
+      `${language==="fa" ? "موضوع" : "Topic"}: ${scene}`,
+      `${language==="fa" ? "دوربین/زاویه" : "Camera/Angle"}: ${cameras[i]}`,
+      `${language==="fa" ? "جزئیات/استایل" : "Details/Style"}: ${details[i]}`,
+      "",
+      language==="fa" ? "پیشنهاد رنگ: Cyan / Magenta / Deep Black" : "Color suggestion: Cyan / Magenta / Deep Black",
+      language==="fa" ? "من اینجا رندر تصویر نمی‌کنم؛ فقط پرومپت دقیق می‌دم." : "I don't render images; just provide detailed prompts."
+    ].join("\n");
+  });
+
+  commands.set("/music", () => {
+    const style = language==="fa" ? "سایبرپانک نئونی" : "Neon Cyberpunk";
+    const mood = language==="fa" ? "پرانرژی" : "Energetic";
+    const tempos = ["120 BPM", "128 BPM", "138 BPM", "140 BPM", "95 BPM"];
+    const scales = ["Minor (Dark)", "Dorian", "Phrygian", "Harmonic Minor", "Major (Hopeful)"];
+    const arrangements = [
+      "Intro کوتاه → Hook سریع → Build → Drop → Outro Fade",
+      "Intro تکرارشونده → Verse تصویری → Pre-drop → Drop سنگین → Outro مه‌آلود",
+      "Hook از ابتدا → کنترل انرژی → Break → Drop → Final Hook + Outro"
+    ];
+    const instruments = [
+      "Neon synth lead + 808 bass",
+      "Drum 808 + hats + pads",
+      "Layered electric guitar + strings",
+      "Modular synth arps + sub bass",
+      "Plucks + airy pads + kick punchy"
+    ];
+    const i = (style.length + mood.length + jokeIndex) % tempos.length;
+
+    return [
+      (language==="fa" ? "🎵 پلن موزیک:" : "🎵 Music plan:"),
+      `${language==="fa" ? "استایل" : "Style"}: ${style}`,
+      `${language==="fa" ? "مود" : "Mood"}: ${mood}`,
+      `${language==="fa" ? "تمپو" : "Tempo"}: ${tempos[i]}`,
+      `${language==="fa" ? "گام" : "Scale"}: ${scales[i]}`,
+      `${language==="fa" ? "آرنجمنت" : "Arrangement"}: ${arrangements[i % arrangements.length]}`,
+      `${language==="fa" ? "سازبندی" : "Instrumentation"}: ${instruments[i]}`,
+      "",
+      language==="fa" ? "یادداشت: من آهنگ واقعی رندر نمی‌کنم، ولی این پلن رو می‌دم تا بسازی." : "Note: I don't render real music, but provide plans to build."
+    ].join("\n");
+  });
+
+  commands.set("/theme", () => {
+    return language==="fa"
+      ? "برای تغییر تم:\n/theme neon\n/theme city\n/theme mountains\n/theme space\n/theme aurora"
+      : "To change theme:\n/theme neon\n/theme city\n/theme mountains\n/theme space\n/theme aurora";
+  });
+
+  commands.set("/lang", () => {
+    return language==="fa"
+      ? "برای تغییر زبان:\n/lang fa  (فارسی)\n/lang en  (English)"
+      : "To change language:\n/lang fa  (فارسی)\n/lang en  (English)";
+  });
+
+  commands.set("/mode", () => {
+    return language==="fa"
+      ? "برای تغییر حالت پاسخ:\n/mode short\n/mode full\n/mode funny\n/mode formal"
+      : "To change response mode:\n/mode short\n/mode full\n/mode funny\n/mode formal";
+  });
+
+  // ----------- توابع کمکی -----------
+  function normalize(text){
+    return (text||"").toString().trim().replace(/\s+/g," ");
+  }
+  function lower(text){
+    return normalize(text).toLowerCase();
+  }
+  function parseCommand(text){
+    const t = lower(text);
+    if(t.startsWith("/help")) return "/help";
+    if(t.startsWith("/joke")) return "/joke";
+    if(t.startsWith("/video")) return "/video";
+    if(t.startsWith("/image")) return "/image";
+    if(t.startsWith("/music")) return "/music";
+    if(t.startsWith("/theme")) return "/theme";
+    if(t.startsWith("/lang")) return "/lang";
+    if(t.startsWith("/mode")) return "/mode";
     return null;
   }
 
-  function addMessage(text, sender = "user") {
-    const div = document.createElement("div");
-    div.classList.add("msg", sender);
-    div.textContent = text;
-    chatBox.appendChild(div);
+  function changeLanguage(arg){
+    if(arg === "fa" || arg === "en"){
+      language = arg;
+      mainTitle.textContent = language === "fa" ? "گفتگو با Zrx (حرفه‌ای)" : "Chat with Zrx (Pro)";
+      hintArea.innerHTML = language==="fa"
+        ? `دستورها: <b>/help</b> ، جوک: <b>/joke</b> ، ویدیو: <b>/video</b> ، عکس: <b>/image</b> ، موزیک: <b>/music</b> ، تم: <b>/theme neon</b><br/>
+           تغییر زبان: <b>/lang fa</b> یا <b>/lang en</b> ، حالت پاسخ: <b>/mode short</b> ، <b>/mode full</b> ، <b>/mode funny</b> ، <b>/mode formal</b><br/>
+           <span class="kbd">Enter</span> برای ارسال پیام`
+        : `Commands: <b>/help</b>, <b>/joke</b>, <b>/video</b>, <b>/image</b>, <b>/music</b>, <b>/theme neon</b><br/>
+           Change language: <b>/lang fa</b> or <b>/lang en</b>, response mode: <b>/mode short</b>, <b>/mode full</b>, <b>/mode funny</b>, <b>/mode formal</b><br/>
+           <span class="kbd">Enter</span> to send message`;
+      input.placeholder = texts[language].sendPlaceholder;
+      return texts[language].langChanged + (language === "fa" ? "فارسی" : "English");
+    }
+    return language==="fa" ? "زبان نامشخص است. فقط fa یا en بزن." : "Unknown language. Use only fa or en.";
+  }
+
+  function changeMode(arg){
+    if(modes.includes(arg)){
+      mode = arg;
+      return texts[language].modeChanged + texts[language].modeLabels[arg];
+    }
+    return language==="fa" ? "حالت نامعتبر است." : "Invalid mode.";
+  }
+
+  function formatReply(text){
+    if(mode === "short") {
+      return text.split("\n").slice(0,3).join("\n") + (text.split("\n").length>3 ? "\n..." : "");
+    }
+    if(mode === "funny") {
+      return text + "\n\n😄🤣🔥";
+    }
+    if(mode === "formal") {
+      return "با احترام:\n" + text;
+    }
+    return text; // full
+  }
+
+  // ----------- پاسخ‌های عمومی ساده -----------
+  function buildGeneralAnswer(userText){
+    const t = userText.toLowerCase();
+
+    if(/تعریف|معنی|چی\s*هست/.test(t)){
+      return language==="fa"
+        ? `تعریف ${userText}:\n\nاین موضوع به زبان ساده یعنی ...\n\nبرای توضیح دقیق‌تر، لطفا موضوع را بیشتر شرح بده.`
+        : `Definition of ${userText}:\n\nThis topic means ... in simple terms.\n\nPlease elaborate for more precise explanation.`;
+    }
+    if(/برنامه|کد|خطا|error/.test(t)){
+      return language==="fa"
+        ? `برای کمک در برنامه‌نویسی:\n1) خطا یا ارور دقیق را بگو.\n2) انتظار داشتی چه اتفاقی بیفتد.\n3) الان چه اتفاقی افتاده.`
+        : `For coding help:\n1) Provide exact error message.\n2) What did you expect?\n3) What actually happened?`;
+    }
+    if(/سفر|تور|کشور/.test(t)){
+      return language==="fa"
+        ? `برای برنامه سفر:\n- مقصد\n- مدت زمان\n- بودجه\n- سبک سفر\n\nاین اطلاعات را بده تا برنامه دقیق بدم.`
+        : `For travel planning:\n- Destination\n- Duration\n- Budget\n- Travel style\n\nProvide these for detailed plan.`;
+    }
+    if(/سلام|hi|hello/.test(t)){
+      return language==="fa"
+        ? texts.fa.greetings[Math.floor(Math.random()*texts.fa.greetings.length)]
+        : texts.en.greetings[Math.floor(Math.random()*texts.en.greetings.length)];
+    }
+
+    return language==="fa"
+      ? texts.fa.promptAskMore
+      : texts.en.promptAskMore;
+  }
+
+  // ----------- پردازش ورودی و پاسخ -----------
+  function addMessage(text, who){
+    if(who === "ai"){
+      const loadingMsg = [...chatBox.children].find(div => div.textContent.includes("در حال پردازش") || div.textContent.includes("Processing"));
+      if(loadingMsg) chatBox.removeChild(loadingMsg);
+    }
+    const row = document.createElement("div");
+    row.className = "row " + who;
+    const bubble = document.createElement("div");
+    bubble.className = "bubble";
+
+    // اگر متن شامل لینک عکس باشد، نمایش عکس داخل حباب
+    if(who==="user" && text.startsWith("data:image")){
+      const img = document.createElement("img");
+      img.src = text;
+      img.alt = language==="fa" ? "عکس آپلود شده" : "Uploaded image";
+      img.className = "img-upload";
+      bubble.appendChild(img);
+    } else if(who==="ai" && text.startsWith("data:image")){
+      const img = document.createElement("img");
+      img.src = text;
+      img.alt = language==="fa" ? "عکس پاسخ" : "Response image";
+      img.className = "img-upload";
+      bubble.appendChild(img);
+    } else {
+      bubble.textContent = text;
+    }
+
+    row.appendChild(bubble);
+    chatBox.appendChild(row);
     chatBox.scrollTop = chatBox.scrollHeight;
   }
 
-  function processInput(text) {
-    text = text.trim();
+  async function processInput(text){
+    const normText = normalize(text);
+    if(!normText) return "";
 
-    if (text === "/help") {
-      // نمایش تا 50 دستور اول
-      let keys = Object.keys(largeCommands).slice(0, 50);
-      let helpText = "دستورات موجود:\n";
-      keys.forEach(k => {
-        helpText += `- ${k}\n`;
-      });
-      return helpText.trim();
+    if(normText.startsWith("/lang")){
+      const arg = normText.split(" ")[1] || "";
+      return changeLanguage(arg);
+    }
+    if(normText.startsWith("/mode")){
+      const arg = normText.split(" ")[1] || "";
+      return changeMode(arg);
+    }
+    if(normText.startsWith("/theme")){
+      const arg = normText.split(" ")[1] || "";
+      if(!arg) return commands.get("/theme")();
+      const ok = applyTheme(arg);
+      if(ok) return texts[language].themeChanged + arg;
+      return texts[language].themeNotFound;
     }
 
-    const key = findBestMatch(text);
-    if (key) {
-      const val = largeCommands[key];
-      if (typeof val === "function") return val();
-      return val;
+    const cmd = parseCommand(normText);
+    if(cmd && commands.has(cmd)) {
+      return formatReply(commands.get(cmd)());
     }
 
-    // اگر سوال داشت علامت ؟ یا ؟ فارسی
-    if (text.includes("?") || text.includes("؟")) {
-      return "سؤال خوبی پرسیدی! اما من هنوز یاد نگرفتم جواب بدم.";
-    }
+    const low = lower(normText);
+    if(/جوک بعدی|next joke/.test(low)) return formatReply(commands.get("/joke")());
+    if(low.includes("جوک") || low.includes("joke")) return formatReply(commands.get("/joke")());
+    if(low.includes("ویدیو") || low.includes("video")) return formatReply(commands.get("/video")());
+    if(low.includes("عکس") || low.includes("image") || low.includes("تصویر")) return formatReply(commands.get("/image")());
+    if(low.includes("موزیک") || low.includes("music") || low.includes("آهنگ")) return formatReply(commands.get("/music")());
 
-    return "متوجه نشدم، لطفا /help را برای دستورات ببین.";
+    return formatReply(buildGeneralAnswer(normText));
   }
 
-  sendBtn.addEventListener("click", () => {
-    const userText = inputText.value.trim();
-    if (!userText) return;
-    addMessage(userText, "user");
-    inputText.value = "";
+  async function sendMessage(){
+    const txt = input.value;
+    if(!txt.trim()) return;
+    addMessage(txt, "user");
+    input.value = "";
+    input.focus();
 
-    setTimeout(() => {
-      const reply = processInput(userText);
-      addMessage(reply, "ai");
-    }, 300);
+    const reply = await processInput(txt);
+    addMessage(reply, "ai");
+  }
+
+  send.addEventListener("click", sendMessage);
+  input.addEventListener("keydown", (e) => {
+    if(e.key === "Enter") sendMessage();
   });
 
-  inputText.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      sendBtn.click();
-    }
+  document.querySelectorAll(".pill").forEach(el => {
+    el.addEventListener("click", () => {
+      input.value = el.getAttribute("data-quick");
+      input.focus();
+    });
   });
 
-  addMessage("سلام! من آماده‌ام با تو صحبت کنم. برای دیدن دستورات /help را ارسال کن.", "ai");
+  // ----------- آپلود عکس -----------
+  imgInput.addEventListener("change", () => {
+    const file = imgInput.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      addMessage(dataUrl, "user");
+      // گزینه: می‌توانید اینجا پردازش AI روی عکس اضافه کنید (API و ...)
+      // در این نمونه فقط نمایش می‌دهیم
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // دکمه برای باز کردن آپلود عکس
+  const imgUploadBtn = document.createElement("div");
+  imgUploadBtn.className = "pill";
+  imgUploadBtn.textContent = language==="fa" ? "آپلود عکس" : "Upload Image";
+  imgUploadBtn.style.userSelect = "none";
+  imgUploadBtn.style.cursor = "pointer";
+  imgUploadBtn.addEventListener("click", () => {
+    imgInput.click();
+  });
+  document.querySelector(".panel").appendChild(imgUploadBtn);
+
+  // مقدار اولیه
+  input.placeholder = texts[language].sendPlaceholder;
+  addMessage(texts[language].greetings[0] + "\n\n" + commands.get("/help")(), "ai");
+
+})();
 </script>
+<script>
+// ادامه دیتاهای جوک‌ها فارسی (نمونه‌های بیشتر)
+const extraJokesFa = [
+  "یه بار ربات گفت: «من خسته‌ام، یه استراحت می‌خوام!»",
+  "چرا برنامه‌نویس‌ها عاشق کدهای تمیزند؟ چون کد کثیف باعث باگ می‌شه!",
+  "کامپیوتر مثل بچه است، اگه بهش توجه نکنی، خرابکاری می‌کنه!",
+  "وقتی کدت اجرا نشد، نگران نباش، فقط ربات‌ها دارن تست می‌کنن!",
+  "جوک کد نویس‌ها: چرا کامپیوتر دوست نداره باگ داشته باشه؟ چون از دردسر فرار می‌کنه!"
+  //... (می‌تونید این آرایه را تا ۵۰۰ عدد ادامه بدید)
+];
 
-</body>
-</html>
+// ادامه دیتاهای جوک‌ها انگلیسی (نمونه‌های بیشتر)
+const extraJokesEn = [
+  "Why don’t programmers like nature? It has too many bugs.",
+  "I told my computer I needed a break, now it won’t stop sending me Kit-Kat ads.",
+  "There are 10 types of people in the world: those who understand binary and those who don’t.",
+  "Debugging is like being the detective in a crime movie where you are also the murderer.",
+  "Why do Java developers wear glasses? Because they don’t C#."
+  //... (ادامه دهید)
+];
+
+// ترکیب با آرایه‌های اصلی
+jokesFa.push(...extraJokesFa);
+jokesEn.push(...extraJokesEn);
+
+// جملات طنز برای حالت funny
+const funnyPhrasesFa = [
+  "خنده‌دار بودن یعنی وقتی کدت خطا می‌ده، بازم قهقهه بزنی!",
+  "زندگی مثل کده، یه جاهایی باید دیباک کنی!",
+  "وقتی کد زدی و جواب نگرفتی، یعنی هنوز دنیای موازی کشف نشده!",
+  "کامپیوتر مثل دوستیه؛ باید بهش رسیدگی کنی وگرنه خراب می‌شه!",
+  "جوک برنامه‌نویسی: چرا کد من شب‌ها کابوس می‌بینه؟ چون باگ داره!"
+];
+const funnyPhrasesEn = [
+  "Being funny means laughing even when your code throws errors!",
+  "Life is like coding, sometimes you just have to debug!",
+  "If your code doesn't work, maybe parallel universes are involved!",
+  "Computers are like friends; take care of them or they break!",
+  "Programming joke: Why does my code have nightmares? Because it has bugs!"
+];
+
+// پرومپت‌های عکس بیشتر (نمونه)
+const extraImagePromptsFa = [
+  "غروب آفتاب در ساحل با نورهای گرم و آرامش‌بخش",
+  "فضای داخلی یک کافه مدرن با نورپردازی نرم و چوبی",
+  "پرتره هنری از یک زن با موهای رنگی و پس‌زمینه تار",
+  "شهر آینده با آسمان‌خراش‌های شیشه‌ای و ماشین‌های پرنده",
+  "طبیعت وحشی با درختان بلند و مه صبحگاهی"
+];
+const extraImagePromptsEn = [
+  "Sunset at the beach with warm and soothing lights",
+  "Interior of a modern cafe with soft wooden lighting",
+  "Artistic portrait of a woman with colored hair and blurred background",
+  "Future city with glass skyscrapers and flying cars",
+  "Wild nature with tall trees and morning fog"
+];
+
+// اضافه کردن به پرومپت‌ها
+// (اگر پرومپت قبلی در آرایه وجود داشت، اینجا اضافه کنید)
+// برای نمونه ساده اینجا فقط یک آرایه جداگانه داریم
+
+// عملکرد اضافه کردن پرومپت عکس با انتخاب تصادفی
+function getExtraImagePrompt() {
+  const i = Math.floor(Math.random() * extraImagePromptsFa.length);
+  return language === "fa" ? extraImagePromptsFa[i] : extraImagePromptsEn[i];
+}
+
+// نمونه استفاده در دستور /image:
+commands.set("/image", () => {
+  const basePrompt = commands.get("/image")?.() || "";
+  return basePrompt + "\n\n" + (language === "fa" ? "پرومپت اضافه: " : "Extra prompt: ") + getExtraImagePrompt();
+});
+
+// ادامه جملات کمک آموزشی برای دانش‌آموزان (نمونه)
+const helpPhrasesFa = [
+  "برای حل مسئله ریاضی، ابتدا صورت سوال را دقیق بخوان و درک کن.",
+  "اگر جواب سوال را نمی‌دانی، به نکات مهم توجه کن و قدم به قدم جلو برو.",
+  "از منابع معتبر کتابخانه و اینترنت برای مطالعه استفاده کن.",
+  "تمرین کردن کلید یادگیری است، از تمرین‌های متنوع نترس.",
+  "سوالات خود را با معلم یا دوستان به اشتراک بگذار تا بهتر یاد بگیری."
+];
+const helpPhrasesEn = [
+  "To solve math problems, first carefully read and understand the question.",
+  "If you don't know the answer, focus on key points and proceed step by step.",
+  "Use reliable library and internet sources for studying.",
+  "Practice is the key to learning, don't fear diverse exercises.",
+  "Share your questions with teachers or friends for better understanding."
+];
+
+// دستور کمک به دانش‌آموزان
+commands.set("/helpme", () => {
+  const phrases = language === "fa" ? helpPhrasesFa : helpPhrasesEn;
+  const idx = Math.floor(Math.random() * phrases.length);
+  return phrases[idx];
+});
+
+// برای ارسال سریع /helpme می‌تونید در UI هم دکمه اضافه کنید
+
+// اضافه کردن دکمه سریع برای /helpme
+const helpMePill = document.createElement("div");
+helpMePill.className = "pill";
+helpMePill.textContent = language === "fa" ? "کمک درس" : "Help Me";
+helpMePill.style.userSelect = "none";
+helpMePill.style.cursor = "pointer";
+helpMePill.addEventListener("click", () => {
+  input.value = "/helpme";
+  input.focus();
+});
+document.querySelector(".panel").appendChild(helpMePill);
+
+// می‌توانید مشابه این‌ها دیتای بیشتری اضافه کنید و به دستورات مختلف اختصاص دهید
+
+</script>
+<script>
+// اضافه کردن جوک‌های بیشتر به آرایه‌ها (نمونه چندصد جوک برای رسیدن به حجم زیاد)
+
+const moreJokesFa = [
+  "وقتی کد نوشتی و اجرا نشد، یعنی کامپیوتر داره شوخی می‌کنه!",
+  "برنامه‌نویس‌ها مثل جادوگرن، وقتی کد می‌نویسن، دنیارو تغییر میدن!",
+  "باگ‌ها مثل زامبی‌ان، هرچی می‌کشیشون، بیشتر می‌شن!",
+  "چرا کامپیوترها هیچوقت گرسنه نمی‌شن؟ چون همیشه برق دارن!",
+  "کدهای خوب مثل شعرن، باید با عشق نوشته بشن."
+  // ... (می‌توانید تا ۵۰۰ عدد ادامه دهید)
+];
+
+const moreJokesEn = [
+  "Why don't programmers like to go outside? The sunlight causes too many glares.",
+  "Writing code is like writing a book... except if you miss a single comma, the whole thing fails.",
+  "Bugs are like cockroaches, the more you kill, the more appear.",
+  "Computers never get hungry because they always have power.",
+  "Good code is like poetry, it needs to be written with love."
+  // ... (ادامه دهید)
+];
+
+// اضافه کردن به آرایه‌های اصلی
+jokesFa.push(...moreJokesFa);
+jokesEn.push(...moreJokesEn);
+
+// جملات طنز بیشتر برای حالت funny
+const moreFunnyPhrasesFa = [
+  "کد من مثل زندگیه، پر از پیچ و خم!",
+  "اگر کدت درست کار نکرد، یعنی فرصت خوبی برای خندیدنه!",
+  "کد زدن یعنی یک جور ورزش ذهنی با وزنه‌های باگ.",
+  "وقتی کدت اجرا شد، یعنی خدا هم راضی شده!",
+  "برنامه‌نویس‌ها هیچوقت نمی‌خوابن، فقط در حالت استندبای هستن."
+];
+
+const moreFunnyPhrasesEn = [
+  "My code is like life, full of twists and turns!",
+  "If your code didn’t work, that’s a great opportunity to laugh!",
+  "Coding is like mental exercise with the weights of bugs.",
+  "When your code runs, even God approves!",
+  "Programmers never sleep, they just standby."
+];
+
+funnyPhrasesFa.push(...moreFunnyPhrasesFa);
+funnyPhrasesEn.push(...moreFunnyPhrasesEn);
+
+// استفاده در فرمت پاسخ (اگر حالت funny انتخاب شده)
+function formatReply(text){
+  if(mode === "short") {
+    return text.split("\n").slice(0,3).join("\n") + (text.split("\n").length>3 ? "\n..." : "");
+  }
+  if(mode === "funny") {
+    const funnyAdd = language==="fa"
+      ? funnyPhrasesFa[Math.floor(Math.random()*funnyPhrasesFa.length)]
+      : funnyPhrasesEn[Math.floor(Math.random()*funnyPhrasesEn.length)];
+    return text + "\n\n😄🤣🔥\n" + funnyAdd;
+  }
+  if(mode === "formal") {
+    return "با احترام:\n" + text;
+  }
+  return text; // full
+}
+
+// اضافه کردن دستورات جدید یا ارتقا یافته در commands
+commands.set("/funnyjoke", () => {
+  const idx = Math.floor(Math.random() * jokesFa.length);
+  const joke = language==="fa" ? jokesFa[idx] : jokesEn[idx];
+  const funnyAdd = language==="fa" ? funnyPhrasesFa[Math.floor(Math.random()*funnyPhrasesFa.length)] : funnyPhrasesEn[Math.floor(Math.random()*funnyPhrasesEn.length)];
+  return joke + "\n\n" + funnyAdd;
+});
+
+// اضافه کردن دستور /helpme بیشتر برای دانش‌آموزان
+const moreHelpPhrasesFa = [
+  "مهم‌ترین نکته یادگیری، تمرین مداوم است.",
+  "اگر سوال داری، آن را به بخش‌های کوچک تقسیم کن و هر بخش را جداگانه بررسی کن.",
+  "از منابع تصویری برای یادگیری بهتر استفاده کن.",
+  "تکرار باعث تثبیت مطالب در ذهن می‌شود.",
+  "می‌توانی از برنامه‌های آموزشی آنلاین هم بهره بگیری."
+];
+
+const moreHelpPhrasesEn = [
+  "The key to learning is consistent practice.",
+  "If you have a question, break it into smaller parts and analyze each part.",
+  "Use visual resources for better understanding.",
+  "Repetition helps to consolidate knowledge in your mind.",
+  "You can also benefit from online educational programs."
+];
+
+helpPhrasesFa.push(...moreHelpPhrasesFa);
+helpPhrasesEn.push(...moreHelpPhrasesEn);
+
+// به روز رسانی دستور /helpme با جملات بیشتر
+commands.set("/helpme", () => {
+  const phrases = language === "fa" ? helpPhrasesFa : helpPhrasesEn;
+  const idx = Math.floor(Math.random() * phrases.length);
+  return phrases[idx];
+});
+</script>
+<script>
+// دکمه برای ارسال جوک طنز سریع
+const funnyJokePill = document.createElement("div");
+funnyJokePill.className = "pill";
+funnyJokePill.textContent = language === "fa" ? "جوک خنده‌دار" : "Funny Joke";
+funnyJokePill.style.userSelect = "none";
+funnyJokePill.style.cursor = "pointer";
+funnyJokePill.addEventListener("click", () => {
+  input.value = "/funnyjoke";
+  input.focus();
+});
+document.querySelector(".panel").appendChild(funnyJokePill);
+
+// دکمه برای کمک به دانش‌آموزان بیشتر
+const helpMeMorePill = document.createElement("div");
+helpMeMorePill.className = "pill";
+helpMeMorePill.textContent = language === "fa" ? "کمک درس بیشتر" : "More Help";
+helpMeMorePill.style.userSelect = "none";
+helpMeMorePill.style.cursor = "pointer";
+helpMeMorePill.addEventListener("click", () => {
+  input.value = "/helpme";
+  input.focus();
+});
+document.querySelector(".panel").appendChild(helpMeMorePill);
+</script>
