@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>انتخاب نسخه ماینکرفت و اجرای نسخه روی ویندوز</title>
+<title>انتخاب نسخه ماینکرفت و اجرای آن (ویندوز)</title>
 <style>
   body {
     font-family: Tahoma, Arial, sans-serif;
@@ -165,20 +165,7 @@
     infoText.textContent = `شما لانچر "${launcher.charAt(0).toUpperCase() + launcher.slice(1)}" را انتخاب کردید. لطفا نسخه را انتخاب کنید.`;
   });
 
-  // تولید محتوای فایل BAT داینامیک
   function generateBatContent(launcher, version){
-    // مسیر لانچر ماینکرفت رسمی پیش‌فرض ویندوز:
-    // %AppData%\.minecraft\launcher.exe یا لانچر جدید ممکنه مسیر متفاوت داشته باشه
-    // ما از فرض مسیر لانچر رسمی در مسیر پیش‌فرض استفاده می‌کنیم.
-    // دستور اجرای لانچر با نسخه خاص (اگر لانچر مایکروسافت باشد، ممکن است پارامترها متفاوت باشد)
-    // اینجا نمونه ساده با دستور فرضی:
-    // "start "" "C:\Program Files (x86)\Minecraft Launcher\MinecraftLauncher.exe" --version 1.16.5"
-    // چون پارامتر رسمی لانچر ماینکرفت برای اجرا با نسخه خاص وجود ندارد، این یک نمونه فرضی است.
-
-    // شما باید مسیر لانچر را به مسیر واقعی سیستم خودتان تغییر دهید.
-    // یا از لانچرهای سفارشی استفاده کنید که پارامتر نسخه را قبول کنند.
-
-    // نمونه محتوای bat:
     return `@echo off
 REM اجرای لانچر ماینکرفت با نسخه ${version} و لانچر ${launcher}
 start "" "%LocalAppData%\\Programs\\Minecraft Launcher\\MinecraftLauncher.exe" --workDir "%APPDATA%\\.minecraft" --version ${version}
@@ -196,7 +183,6 @@ exit
 
     const batContent = generateBatContent(launcher, version);
 
-    // ساخت فایل blob و دانلود آن
     const blob = new Blob([batContent], {type: 'text/plain'});
     const url = URL.createObjectURL(blob);
 
