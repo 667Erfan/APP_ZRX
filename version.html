@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>انتخاب نسخه ماینکرفت</title>
+<style>
+  body {
+    font-family: Tahoma, Arial, sans-serif;
+    background:#121212;
+    color:#eee;
+    padding: 20px;
+    max-width: 480px;
+    margin: auto;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  label {
+    display: block;
+    margin: 14px 0 6px 0;
+    font-weight: bold;
+  }
+  select, button {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    background: #222;
+    color: #eee;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+  button {
+    margin-top: 24px;
+    background: #0ff;
+    color: #000;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+  }
+  button:hover:not(:disabled) {
+    background: #0cc;
+  }
+  button:disabled {
+    background: #555;
+    cursor: not-allowed;
+  }
+  .info {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #aaa;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<h1>انتخاب نسخه ماینکرفت</h1>
+
+<label for="launcherSelect">انتخاب لانچر:</label>
+<select id="launcherSelect" aria-label="انتخاب لانچر ماینکرفت">
+  <option value="">-- انتخاب کنید --</option>
+  <option value="forge">Forge</option>
+  <option value="optifine">OptiFine</option>
+  <option value="fabric">Fabric</option>
+</select>
+
+<label for="versionSelect" id="versionLabel" style="display:none;">انتخاب نسخه:</label>
+<select id="versionSelect" style="display:none;" aria-label="انتخاب نسخه ماینکرفت"></select>
+
+<button id="downloadBtn" disabled>دانلود نسخه</button>
+
+<div class="info" id="infoText"></div>
+
+<script>
+  const launcherSelect = document.getElementById('launcherSelect');
+  const versionSelect = document.getElementById('versionSelect');
+  const versionLabel = document.getElementById('versionLabel');
+  const downloadBtn = document.getElementById('downloadBtn');
+  const infoText = document.getElementById('infoText');
+
+  // رنج نسخه‌ها از 1.8.9 تا 1.26.1
+  // توجه: نسخه 1.26.1 فرضی است چون نسخه رسمی فعلی ممکن است متفاوت باشد
+  // ساخت آرایه نسخه‌ها به صورت رشته و عددی
+  // نسخه‌ها به صورت استاندارد: 1.x.y (x بین 8 تا 26 و y بین 0 تا 9 یا 1)
+  
+  // این تابع نسخه‌ها را به صورت رشته تولید می‌کند
+  function generateVersions() {
+    const versions = [];
+    // نسخه 1.8.9 به صورت خاص اضافه می‌شود چون 8.0 و 8.1 وجود ندارد
+    versions.push('1.8.9');
+    // نسخه‌های بین 1.9 تا 1.12.2 (معروف)
+    const knownVersions = [
+      '1.9', '1.9.4',
+      '1.10', '1.11', '1.11.2',
+      '1.12', '1.12.1', '1.12.2'
+    ];
+    versions.push(...knownVersions);
+
+    // حالا از 1.13 تا 1.26.1 (نسخه‌های فرضی و واقعی) به صورت ساده می‌سازیم
+    // نسخه‌های جدید معمولاً فقط شماره اصلی و گاهی patch دارند
+    for(let major=13; major<=26; major++){
+      versions.push(`1.${major}`);
+      // برخی نسخه‌ها patch دارند (مثلاً 1.16.5, 1.17.1, 1.18.2, 1.19.3, 1.20.1, 1.26.1)
+      // برای نمونه چند نسخه patch اضافه می‌کنیم:
+      if(major === 16) versions.push('1.16.5');
+      if(major === 17) versions.push('1.17.1');
+      if(major === 18) versions.push('1.18.2');
+      if(major === 19){
+        versions.push('1.19.1');
+        versions.push('1.19.2');
+        versions.push('1.19.3');
+      }
+      if(major === 20) versions.push('1.20.1');
+      if(major === 26) versions.push('1.26.1');
+    }
+
+    // مرتب کردن نسخه‌ها به ترتیب نسخه (اگر لازم باشد)
+    // چون نسخه‌ها بر اساس اضافه کردن هستند، در اینجا نیازی نیست مرتب کنیم
+    return versions;
+  }
+
+  // ذخیره نسخه‌ها برای استفاده
+  const allVersions = generateVersions();
+
+  // وقتی لانچر انتخاب شد، نسخه‌ها را نمایش بده
+  launcherSelect.addEventListener('change', () => {
+    const launcher = launcherSelect.value;
+    if(!launcher){
+      versionSelect.style.display = 'none';
+      versionLabel.style.display = 'none';
+      downloadBtn.disabled = true;
+      infoText.textContent = '';
+      versionSelect.innerHTML = '';
+      return;
+    }
+    versionSelect.style.display = 'block';
+    versionLabel.style.display = 'block';
+
+    // پر کردن نسخه‌ها با توجه به لانچر
+    // فرض کنیم همه لانچرها همه نسخه‌ها را پشتیبانی می‌کنند به جز OptiFine که فقط از 1.8.9 تا 1.20.1 است
+    let filteredVersions = [];
+    if(launcher === 'optifine'){
+      filteredVersions = allVersions.filter(v => {
+        // فقط نسخه‌های <= 1.20.1
+        const parts = v.split('.');
+        if(parts.length === 3){ // مثلا 1.16.5
+          const major = parseInt(parts[1],10);
+          const patch = parseInt(parts[2],10);
+          if(major < 20) return true;
+          if(major === 20 && patch <= 1) return true;
+          return false;
+        } else if(parts.length === 2){
+          const major = parseInt(parts[1],10);
+          return major <= 20;
+        }
+        return false;
+      });
+    } else {
+      filteredVersions = [...allVersions];
+    }
+
+    versionSelect.innerHTML = '';
+    filteredVersions.forEach(ver => {
+      const opt = document.createElement('option');
+      opt.value = ver;
+      opt.textContent = ver;
+      versionSelect.appendChild(opt);
+    });
+
+    versionSelect.selectedIndex = 0;
+    downloadBtn.disabled = false;
+    infoText.textContent = `شما لانچر "${launcher.charAt(0).toUpperCase() + launcher.slice(1)}" را انتخاب کردید. لطفا نسخه را انتخاب کنید.`;
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    const launcher = launcherSelect.value;
+    const version = versionSelect.value;
+    if(!launcher || !version){
+      alert('لطفا ابتدا لانچر و نسخه را انتخاب کنید.');
+      return;
+    }
+    // لینک دانلود فرضی
+    // مثلا لینک می‌تواند به صورت https://example.com/download/{launcher}/{version}.zip باشد
+    const link = `https://example.com/download/${launcher}/${version}.zip`;
+    // باز کردن لینک در تب جدید
+    window.open(link, '_blank');
+
+    infoText.textContent = `لینک دانلود نسخه ${version} با لانچر ${launcher} ساخته شد.`;
+  });
+</script>
+
+</body>
+</html>
