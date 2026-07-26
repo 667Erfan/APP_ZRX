@@ -3,56 +3,88 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>سازنده تصویر (بدون API)</title>
+  <title>ساخت تصویر</title>
   <style>
     body{font-family:sans-serif;margin:20px}
-    textarea{width:100%;height:120px;padding:10px;font-size:16px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
-    select,button{padding:10px 12px;font-size:16px}
-    button{cursor:pointer}
-    .box{margin-top:14px;color:#333}
+    textarea{width:100%;height:110px;padding:10px;font-size:16px}
+    button{padding:10px 14px;font-size:16px;cursor:pointer}
+    .log{margin-top:14px;padding:12px;border:1px solid #ddd;border-radius:10px;min-height:90px}
+    .log p{margin:6px 0}
+    .preview{margin-top:14px;display:none;border:1px solid #ddd;border-radius:10px;padding:10px}
+    img{max-width:100%;border-radius:8px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   </style>
 </head>
 <body>
-  <h2>تولید تصویر (بدون کلید API)</h2>
+  <h2>ساخت تصویر (همان صفحه)</h2>
 
-  <label>Prompt</label>
-  <textarea id="prompt" placeholder="مثلاً: یک ربات دوست‌داشتنی با پس‌زمینه نئون"></textarea>
+  <textarea id="prompt" placeholder="مثلاً: یک مرد شیک با مانتو، پس‌زمینه استودیو"></textarea>
 
-  <div class="row">
-    <label>سبک/سایز:</label>
-    <select id="opt">
-      <option value="square">مربعی</option>
-      <option value="portrait">عمودی</option>
-      <option value="landscape">افقی</option>
-    </select>
-    <button id="go">ساخت تصویر</button>
+  <div class="row" style="margin-top:10px">
+    <button id="btn">ساخت تصویر</button>
   </div>
 
-  <div class="box" id="msg"></div>
+  <div class="log" id="log"></div>
+
+  <div class="preview" id="preview">
+    <img id="img" alt="preview" />
+  </div>
 
   <script>
-    const btn = document.getElementById("go");
+    const btn = document.getElementById("btn");
     const promptEl = document.getElementById("prompt");
-    const optEl = document.getElementById("opt");
-    const msg = document.getElementById("msg");
+    const logEl = document.getElementById("log");
+    const previewEl = document.getElementById("preview");
+    const imgEl = document.getElementById("img");
 
-    btn.addEventListener("click", () => {
+    function add(text){
+      const p = document.createElement("p");
+      p.textContent = text;
+      logEl.appendChild(p);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    btn.addEventListener("click", async () => {
       const p = (promptEl.value || "").trim();
-      if (!p) { msg.textContent = "لطفاً Prompt وارد کن."; return; }
-      msg.textContent = "در حال انتقال به سازنده تصویر...";
+      logEl.innerHTML = "";
+      previewEl.style.display = "none";
+      imgEl.src = "";
 
-      // اینجا از یک سازنده عمومی استفاده می‌کنیم و Prompt را با query می‌فرستیم.
-      // اگر لینک/پارامترها برای سایت مد نظر تو تغییر کند، بگو تا همون سایت رو دقیق تنظیم کنم.
-      const sizeMap = { square: "1024x1024", portrait: "1024x1536", landscape: "1536x1024" };
-      const size = sizeMap[optEl.value] || "1024x1024";
+      if(!p){ add("لطفاً یک توضیح (Prompt) وارد کن."); return; }
 
-      // نمونه لینک (ممکن است برخی سایت‌ها پارامترها را با نام‌های دیگری بگیرند)
-      const url = "https://www.bing.com/images/create" +
-        "?q=" + encodeURIComponent(p + " --aspect " + size);
+      // متن‌های نمایشی طبق چیزی که گفتی
+      add("مانتو رفت تو سایت...");
+      await new Promise(r => setTimeout(r, 600));
 
-      window.open(url, "_blank");
-      msg.textContent = "باز شد ✅ (در صفحه جدید تصویر ساخته می‌شود)";
+      add("مرد وارد شد...");
+      await new Promise(r => setTimeout(r, 600));
+
+      add("متن عکس: " + p);
+      await new Promise(r => setTimeout(r, 700));
+
+      add("ساخت تصویر...");
+      await new Promise(r => setTimeout(r, 1200));
+
+      // ⚠️ اینجا بدون API/مدل واقعی، نمی‌تونم تصویر تولید کنم.
+      // برای نمایش «تصویر» فعلاً یک placeholder می‌گذارم:
+      previewEl.style.display = "block";
+      imgEl.src =
+        "data:image/svg+xml;charset=utf-8," +
+        encodeURIComponent(
+          `<svg xmlns="http://www.w3.org/2000/svg" width="900" height="600">
+            <rect width="100%" height="100%" fill="#f6f7fb"/>
+            <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle"
+              font-family="sans-serif" font-size="26" fill="#333">
+              تولید واقعی تصویر نیاز به سرویس/مدل دارد
+            </text>
+            <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+              font-family="sans-serif" font-size="18" fill="#666">
+              Prompt: ${p.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+            </text>
+          </svg>`
+        );
+
+      add("انجام شد ✅");
     });
   </script>
 </body>
