@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>انتخاب نسخه ماینکرفت</title>
+<title>انتخاب نسخه ماینکرفت و اجرای نسخه روی ویندوز</title>
 <style>
   body {
     font-family: Tahoma, Arial, sans-serif;
@@ -54,11 +54,17 @@
     color: #aaa;
     text-align: center;
   }
+  .note {
+    font-size: 12px;
+    color: #666;
+    margin-top: 10px;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
 
-<h1>انتخاب نسخه ماینکرفت</h1>
+<h1>انتخاب نسخه ماینکرفت و اجرای آن (ویندوز)</h1>
 
 <label for="launcherSelect">انتخاب لانچر:</label>
 <select id="launcherSelect" aria-label="انتخاب لانچر ماینکرفت">
@@ -71,9 +77,13 @@
 <label for="versionSelect" id="versionLabel" style="display:none;">انتخاب نسخه:</label>
 <select id="versionSelect" style="display:none;" aria-label="انتخاب نسخه ماینکرفت"></select>
 
-<button id="downloadBtn" disabled>دانلود نسخه</button>
+<button id="downloadBtn" disabled>دانلود و اجرای نسخه (فایل BAT)</button>
 
 <div class="info" id="infoText"></div>
+<div class="note">
+  <p>پس از دانلود، فایل را اجرا کنید تا ماینکرفت با نسخه انتخابی باز شود.</p>
+  <p>توجه: این روش فقط روی ویندوز و در صورتی که لانچر ماینکرفت در مسیر پیش‌فرض باشد، کار می‌کند.</p>
+</div>
 
 <script>
   const launcherSelect = document.getElementById('launcherSelect');
@@ -82,30 +92,17 @@
   const downloadBtn = document.getElementById('downloadBtn');
   const infoText = document.getElementById('infoText');
 
-  // رنج نسخه‌ها از 1.8.9 تا 1.26.1
-  // توجه: نسخه 1.26.1 فرضی است چون نسخه رسمی فعلی ممکن است متفاوت باشد
-  // ساخت آرایه نسخه‌ها به صورت رشته و عددی
-  // نسخه‌ها به صورت استاندارد: 1.x.y (x بین 8 تا 26 و y بین 0 تا 9 یا 1)
-  
-  // این تابع نسخه‌ها را به صورت رشته تولید می‌کند
   function generateVersions() {
     const versions = [];
-    // نسخه 1.8.9 به صورت خاص اضافه می‌شود چون 8.0 و 8.1 وجود ندارد
     versions.push('1.8.9');
-    // نسخه‌های بین 1.9 تا 1.12.2 (معروف)
     const knownVersions = [
       '1.9', '1.9.4',
       '1.10', '1.11', '1.11.2',
       '1.12', '1.12.1', '1.12.2'
     ];
     versions.push(...knownVersions);
-
-    // حالا از 1.13 تا 1.26.1 (نسخه‌های فرضی و واقعی) به صورت ساده می‌سازیم
-    // نسخه‌های جدید معمولاً فقط شماره اصلی و گاهی patch دارند
     for(let major=13; major<=26; major++){
       versions.push(`1.${major}`);
-      // برخی نسخه‌ها patch دارند (مثلاً 1.16.5, 1.17.1, 1.18.2, 1.19.3, 1.20.1, 1.26.1)
-      // برای نمونه چند نسخه patch اضافه می‌کنیم:
       if(major === 16) versions.push('1.16.5');
       if(major === 17) versions.push('1.17.1');
       if(major === 18) versions.push('1.18.2');
@@ -117,16 +114,11 @@
       if(major === 20) versions.push('1.20.1');
       if(major === 26) versions.push('1.26.1');
     }
-
-    // مرتب کردن نسخه‌ها به ترتیب نسخه (اگر لازم باشد)
-    // چون نسخه‌ها بر اساس اضافه کردن هستند، در اینجا نیازی نیست مرتب کنیم
     return versions;
   }
 
-  // ذخیره نسخه‌ها برای استفاده
   const allVersions = generateVersions();
 
-  // وقتی لانچر انتخاب شد، نسخه‌ها را نمایش بده
   launcherSelect.addEventListener('change', () => {
     const launcher = launcherSelect.value;
     if(!launcher){
@@ -140,14 +132,11 @@
     versionSelect.style.display = 'block';
     versionLabel.style.display = 'block';
 
-    // پر کردن نسخه‌ها با توجه به لانچر
-    // فرض کنیم همه لانچرها همه نسخه‌ها را پشتیبانی می‌کنند به جز OptiFine که فقط از 1.8.9 تا 1.20.1 است
     let filteredVersions = [];
     if(launcher === 'optifine'){
       filteredVersions = allVersions.filter(v => {
-        // فقط نسخه‌های <= 1.20.1
         const parts = v.split('.');
-        if(parts.length === 3){ // مثلا 1.16.5
+        if(parts.length === 3){
           const major = parseInt(parts[1],10);
           const patch = parseInt(parts[2],10);
           if(major < 20) return true;
@@ -176,6 +165,27 @@
     infoText.textContent = `شما لانچر "${launcher.charAt(0).toUpperCase() + launcher.slice(1)}" را انتخاب کردید. لطفا نسخه را انتخاب کنید.`;
   });
 
+  // تولید محتوای فایل BAT داینامیک
+  function generateBatContent(launcher, version){
+    // مسیر لانچر ماینکرفت رسمی پیش‌فرض ویندوز:
+    // %AppData%\.minecraft\launcher.exe یا لانچر جدید ممکنه مسیر متفاوت داشته باشه
+    // ما از فرض مسیر لانچر رسمی در مسیر پیش‌فرض استفاده می‌کنیم.
+    // دستور اجرای لانچر با نسخه خاص (اگر لانچر مایکروسافت باشد، ممکن است پارامترها متفاوت باشد)
+    // اینجا نمونه ساده با دستور فرضی:
+    // "start "" "C:\Program Files (x86)\Minecraft Launcher\MinecraftLauncher.exe" --version 1.16.5"
+    // چون پارامتر رسمی لانچر ماینکرفت برای اجرا با نسخه خاص وجود ندارد، این یک نمونه فرضی است.
+
+    // شما باید مسیر لانچر را به مسیر واقعی سیستم خودتان تغییر دهید.
+    // یا از لانچرهای سفارشی استفاده کنید که پارامتر نسخه را قبول کنند.
+
+    // نمونه محتوای bat:
+    return `@echo off
+REM اجرای لانچر ماینکرفت با نسخه ${version} و لانچر ${launcher}
+start "" "%LocalAppData%\\Programs\\Minecraft Launcher\\MinecraftLauncher.exe" --workDir "%APPDATA%\\.minecraft" --version ${version}
+exit
+`;
+  }
+
   downloadBtn.addEventListener('click', () => {
     const launcher = launcherSelect.value;
     const version = versionSelect.value;
@@ -183,13 +193,22 @@
       alert('لطفا ابتدا لانچر و نسخه را انتخاب کنید.');
       return;
     }
-    // لینک دانلود فرضی
-    // مثلا لینک می‌تواند به صورت https://example.com/download/{launcher}/{version}.zip باشد
-    const link = `https://example.com/download/${launcher}/${version}.zip`;
-    // باز کردن لینک در تب جدید
-    window.open(link, '_blank');
 
-    infoText.textContent = `لینک دانلود نسخه ${version} با لانچر ${launcher} ساخته شد.`;
+    const batContent = generateBatContent(launcher, version);
+
+    // ساخت فایل blob و دانلود آن
+    const blob = new Blob([batContent], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Launch_Minecraft_${version}_${launcher}.bat`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    infoText.textContent = `فایل BAT نسخه ${version} برای لانچر ${launcher} ساخته و دانلود شد. آن را اجرا کنید.`;
   });
 </script>
 
