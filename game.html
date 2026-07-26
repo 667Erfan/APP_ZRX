@@ -5,18 +5,39 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
   <title>NEON RUN - game.html</title>
   <style>
-    :root{--bg0:#05060a;--bg1:#070a1a;--neon1:#7c5cff;--neon2:#19d3ff;--text:#eaf0ff;--muted:rgba(234,240,255,.7);}
+    :root{
+      --bg0:#05060a; --bg1:#070a1a;
+      --neon1:#7c5cff; --neon2:#19d3ff; --neon3:#2ee59d;
+      --text:#eaf0ff;
+      --muted:rgba(234,240,255,.72);
+      --glass: rgba(255,255,255,.06);
+    }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0;font-family:Tahoma,Arial,sans-serif;color:var(--text);
+      margin:0;
+      font-family:Tahoma,Arial,sans-serif;
+      color:var(--text);
       background:linear-gradient(180deg,var(--bg0),var(--bg1));
       overflow:hidden;
-      touch-action:none; -webkit-user-select:none; user-select:none;
+      touch-action:none;
+      user-select:none;
+      -webkit-user-select:none;
     }
-    #c{position:fixed;inset:0;width:100%;height:100%;display:block;}
-    .ui{position:fixed;inset:0;pointer-events:none;display:flex;flex-direction:column;justify-content:space-between;padding:14px;gap:10px;}
-    .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+    #c{position:fixed;inset:0;width:100%;height:100%;display:block}
+
+    /* UI container */
+    .ui{
+      position:fixed; inset:0;
+      pointer-events:none;
+      display:flex; flex-direction:column;
+      justify-content:space-between;
+      padding:14px; gap:10px;
+    }
+    .topbar{
+      display:flex; justify-content:space-between; align-items:flex-start;
+      gap:10px; flex-wrap:wrap;
+    }
     .panel{
       pointer-events:auto;
       background:rgba(255,255,255,.06);
@@ -26,55 +47,123 @@
       backdrop-filter:blur(6px);
       padding:10px 12px;
     }
-    .hud{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
-    .chip{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.10);background:rgba(0,0,0,.18);font-weight:900;font-size:12px;white-space:nowrap;}
-    .dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.25);border:1px solid rgba(255,255,255,.2);box-shadow:0 0 18px rgba(255,255,255,.18);}
-    .dot.p1{background: rgba(124,92,255,.9); border-color: rgba(124,92,255,.5); box-shadow:0 0 22px rgba(124,92,255,.5);}
-    .dot.p2{background: rgba(25,211,255,.9); border-color: rgba(25,211,255,.5); box-shadow:0 0 22px rgba(25,211,255,.5);}
-    .dot.p3{background: rgba(46,229,157,.9); border-color: rgba(46,229,157,.5); box-shadow:0 0 22px rgba(46,229,157,.5);}
-    .dot.bad{background: rgba(255,77,109,.85); border-color: rgba(255,77,109,.45); box-shadow:0 0 22px rgba(255,77,109,.35);}
-    .center{align-items:center;justify-content:center;display:flex;flex:1;}
-    .modal{
-      pointer-events:auto;width:min(720px,96vw);padding:18px;border-radius:18px;
+    .hud{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .chip{
+      display:flex;align-items:center;gap:8px;
+      padding:8px 10px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      font-weight:900;font-size:12px;white-space:nowrap;
+    }
+    .dot{width:10px;height:10px;border-radius:50%;
+      background:rgba(255,255,255,.25);
+      border:1px solid rgba(255,255,255,.2);
+      box-shadow:0 0 18px rgba(255,255,255,.18);
+    }
+    .dot.p1{background:rgba(124,92,255,.9);border-color:rgba(124,92,255,.55);box-shadow:0 0 22px rgba(124,92,255,.55);}
+    .dot.p2{background:rgba(25,211,255,.9);border-color:rgba(25,211,255,.55);box-shadow:0 0 22px rgba(25,211,255,.55);}
+    .dot.p3{background:rgba(46,229,157,.9);border-color:rgba(46,229,157,.55);box-shadow:0 0 22px rgba(46,229,157,.55);}
+    .dot.bad{background:rgba(255,77,109,.85);border-color:rgba(255,77,109,.45);box-shadow:0 0 22px rgba(255,77,109,.35);}
+
+    .center{flex:1;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+
+    .screen{
+      pointer-events:auto;
+      width:min(760px,96vw);
+      border-radius:18px;
       border:1px solid rgba(255,255,255,.14);
       background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.05));
-      box-shadow:0 40px 150px rgba(0,0,0,.55);position:relative;overflow:hidden;
+      box-shadow:0 40px 150px rgba(0,0,0,.55);
+      position:relative;
+      overflow:hidden;
       display:none;
     }
-    .modal.show{display:block;}
-    .modal::before{content:"";position:absolute;inset:-2px;opacity:.9;
-      background:radial-gradient(800px 260px at 30% 0%, rgba(124,92,255,.22), transparent 60%),
-                 radial-gradient(700px 260px at 80% 30%, rgba(25,211,255,.18), transparent 60%);
+    .screen.show{display:block}
+    .screen::before{
+      content:"";
+      position:absolute;inset:-2px;opacity:.9;
+      background:
+        radial-gradient(800px 260px at 30% 0%, rgba(124,92,255,.22), transparent 60%),
+        radial-gradient(700px 260px at 80% 30%, rgba(25,211,255,.18), transparent 60%);
       pointer-events:none;
     }
-    .modal > *{position:relative}
-    .title{font-size:22px;font-weight:1000;letter-spacing:.4px;margin-bottom:6px;}
-    .subtitle{color:var(--muted);line-height:1.7;font-size:13px;margin:0 0 12px;}
-    .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;justify-content:center;}
+    .screen > *{position:relative}
+
+    .title{font-size:28px;font-weight:1100;letter-spacing:.6px;margin:16px 16px 6px}
+    .subtitle{color:var(--muted);line-height:1.8;font-size:13px;margin:0 16px 12px}
+    .btnrow{display:flex;gap:10px;flex-wrap:wrap;margin:8px 16px 16px;justify-content:center}
     button{
       pointer-events:auto;cursor:pointer;border:0;border-radius:14px;
-      padding:12px 16px;font-weight:1000;letter-spacing:.3px;color:#071018;
+      padding:12px 16px;font-weight:1000;letter-spacing:.3px;
+      color:#071018;
       background:linear-gradient(135deg,var(--neon1),var(--neon2));
       box-shadow:0 14px 40px rgba(124,92,255,.30);
+      transition:transform .07s ease;
     }
     button:active{transform:scale(.98)}
-    .ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.14);box-shadow:none;}
-    .bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;pointer-events:none;}
-    .help{pointer-events:auto;max-width:520px;color:var(--muted);font-size:12px;line-height:1.8;background:rgba(255,255,255,.06);}
-    .bar{pointer-events:auto;width:min(420px,86vw);padding:10px 12px;}
-    .meter{height:10px;border-radius:999px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.10);overflow:hidden;position:relative;}
-    .meter > span{position:absolute;inset:0;width:50%;background:linear-gradient(90deg,rgba(124,92,255,.9),rgba(25,211,255,.9));box-shadow:0 0 26px rgba(124,92,255,.35);}
-    .mobileCtrls{
-      display:none;pointer-events:auto;position:fixed;left:14px;right:14px;bottom:14px;
-      gap:10px;justify-content:space-between;align-items:flex-end;
-    }
-    .btnBig{
-      width:92px;height:92px;border-radius:24px;background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.18);color:var(--text);display:flex;align-items:center;justify-content:center;flex-direction:column;touch-action:manipulation;
+    .ghost{
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border:1px solid rgba(255,255,255,.14);
       box-shadow:none;
     }
-    .btnBig.active{background:linear-gradient(135deg,var(--neon1),var(--neon2));color:#071018;border-color:transparent;box-shadow:0 14px 40px rgba(124,92,255,.30);}
-    @media (max-width:720px){.mobileCtrls{display:flex}.help{display:none}.bar{width:100%;}}
+    .kbd{
+      display:inline-flex;align-items:center;justify-content:center;
+      min-width:28px;padding:4px 8px;border-radius:10px;
+      background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.12);
+      font-weight:1000;font-size:12px;margin:0 4px;
+    }
+
+    .bottom{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;pointer-events:none;}
+    .help{
+      pointer-events:auto;
+      max-width:520px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:14px;
+      padding:10px 12px;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.8;
+    }
+    .bar{pointer-events:auto;width:min(420px,86vw);padding:10px 12px;}
+    .meter{
+      height:10px;border-radius:999px;background:rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;position:relative;
+    }
+    .meter > span{
+      position:absolute;inset:0;width:50%;
+      background:linear-gradient(90deg,rgba(124,92,255,.9),rgba(25,211,255,.9));
+      box-shadow:0 0 26px rgba(124,92,255,.35);
+    }
+
+    /* Mobile controls */
+    .mobileCtrls{
+      display:none; pointer-events:auto;
+      position:fixed; left:14px; right:14px; bottom:14px;
+      gap:10px; justify-content:space-between; align-items:flex-end;
+    }
+    .btnBig{
+      width:92px;height:92px;border-radius:24px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.18);
+      color:var(--text);
+      display:flex;align-items:center;justify-content:center;
+      flex-direction:column; touch-action:manipulation;
+      box-shadow:none;
+    }
+    .btnBig.active{
+      background:linear-gradient(135deg,var(--neon1),var(--neon2));
+      color:#071018;border-color:transparent;box-shadow:0 14px 40px rgba(124,92,255,.30);
+    }
+    @media (max-width:720px){
+      .mobileCtrls{display:flex}
+      .help{display:none}
+      .bar{width:100%}
+      .title{font-size:24px}
+    }
   </style>
 </head>
 <body>
@@ -83,9 +172,9 @@
 <div class="ui">
   <div class="topbar">
     <div class="panel hud">
-      <div class="chip"><span class="dot p1"></span> <span id="score">0</span> امتیاز</div>
-      <div class="chip"><span class="dot p2"></span> <span id="coins">0</span> پولک</div>
-      <div class="chip"><span class="dot p3"></span> <span id="level">1</span> لول</div>
+      <div class="chip"><span class="dot p1"></span><span id="score">0</span> امتیاز</div>
+      <div class="chip"><span class="dot p2"></span><span id="coins">0</span> پولک</div>
+      <div class="chip"><span class="dot p3"></span><span id="level">1</span> لول</div>
     </div>
     <div class="panel hud">
       <div class="chip"><span class="dot bad"></span> جان: <span id="hp">3</span></div>
@@ -94,24 +183,42 @@
   </div>
 
   <div class="center">
-    <div class="modal" id="modal">
+    <div class="screen show" id="homeScreen">
       <div class="title">NEON RUN</div>
-      <p class="subtitle">هدف: جمع کردن پولک‌های نئونی و دور شدن از موانع.</p>
-      <p class="subtitle" style="margin-top:0">
-        لپ‌تاپ: <b>A</b>/<b>D</b> حرکت، <b>Space</b> پرش<br/>
-        موبایل: کشیدن حرکت افقی، دکمه پرش (یا تپ صفحه)
-      </p>
+      <div class="subtitle">
+        هدف: <b>جمع کردن پولک‌های نئونی</b> و دور شدن از موانع.<br/>
+        لپ‌تاپ/PC: <span class="kbd">A</span><span class="kbd">D</span> حرکت، <span class="kbd">Space</span> پرش<br/>
+        موبایل: کشیدن = حرکت افقی، دکمه بزرگ = پرش (تپ صفحه هم پرش می‌دهد)
+      </div>
       <div class="btnrow">
-        <button id="startBtn">شروع بازی</button>
-        <button id="restartBtn" class="ghost" style="display:none">شروع مجدد</button>
+        <button id="playBtn">شروع بازی</button>
+        <button id="howBtn" class="ghost">راهنما</button>
+      </div>
+      <div class="subtitle" id="howText" style="display:none;margin-top:-6px;">
+        ترفند: پولک‌ها را جمع کن. برخورد جان را کم می‌کند.
+        وقتی جان صفر شد، می‌توانی با دکمه <b>خانه</b> برگردی.
+      </div>
+    </div>
+
+    <div class="screen" id="overScreen">
+      <div class="title">بازی تمام شد</div>
+      <div class="subtitle" id="finalStats">امتیازت: 0</div>
+      <div class="btnrow">
+        <button id="restartBtn">شروع مجدد</button>
+        <button id="homeBtn" class="ghost">خانه</button>
+      </div>
+      <div class="subtitle" style="margin-top:-2px;color:rgba(234,240,255,.55)">
+        با خانه برمی‌گردی به صفحه اول داخل همین فایل.
       </div>
     </div>
   </div>
 
   <div class="bottom">
-    <div class="help panel" id="helpBox"><strong>ترفند:</strong> پولک‌ها را جمع کن. برخورد = کم شدن جان.</div>
-    <div class="bar panel">
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px;color:var(--muted);font-size:12px;">
+    <div class="help">
+      <strong>ترفند:</strong> پولک‌ها را جمع کن. با برخورد، جان کم می‌شود.
+    </div>
+    <div class="panel bar">
+      <div style="display:flex;justify-content:space-between; margin-bottom:8px; color:var(--muted); font-size:12px;">
         <span>پیشرفت لول</span><span id="progTxt">0/0</span>
       </div>
       <div class="meter"><span id="progBar"></span></div>
@@ -119,7 +226,7 @@
   </div>
 </div>
 
-<div class="mobileCtrls">
+<div class="mobileCtrls" aria-hidden="true">
   <div class="btnBig" id="jumpBtn">پرش</div>
 </div>
 
@@ -128,6 +235,7 @@
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
 
+  // UI elements
   const scoreEl = document.getElementById('score');
   const coinsEl = document.getElementById('coins');
   const levelEl = document.getElementById('level');
@@ -136,15 +244,21 @@
   const progBar = document.getElementById('progBar');
   const progTxt = document.getElementById('progTxt');
 
-  const modal = document.getElementById('modal');
-  const startBtn = document.getElementById('startBtn');
+  const homeScreen = document.getElementById('homeScreen');
+  const overScreen = document.getElementById('overScreen');
+  const playBtn = document.getElementById('playBtn');
+  const howBtn = document.getElementById('howBtn');
+  const howText = document.getElementById('howText');
   const restartBtn = document.getElementById('restartBtn');
+  const homeBtn = document.getElementById('homeBtn');
+  const finalStats = document.getElementById('finalStats');
   const jumpBtn = document.getElementById('jumpBtn');
 
-  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const rand=(a,b)=>a+Math.random()*(b-a);
-  const lerp=(a,b,t)=>a+(b-a)*t;
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const rand = (a,b)=>a+Math.random()*(b-a);
+  const lerp = (a,b,t)=>a+(b-a)*t;
 
+  // Resize
   let W=0,H=0,dpr=1;
   function resize(){
     dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
@@ -159,98 +273,35 @@
   window.addEventListener('resize', resize);
   resize();
 
-  function neonCircle(x,y,r,outer,inner){
-    ctx.save();
-    ctx.shadowBlur = 26;
-    ctx.shadowColor = outer;
-    ctx.fillStyle = outer;
-    ctx.beginPath();
-    ctx.arc(x,y,r,0,Math.PI*2);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = inner || 'rgba(124,92,255,.2)';
-    ctx.beginPath();
-    ctx.arc(x,y,r*0.6,0,Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-  }
-  function glowLine(x1,y1,x2,y2,color,th=2){
-    ctx.save();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = th;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 18;
-    ctx.beginPath();
-    ctx.moveTo(x1,y1);
-    ctx.lineTo(x2,y2);
-    ctx.stroke();
-    ctx.restore();
-  }
-
   // Game state
-  let running = false;
-  let lastT = 0;
   const game = {
     time:0, score:0, coins:0, level:1, hp:3,
     speed:220,
     needCoins(){ return 10 + (this.level-1)*6; },
-    progress(){ return {cur:this.coins%this.needCoins(), total:this.needCoins()}; }
+    progress(){ return {cur: this.coins % this.needCoins(), total: this.needCoins()}; }
   };
+
   const player = {
-    x:0,y:0,r:14,
-    vx:0,vy:0,targetX:0,onGround:true,invuln:0,
-    moveSpeed:540,jumpForce:520,jumpCooldown:0
+    x:0, y:0, r:14,
+    vx:0, vy:0,
+    targetX:0,
+    onGround:true,
+    invuln:0,
+    moveSpeed:540,
+    jumpForce:520,
+    jumpCooldown:0,
+    jumpRequested:false
   };
-  const atoms = {coins:[], obstacles:[], particles:[], sparks:[]};
-  const bg = {stars:[]};
 
-  function initBg(){
-    bg.stars.length=0;
-    const count = Math.floor((W*H)/45000);
-    for(let i=0;i<count;i++){
-      bg.stars.push({
-        x:rand(0,W), y:rand(0,H),
-        r:rand(0.6,2.2), a:rand(0.05,0.22),
-        vx:rand(-0.15,0.15), vy:rand(0.3,1.0),
-        hue: Math.random()<0.5 ? 260 : 195
-      });
-    }
-  }
+  const atoms = { coins:[], obstacles:[], particles:[], sparks:[] };
+  const bg = { stars:[] };
 
-  function spawnCoin(initial=false){
-    const x = rand(30, W-30);
-    const y = initial ? rand(H*0.08, H*0.75) : -30 - rand(0, H*0.55);
-    const r = rand(10,13);
-    const hue = Math.random()<0.5 ? 260 : 195;
-    atoms.coins.push({x,y,r,hue,rot:rand(0,Math.PI*2),wob:rand(0,Math.PI*2),alive:true});
-  }
+  let running = false;
+  let lastT = 0;
 
-  function spawnObstacle(initial=false){
-    const x = rand(30, W-30);
-    const y = initial ? rand(H*0.1, H*0.75) : -70 - rand(0, H*0.65);
-    const w = rand(26,46), h = rand(18,34);
-    const kind = Math.random()<0.5 ? "bar" : "block";
-    atoms.obstacles.push({x,y,w,h,kind,phase:rand(0,Math.PI*2),alive:true});
-  }
-
-  function reset(){
-    running = false; // فقط برای جلوگیری از دوبار اجرا
-    game.time=0; game.score=0; game.coins=0; game.level=1; game.hp=3; game.speed=220;
-
-    player.x=W/2; player.y=H*0.72;
-    player.vx=0; player.vy=0; player.targetX=player.x;
-    player.onGround=true; player.invuln=0; player.jumpCooldown=0;
-
-    atoms.coins.length=0; atoms.obstacles.length=0; atoms.particles.length=0; atoms.sparks.length=0;
-    for(let i=0;i<16;i++) spawnCoin(true);
-    for(let i=0;i<10;i++) spawnObstacle(true);
-
-    initBg();
-    updateUI();
-
-    stateTxt.textContent = "آماده";
-    modal.classList.add('show');
-    restartBtn.style.display='none';
+  function setScreen(home){
+    homeScreen.classList.toggle('show', !!home);
+    overScreen.classList.toggle('show', !home);
   }
 
   function updateUI(){
@@ -264,23 +315,121 @@
     progBar.style.width = total ? ((cur/total)*100).toFixed(1)+'%' : '0%';
   }
 
-  // Input
-  const keys = {a:false,d:false,space:false};
-  function jumpPress(){
-    if(!running) return;
-    player.spaceRequested = true;
+  function initBg(){
+    bg.stars.length = 0;
+    const count = Math.floor((W*H)/45000);
+    for(let i=0;i<count;i++){
+      bg.stars.push({
+        x: rand(0,W), y: rand(0,H),
+        r: rand(0.6,2.2), a: rand(0.05,0.22),
+        vx: rand(-0.15,0.15),
+        vy: rand(0.3,1.0),
+        hue: Math.random()<0.5 ? 260 : 195
+      });
+    }
   }
 
+  function spawnCoin(initial=false){
+    const x = rand(30, W-30);
+    const y = initial ? rand(H*0.08, H*0.75) : -30 - rand(0, H*0.55);
+    const r = rand(10,13);
+    const hue = Math.random()<0.5 ? 260 : 195;
+    atoms.coins.push({
+      x,y,r,hue,
+      rot: rand(0,Math.PI*2),
+      wob: rand(0,Math.PI*2),
+      alive:true
+    });
+  }
+
+  function spawnObstacle(initial=false){
+    const x = rand(30, W-30);
+    const y = initial ? rand(H*0.1, H*0.75) : -80 - rand(0, H*0.65);
+    const w = rand(26,46);
+    const h = rand(18,34);
+    const kind = Math.random()<0.5 ? "bar" : "block";
+    atoms.obstacles.push({
+      x,y,w,h,kind,
+      phase: rand(0,Math.PI*2),
+      alive:true
+    });
+  }
+
+  function resetWorld(){
+    game.time=0; game.score=0; game.coins=0; game.level=1; game.hp=3; game.speed=220;
+
+    player.x = W/2;
+    player.y = H*0.72;
+    player.vx=0; player.vy=0;
+    player.targetX = player.x;
+    player.onGround = true;
+    player.invuln = 0;
+    player.jumpCooldown = 0;
+    player.jumpRequested = false;
+
+    atoms.coins.length=0;
+    atoms.obstacles.length=0;
+    atoms.particles.length=0;
+    atoms.sparks.length=0;
+
+    for(let i=0;i<16;i++) spawnCoin(true);
+    for(let i=0;i<10;i++) spawnObstacle(true);
+
+    initBg();
+    updateUI();
+  }
+
+  function nextLevel(){
+    game.level++;
+    game.speed = 220 + (game.level-1)*34;
+    player.invuln = Math.max(player.invuln, 0.8);
+    stateTxt.textContent = `لول ${game.level}`;
+
+    for(let i=0;i<10;i++) spawnCoin();
+    for(let i=0;i<8;i++) spawnObstacle();
+  }
+
+  function circleRectHit(cx,cy,cr, rx,ry, rw,rh){
+    const left = rx - rw/2, right = rx + rw/2;
+    const top = ry - rh/2, bottom = ry + rh/2;
+    const nx = clamp(cx,left,right);
+    const ny = clamp(cy,top,bottom);
+    const dx=cx-nx, dy=cy-ny;
+    return dx*dx + dy*dy <= cr*cr;
+  }
+
+  function lose(){
+    if(player.invuln>0) return;
+    game.hp--;
+    player.invuln = 1.2;
+    stateTxt.textContent = "برخورد!";
+
+    if(game.hp<=0){
+      running = false;
+      stateTxt.textContent = "بازی تمام شد";
+      finalStats.textContent = `امتیازت: ${game.score}`;
+      setScreen(false);
+    } else {
+      // کمی عقب‌نشینی حسی
+      player.vx *= 0.2;
+    }
+    updateUI();
+  }
+
+  // Input
+  const keys = {A:false, D:false};
   window.addEventListener('keydown', (e)=>{
-    if(e.code==='KeyA') keys.a=true;
-    if(e.code==='KeyD') keys.d=true;
-    if(e.code==='Space'){ keys.space=true; if(!running) return; e.preventDefault(); jumpPress(); }
+    if(e.code==='KeyA') keys.A=true;
+    if(e.code==='KeyD') keys.D=true;
+    if(e.code==='Space' && running){
+      e.preventDefault();
+      player.jumpRequested = true;
+    }
   }, {passive:false});
 
   window.addEventListener('keyup', (e)=>{
-    if(e.code==='KeyA') keys.a=false;
-    if(e.code==='KeyD') keys.d=false;
-    if(e.code==='Space') keys.space=false;
+    if(e.code==='KeyA') keys.A=false;
+    if(e.code==='KeyD') keys.D=false;
   });
 
   window.addEventListener('mousemove', (e)=>{
@@ -288,14 +437,19 @@
     player.targetX = clamp(e.clientX, 0, W);
   }, {passive:true});
 
+  // Touch
+  let lastTap = 0;
   window.addEventListener('touchstart', (e)=>{
     if(!running) return;
     const t = e.touches && e.touches[0];
     if(t) player.targetX = clamp(t.clientX, 0, W);
+
+    const now = Date.now();
+    if(now - lastTap < 260){
+      player.jumpRequested = true;
+    }
+    lastTap = now;
     e.preventDefault();
-    // تپ صفحه = پرش (اگر کاربر انگشت رو خیلی کوتاه نگه داره)
-    // اینجا ساده: اگر کاربر روی صفحه تپ کرد، پرش انجام می‌دیم
-    jumpPress();
   }, {passive:false});
 
   window.addEventListener('touchmove', (e)=>{
@@ -305,83 +459,82 @@
     e.preventDefault();
   }, {passive:false});
 
-  jumpBtn.addEventListener('touchstart', (e)=>{
-    e.preventDefault();
-    jumpPress();
-  }, {passive:false});
-  jumpBtn.addEventListener('mousedown', (e)=>{
-    e.preventDefault();
-    jumpPress();
-  });
+  function doJump(){
+    if(!running) return;
+    player.jumpRequested = true;
+    jumpBtn.classList.add('active');
+    setTimeout(()=>jumpBtn.classList.remove('active'), 120);
+  }
+  jumpBtn.addEventListener('touchstart', (e)=>{ e.preventDefault(); doJump(); }, {passive:false});
+  jumpBtn.addEventListener('mousedown', (e)=>{ e.preventDefault(); doJump(); });
 
-  // Start button (fix اصلی)
-  function startGame(){
-    modal.classList.remove('show');
-    restartBtn.style.display='none';
-    resetWorldOnly();
+  // Buttons
+  playBtn.addEventListener('click', ()=>{
+    setScreen(false);
     running = true;
     stateTxt.textContent = "در حال اجرا...";
-  }
-
-  function resetWorldOnly(){
-    // فقط دوباره دنیارو بساز بدون اینکه modal برگرده
-    game.time=0; game.score=0; game.coins=0; game.level=1; game.hp=3; game.speed=220;
-    player.x=W/2; player.y=H*0.72;
-    player.vx=0; player.vy=0; player.targetX=player.x;
-    player.onGround=true; player.invuln=0; player.jumpCooldown=0;
-    player.spaceRequested=false;
-    atoms.coins.length=0; atoms.obstacles.length=0; atoms.particles.length=0; atoms.sparks.length=0;
-    for(let i=0;i<16;i++) spawnCoin(true);
-    for(let i=0;i<10;i++) spawnObstacle(true);
-    initBg();
-    updateUI();
-  }
-
-  startBtn.addEventListener('click', startGame);
-  restartBtn.addEventListener('click', ()=>{
-    modal.classList.remove('show');
-    startGame();
-    restartBtn.style.display='none';
+    resetWorld();
   });
 
-  // Collision helpers
-  function circleRectHit(cx,cy,cr, rx,ry, rw,rh){
-    const left=rx-rw/2, right=rx+rw/2;
-    const top=ry-rh/2, bottom=ry+rh/2;
-    const nx=clamp(cx,left,right);
-    const ny=clamp(cy,top,bottom);
-    const dx=cx-nx, dy=cy-ny;
-    return dx*dx+dy*dy <= cr*cr;
+  howBtn.addEventListener('click', ()=>{
+    howText.style.display = (howText.style.display === 'none' ? 'block' : 'none');
+  });
+
+  restartBtn.addEventListener('click', ()=>{
+    running = true;
+    stateTxt.textContent = "در حال اجرا...";
+    resetWorld();
+    setScreen(false);
+  });
+
+  homeBtn.addEventListener('click', ()=>{
+    running = false;
+    stateTxt.textContent = "آماده";
+    setScreen(true);
+  });
+
+  // Drawing helpers
+  function glowLine(x1,y1,x2,y2,color,th=2){
+    ctx.save();
+    ctx.strokeStyle=color;
+    ctx.lineWidth=th;
+    ctx.shadowColor=color;
+    ctx.shadowBlur=18;
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
+    ctx.restore();
   }
 
-  function lose(){
-    if(player.invuln>0) return;
-    game.hp--;
-    player.invuln = 1.2;
-    stateTxt.textContent = "برخورد!";
-    if(game.hp<=0){
-      running = false;
-      stateTxt.textContent = "بازی تمام شد";
-      modal.classList.add('show');
-      restartBtn.style.display='inline-block';
-    }
+  function neonCircle(x,y,r,outer,inner){
+    ctx.save();
+    ctx.shadowBlur = 26;
+    ctx.shadowColor = outer;
+    ctx.fillStyle = outer;
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = inner || 'rgba(124,92,255,.22)';
+    ctx.beginPath();
+    ctx.arc(x,y,r*0.6,0,Math.PI*2);
+    ctx.fill();
+
+    ctx.strokeStyle='rgba(255,255,255,.18)';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();
+    ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
   }
 
-  function nextLevel(){
-    game.level++;
-    game.speed = 220 + (game.level-1)*34;
-    for(let i=0;i<10;i++) spawnCoin();
-    for(let i=0;i<8;i++) spawnObstacle();
-    player.invuln = 0.8;
-    stateTxt.textContent = `لول ${game.level}`;
-  }
-
-  // Draw
   function drawBackground(){
-    ctx.fillStyle='rgba(0,0,0,.26)';
+    // dark fade
+    ctx.fillStyle = 'rgba(0,0,0,.20)';
     ctx.fillRect(0,0,W,H);
 
-    // radial blobs
     const g = ctx.createRadialGradient(W*0.25, H*0.15, 50, W*0.25, H*0.15, Math.max(W,H)*0.9);
     g.addColorStop(0,'rgba(124,92,255,.18)');
     g.addColorStop(0.35,'rgba(124,92,255,.06)');
@@ -406,13 +559,14 @@
     }
     ctx.restore();
 
+    // stars
     for(const s of bg.stars){
       ctx.save();
-      ctx.globalAlpha=s.a;
+      ctx.globalAlpha = s.a;
       const col = s.hue===260 ? 'rgba(124,92,255,.95)' : 'rgba(25,211,255,.95)';
-      ctx.fillStyle=col;
-      ctx.shadowColor=col;
-      ctx.shadowBlur=14;
+      ctx.fillStyle = col;
+      ctx.shadowColor = col;
+      ctx.shadowBlur = 14;
       ctx.beginPath();
       ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
       ctx.fill();
@@ -423,6 +577,13 @@
   function draw(){
     drawBackground();
 
+    // Always draw player a bit for nice look
+    const pr = player.r*(1+0.06*Math.sin(game.time*6));
+    neonCircle(player.x, player.y, pr, 'rgba(25,211,255,.95)', 'rgba(124,92,255,.22)');
+    glowLine(player.x-pr*0.35, player.y-pr*0.05, player.x+pr*0.35, player.y-pr*0.05, 'rgba(234,240,255,.65)', 2);
+
+    if(!running) return;
+
     // coins
     for(const c of atoms.coins){
       if(!c.alive) continue;
@@ -430,39 +591,49 @@
       const r = c.r*(0.9+0.12*pulse);
       const outer = c.hue===260 ? `hsla(260,100%,70%,${0.9*pulse})` : `hsla(195,100%,70%,${0.9*pulse})`;
       const inner = c.hue===260 ? 'rgba(124,92,255,.25)' : 'rgba(25,211,255,.25)';
+
       ctx.save();
       ctx.translate(c.x,c.y);
       ctx.rotate(c.rot + Math.sin(game.time*2+c.wob)*0.2);
       ctx.shadowBlur = 26;
       ctx.shadowColor = outer;
-      // ring
+
       ctx.strokeStyle = outer;
       ctx.lineWidth = 2.2;
       ctx.beginPath();
       ctx.arc(0,0,r,0,Math.PI*2);
       ctx.stroke();
-      neonCircle(0,0,r*0.95, outer, inner);
+
+      neonCircle(0,0,r*0.95,outer,inner);
+
+      ctx.shadowBlur = 0;
+      for(let i=0;i<6;i++){
+        const ang=(Math.PI*2*i)/6;
+        glowLine(Math.cos(ang)*r*0.2, Math.sin(ang)*r*0.2,
+                 Math.cos(ang)*r*1.05, Math.sin(ang)*r*1.05, outer, 1);
+      }
       ctx.restore();
     }
 
     // obstacles
     for(const o of atoms.obstacles){
       if(!o.alive) continue;
-      const t=game.time*2 + o.phase;
-      const wob=Math.sin(t)*6;
-      const x=o.x + wob*0.35, y=o.y;
+      const t = game.time*2 + o.phase;
+      const wob = Math.sin(t)*6;
+      const x = o.x + wob*0.35, y = o.y;
 
       ctx.save();
       ctx.translate(x,y);
+
       const gg = ctx.createLinearGradient(0,-o.h/2,o.w,o.h/2);
       gg.addColorStop(0,'rgba(255,77,109,.30)');
       gg.addColorStop(0.5,'rgba(124,92,255,.22)');
       gg.addColorStop(1,'rgba(25,211,255,.18)');
-      ctx.fillStyle=gg;
-      ctx.strokeStyle='rgba(255,77,109,.85)';
-      ctx.lineWidth=2;
-      ctx.shadowColor='rgba(255,77,109,.85)';
-      ctx.shadowBlur=28;
+      ctx.fillStyle = gg;
+      ctx.strokeStyle = 'rgba(255,77,109,.85)';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = 'rgba(255,77,109,.85)';
+      ctx.shadowBlur = 28;
 
       if(o.kind==="bar"){
         const w=o.w,h=o.h,r=10;
@@ -472,11 +643,15 @@
         ctx.arcTo(w/2,h/2,-w/2,h/2,r);
         ctx.arcTo(-w/2,h/2,-w/2,-h/2,r);
         ctx.arcTo(-w/2,-h/2,w/2,-h/2,r);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.shadowBlur=0;
+        const neonCol='rgba(124,92,255,.65)';
         for(let i=-2;i<=2;i++){
-          glowLine(-o.w/2,(i*8), o.w/2,(i*8)+o.h*0.1,'rgba(124,92,255,.65)',1);
+          glowLine(-o.w/2,(i*8),o.w/2,(i*8)+o.h*0.1,neonCol,1);
         }
-      }else{
+      } else {
         const w=o.w,h=o.h,rr=10;
         ctx.beginPath();
         ctx.moveTo(-w/2+rr,-h/2);
@@ -484,58 +659,35 @@
         ctx.arcTo(w/2,h/2,-w/2,h/2,rr);
         ctx.arcTo(-w/2,h/2,-w/2,-h/2,rr);
         ctx.arcTo(-w/2,-h/2,w/2,-h/2,rr);
-        ctx.closePath(); ctx.fill(); ctx.stroke();
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
         glowLine(-w/2,-h/2,w/2,h/2,'rgba(255,77,109,.65)',2);
         glowLine( w/2,-h/2,-w/2,h/2,'rgba(25,211,255,.55)',2);
       }
       ctx.restore();
     }
-
-    // player
-    ctx.save();
-    const inv = player.invuln>0;
-    ctx.globalAlpha = inv ? 0.5+0.5*Math.sin(game.time*20)*0.7 : 1;
-    const pr = player.r*(1+0.06*Math.sin(game.time*6));
-    const pcol='rgba(25,211,255,.95)';
-    const scol='rgba(124,92,255,.85)';
-
-    // shadow
-    ctx.globalAlpha = inv ? 0.18 : 0.25;
-    ctx.fillStyle='rgba(0,0,0,.8)';
-    ctx.beginPath();
-    ctx.ellipse(player.x, player.y+pr*1.25, pr*1.1, pr*0.55, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    ctx.globalAlpha = inv ? 0.85 : 1;
-    neonCircle(player.x, player.y, pr, pcol, `rgba(124,92,255,.25)`);
-    glowLine(player.x-pr*0.35, player.y-pr*0.05, player.x+pr*0.35, player.y-pr*0.05,'rgba(234,240,255,.65)',2);
-
-    // thruster
-    if(Math.abs(player.vx)>20){
-      for(let i=0;i<3;i++){
-        const rr=pr*(0.35+i*0.12);
-        const dy=player.y + pr*(0.35+i*0.08);
-        glowLine(player.x-rr*0.2,dy, player.x+rr*0.05,dy+rand(10,18),'rgba(46,229,157,.5)',1);
-      }
-    }
-    ctx.restore();
   }
 
   function update(dt){
     game.time += dt;
     game.speed = 220 + (game.level-1)*34;
 
-    // animate stars
+    // stars drift
     for(const s of bg.stars){
       s.x += s.vx*dt*60;
       s.y += (s.vy*(game.speed/220))*dt*60;
-      if(s.y>H+10){ s.y=-10; s.x=rand(0,W); s.vx=rand(-0.15,0.15); }
+      if(s.y>H+10){
+        s.y=-10;
+        s.x=rand(0,W);
+        s.vx=rand(-0.15,0.15);
+      }
       if(s.x< -10) s.x=W+10;
       if(s.x> W+10) s.x=-10;
     }
 
-    // controls
-    const moveX = (keys.a?-1:0) + (keys.d?1:0);
+    // horizontal control
+    const moveX = (keys.A?-1:0) + (keys.D?1:0);
     let ax = 0;
     if(moveX!==0) ax = moveX*player.moveSpeed;
     else ax = (player.targetX - player.x)*10;
@@ -543,24 +695,23 @@
     player.vx = lerp(player.vx, ax, clamp(dt*10,0,1));
 
     // jump
-    const wantsJump = !!player.spaceRequested || keys.space;
+    const wantsJump = player.jumpRequested;
+    player.jumpRequested = false;
+
     if(player.jumpCooldown>0) player.jumpCooldown -= dt;
 
-    const g=1350;
+    const g = 1350;
     player.vy += g*dt;
 
     if(wantsJump && player.onGround && player.jumpCooldown<=0){
       player.vy = -player.jumpForce;
-      player.onGround=false;
-      player.jumpCooldown=0.33;
-      player.spaceRequested=false;
+      player.onGround = false;
+      player.jumpCooldown = 0.33;
     }
-    player.spaceRequested=false;
 
     // integrate
     player.x += player.vx*dt;
     player.y += player.vy*dt;
-
     player.x = clamp(player.x, 18, W-18);
 
     const floor = H*0.82;
@@ -570,42 +721,45 @@
 
     if(player.invuln>0) player.invuln -= dt;
 
-    // move world downward
+    // world scroll
     const scroll = (game.speed + game.level*22)*dt;
+
+    // coins move down and collide
     for(const c of atoms.coins){
       if(!c.alive) continue;
       c.y += scroll*(0.95 + (c.r/12)*0.08);
       if(c.y>H+60) c.alive=false;
 
-      // coin collide
       const dx=c.x-player.x, dy=c.y-player.y;
-      if(dx*dx+dy*dy <= (c.r+player.r*0.9)**2){
+      const rr = c.r + player.r*0.9;
+      if(dx*dx+dy*dy <= rr*rr){
         c.alive=false;
         game.score += 10;
         game.coins += 1;
         updateUI();
-        if(game.coins>0 && (game.coins % game.needCoins())===0) nextLevel();
+        if(game.coins % game.needCoins() === 0) nextLevel();
       }
     }
 
+    // obstacles move down and collide
     for(const o of atoms.obstacles){
       if(!o.alive) continue;
       o.y += scroll*(1.0 + (o.w/60)*0.25);
       if(o.y>H+80) o.alive=false;
 
-      if(circleRectHit(player.x,player.y,player.r, o.x,o.y, o.w,o.h)){
+      if(circleRectHit(player.x, player.y, player.r, o.x, o.y, o.w, o.h)){
         lose();
-        // knockback
-        player.vx *= 0.2;
       }
     }
 
-    // spawn to keep flow
-    const needMoreCoins = atoms.coins.filter(x=>x.alive).length < 18 + game.level*2;
-    if(needMoreCoins) spawnCoin();
+    // keep population
+    const aliveCoins = atoms.coins.reduce((a,x)=>a+(x.alive?1:0),0);
+    const aliveObs = atoms.obstacles.reduce((a,x)=>a+(x.alive?1:0),0);
+    const needCoins = 18 + game.level*2;
+    const needObs = 12 + game.level*1.3;
 
-    const needMoreObs = atoms.obstacles.filter(x=>x.alive).length < 12 + game.level*1.3;
-    if(needMoreObs) spawnObstacle();
+    while(aliveCoins < needCoins){ spawnCoin(); aliveCoins++; }
+    while(aliveObs < needObs){ spawnObstacle(); aliveObs++; }
   }
 
   function loop(t){
@@ -614,13 +768,18 @@
 
     if(running) update(dt);
     draw();
-
     requestAnimationFrame(loop);
   }
 
-  reset();
-  modal.classList.add('show');
+  // Start loop immediately for background/visuals
   requestAnimationFrame((t)=>{ lastT=t; loop(t); });
+
+  // initial screen
+  setScreen(true);
+  resetWorld();         // فقط آماده‌سازی برای رسم اولیه
+  running = false;     // تا کاربر روی شروع بازی نزد
+  stateTxt.textContent = "آماده";
+  updateUI();
 })();
 </script>
 </body>
