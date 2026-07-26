@@ -1,301 +1,79 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>سازنده موزیک (آفلاین)</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>متن → آهنگ</title>
   <style>
     body{font-family:sans-serif;margin:20px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:10px}
-    button{padding:10px 14px;font-size:16px;cursor:pointer}
-    select{padding:10px;font-size:16px}
-    input[type="range"]{width:220px}
-    .out{margin-top:14px}
-    pre{white-space:pre-wrap;background:#f7f7f7;padding:12px;border-radius:10px}
+    textarea{width:100%;height:140px;padding:10px;font-size:16px}
+    button{padding:10px 14px;font-size:16px;cursor:pointer;margin-top:10px}
+    .box{margin-top:12px;border:1px solid #ddd;border-radius:10px;padding:12px}
+    a{display:inline-block;margin-top:10px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .status{margin-top:10px;color:#333}
   </style>
 </head>
 <body>
-  <h2>سازنده موزیک (آفلاین با Web Audio)</h2>
+  <h2>تبدیل متن به آهنگ (نسخه API)</h2>
 
+  <textarea id="lyrics" placeholder="اینجا متن/لیرکس را بنویس..."></textarea>
   <div class="row">
-    <label>حالت:</label>
-    <select id="mode">
-      <option value="chill">چیل</option>
-      <option value="happy">شاد</option>
-      <option value="dark">تاریک</option>
-    </select>
-
-    <label>مدت (ثانیه):</label>
-    <input id="dur" type="range" min="10" max="60" value="25"/>
-
-    <button id="gen">بساز</button>
-    <button id="play" disabled>پخش</button>
-    <button id="stop" disabled>توقف</button>
+    <button id="btn">ساخت آهنگ</button>
+    <button id="cancel" disabled>لغو/ریست</button>
   </div>
 
-  <div class="out">
-    <div id="info"></div>
-    <pre id="score"></pre>
-  </div>
+  <div class="status" id="status"></div>
+  <div class="box" id="result" style="display:none"></div>
 
 <script>
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
-const ctx = new AudioCtx();
+const statusEl = document.getElementById("status");
+const resultEl = document.getElementById("result");
+const btn = document.getElementById("btn");
+const cancelBtn = document.getElementById("cancel");
+let ctrl = null;
 
-let current = null;
+btn.onclick = async () => {
+  const text = document.getElementById("lyrics").value.trim();
+  if (!text) return statusEl.textContent = "لطفاً متن را وارد کن.";
 
-const scale = {
-  chill:  [0,2,3,5,7,8,10],   // مینور/دورین-طور
-  happy:  [0,2,4,5,7,9,11],   // ماژور
-  dark:   [0,1,3,5,6,8,10]    // فریج/مینور
+  btn.disabled = true;
+  cancelBtn.disabled = false;
+  resultEl.style.display = "none";
+  resultEl.innerHTML = "";
+  statusEl.textContent = "در حال ساخت...";
+
+  ctrl = new AbortController();
+  try {
+    const res = await fetch("/api/text-to-song", {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ text }),
+      signal: ctrl.signal
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+
+    // انتظار: { downloadUrl, jobId }
+    statusEl.textContent = "آهنگ آماده شد ✅";
+    resultEl.style.display = "block";
+    resultEl.innerHTML = `
+      <div>jobId: <b>${data.jobId || "-"}</b></div>
+      <a href="${data.downloadUrl}" download>دانلود آهنگ</a>
+    `;
+  } catch (e) {
+    statusEl.textContent = "خطا: " + (e?.message || e);
+  } finally {
+    btn.disabled = false;
+    cancelBtn.disabled = true;
+    ctrl = null;
+  }
 };
 
-const tempoByMode = {
-  chill: 92,
-  happy: 130,
-  dark: 78
-};
-
-function midiToFreq(m){ return 440 * Math.pow(2, (m-69)/12); }
-
-// تولید نت‌ها (ملودی) + درام ساده (کیك/اسنر با نویز)
-function generatePattern({mode, durSec}) {
-  const stepsPerBeat = 2; // 8th note
-  const bpm = tempoByMode[mode] ?? 100;
-  const stepDur = 60 / bpm / stepsPerBeat; // seconds per step
-  const totalSteps = Math.floor((durSec * 1.0) / stepDur);
-
-  const rootMidi = 57; // A3 ~
-  const sc = scale[mode] ?? scale.chill;
-
-  // آکورد خیلی ساده: برای هارمونی از درجه‌های مقیاس استفاده می‌کنیم
-  const degrees = [0,3,4,5,6];
-  const chord = () => {
-    const d = degrees[Math.floor(Math.random()*degrees.length)];
-    const n0 = rootMidi + d;
-    return [n0, n0 + 3, n0 + 7];
-  };
-
-  let chordNow = chord();
-
-  const melody = [];
-  const bass = [];
-  for (let s=0; s<totalSteps; s++) {
-    // هر چند میزان یکبار آکورد عوض شود
-    if (s % (stepsPerBeat*4) === 0 && Math.random() < 0.9) chordNow = chord();
-
-    // probability های مختلف
-    const barPos = s % (stepsPerBeat*4);
-    const strong = (barPos === 0);
-
-    let note = null;
-    if (Math.random() < (strong ? 0.85 : 0.45)) {
-      const degree = sc[Math.floor(Math.random()*sc.length)];
-      note = chordNow[0] + degree - (0); // هم‌ریشه نگه داشتن با sc
-      // کمی اکتاو جابه‌جا
-      if (mode === "happy" && Math.random() < 0.35) note += 12;
-      if (mode === "dark" && Math.random() < 0.25) note -= 12;
-    }
-    melody.push(note);
-
-    // بیس: هر 2 ضرب یکبار
-    let b = null;
-    if (s % (stepsPerBeat*2) === 0) {
-      b = chordNow[0] - 12 + (Math.random()<0.2 ? 0 : 0);
-      if (mode === "happy" && Math.random()<0.2) b += 12;
-    }
-    bass.push(b);
-  }
-
-  // درام: کیک روی ضرب‌های قوی، اسنر روی offbeat ها
-  const drums = [];
-  for (let s=0; s<totalSteps; s++) {
-    const barPos = s % (stepsPerBeat*4);
-    const kick = (barPos === 0 || barPos === stepsPerBeat*2 || (mode!=="dark" && barPos===stepsPerBeat*3 && Math.random()<0.4));
-    const snare = (barPos === stepsPerBeat*1 || barPos === stepsPerBeat*3);
-    drums.push({kick: !!kick && Math.random()< (mode==="chill"?0.85:0.95), snare: !!snare});
-  }
-
-  return { bpm, stepDur, totalSteps, melody, bass, drums };
-}
-
-// ساخت صدا
-function playPattern(pattern, {volume=0.6}={}) {
-  // اگر قبلاً در حال پخش بود پاک/توقف
-  if (current?.stopper) current.stopper();
-
-  const stopFlag = {v:false};
-  const stopper = () => { stopFlag.v = true; };
-  current = { stopper };
-
-  const master = ctx.createGain();
-  master.gain.value = volume;
-  master.connect(ctx.destination);
-
-  const now = ctx.currentTime + 0.05;
-
-  const sc = scale.mode ?? null;
-
-  // کیک/اسنر با WebAudio
-  function kick(t){
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = "sine";
-
-    o.frequency.setValueAtTime(140, t);
-    o.frequency.exponentialRampToValueAtTime(50, t + 0.12);
-
-    g.gain.setValueAtTime(1.0, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-
-    o.connect(g); g.connect(master);
-    o.start(t);
-    o.stop(t + 0.2);
-  }
-
-  function snare(t){
-    // نویز + فرکانس کوتاه
-    const bufferSize = ctx.sampleRate * 0.2;
-    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const data = buffer.getChannelData(0);
-    for (let i=0;i<bufferSize;i++){
-      data[i] = (Math.random()*2-1) * (1 - i/bufferSize);
-    }
-
-    const noise = ctx.createBufferSource();
-    noise.buffer = buffer;
-
-    const bp = ctx.createBiquadFilter();
-    bp.type = "bandpass";
-    bp.frequency.value = 1800;
-    bp.Q.value = 0.7;
-
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.9, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
-
-    noise.connect(bp); bp.connect(g); g.connect(master);
-    noise.start(t);
-    noise.stop(t + 0.15);
-
-    // کمی تون پیوندی
-    const o = ctx.createOscillator();
-    o.type = "triangle";
-    o.frequency.setValueAtTime(210, t);
-    o.frequency.exponentialRampToValueAtTime(120, t+0.12);
-
-    const g2 = ctx.createGain();
-    g2.gain.setValueAtTime(0.35, t);
-    g2.gain.exponentialRampToValueAtTime(0.001, t+0.14);
-
-    o.connect(g2); g2.connect(master);
-    o.start(t);
-    o.stop(t + 0.15);
-  }
-
-  function note(t, freq, dur, type="sine", gain=0.35){
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = type;
-    o.frequency.setValueAtTime(freq, t);
-
-    g.gain.setValueAtTime(0.001, t);
-    g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-
-    // کمی کم‌کانتور برای نرم‌تر شدن
-    const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass";
-    lp.frequency.value = (type==="sine"?900:1600);
-
-    o.connect(lp); lp.connect(g); g.connect(master);
-    o.start(t);
-    o.stop(t + dur + 0.02);
-  }
-
-  const { stepDur, totalSteps, melody, bass, drums } = pattern;
-
-  for (let s=0; s<totalSteps; s++) {
-    const t = now + s * stepDur;
-    if (stopFlag.v) break;
-
-    const d = drums[s];
-    if (d?.kick) kick(t);
-    if (d?.snare) snare(t + stepDur*0.02);
-
-    const m = melody[s];
-    if (m != null) {
-      const dur = stepDur * (Math.random()<0.5 ? 0.9 : 1.1);
-      const freq = midiToFreq(m);
-      const type = (pattern.bpm>120 ? "sawtooth" : "triangle");
-      const g = (pattern.bpm>120 ? 0.24 : 0.18);
-      // اگر خوشحال، bright تر؛ اگر تاریک، نرم تر
-      const gain = (pattern.mode==="dark" ? g*0.75 : g);
-      note(t, freq, dur, type, gain);
-    }
-
-    const b = bass[s];
-    if (b != null) {
-      const freq = midiToFreq(b);
-      note(t, freq, stepDur*1.2, "sine", pattern.mode==="happy"?0.22:0.18);
-    }
-  }
-
-  return new Promise(r => setTimeout(r, pattern.totalSteps * stepDur * 1000));
-}
-
-const modeEl = document.getElementById("mode");
-const durEl = document.getElementById("dur");
-const genBtn = document.getElementById("gen");
-const playBtn = document.getElementById("play");
-const stopBtn = document.getElementById("stop");
-const info = document.getElementById("info");
-const score = document.getElementById("score");
-
-genBtn.onclick = () => {
-  const mode = modeEl.value;
-  const durSec = Number(durEl.value);
-  info.textContent = "در حال ساخت...";
-  const pattern = generatePattern({mode, durSec});
-  pattern.mode = mode;
-
-  // نمایش چند نت برای حس بصری
-  const mel = pattern.melody
-    .map((n,i)=> n==null ? null : ({i, n}))
-    .filter(Boolean)
-    .slice(0, 24)
-    .map(x => `(${x.i}:${x.n})`).join(" ");
-
-  score.textContent =
-    `mode: ${mode}\n` +
-    `bpm: ${pattern.bpm}\n` +
-    `steps: ${pattern.totalSteps}\n` +
-    `melody(sample): ${mel || "-"}`;
-
-  currentPattern = pattern;
-  info.textContent = "ساخته شد. آماده پخش ✅";
-  playBtn.disabled = false;
-  stopBtn.disabled = true;
-};
-
-let currentPattern = null;
-
-playBtn.onclick = async () => {
-  if (!currentPattern) return;
-  playBtn.disabled = true;
-  stopBtn.disabled = false;
-  info.textContent = "در حال پخش...";
-  await playPattern(currentPattern, { volume: 0.65 });
-  info.textContent = "پایان ✅";
-  playBtn.disabled = false;
-  stopBtn.disabled = true;
-};
-
-stopBtn.onclick = () => {
-  if (current?.stopper) current.stopper();
-  playBtn.disabled = false;
-  stopBtn.disabled = true;
-  info.textContent = "توقف شد ⏹️";
+cancelBtn.onclick = () => {
+  if (ctrl) ctrl.abort();
+  statusEl.textContent = "لغو شد.";
 };
 </script>
 </body>
