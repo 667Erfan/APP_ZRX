@@ -3,21 +3,38 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Cartoon Runner</title>
+  <title>Cartoon Runner - NPC Dialogue</title>
   <style>
     html, body { height: 100%; margin: 0; overflow: hidden; background:#070a14; touch-action:none; }
-    #wrap { position:fixed; inset:0; display:flex; flex-direction:column; }
-    canvas { flex:1; width:100%; height:100%; display:block; }
-
-    .ui {
-      position:absolute; left:0; right:0; bottom:14px;
-      display:flex; justify-content:center; gap:12px;
+    canvas { width:100%; height:100%; display:block; }
+    #toast{
+      position:fixed; left:12px; top:12px;
+      background: rgba(124,92,255,.18);
+      border: 1px solid rgba(124,92,255,.35);
+      color:#eaf0ff;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      font-size:16px;
+      max-width: calc(100vw - 24px);
+      line-height:1.5;
       pointer-events:none;
-      padding:0 12px;
+      opacity:0;
+      transform: translateY(-8px);
+      transition: opacity .18s ease, transform .18s ease;
+      z-index:10;
+    }
+    #toast.show{ opacity:1; transform: translateY(0); }
+
+    .ui{
+      position:fixed; left:0; right:0; bottom:14px;
+      display:flex; justify-content:center; gap:12px; padding:0 12px;
+      pointer-events:none;
+      z-index:10;
     }
     .btn{
       pointer-events:auto;
-      width:128px; height:74px;
+      width:130px; height:74px;
       border-radius:18px;
       background: rgba(255,255,255,.06);
       border: 1px solid rgba(255,255,255,.18);
@@ -28,50 +45,29 @@
       touch-action:none;
     }
     .btn:active{ transform: scale(.98); }
-    .btn.small{ width:110px; }
-
     .hint{
-      position:absolute; top:12px; left:12px;
+      position:fixed; top:92px; left:12px;
       color: rgba(234,240,255,.75);
-      font-family: Tahoma, Arial;
-      font-weight:700; font-size:13px;
+      font-weight:800; font-size:12px;
       background: rgba(255,255,255,.05);
       border: 1px solid rgba(255,255,255,.10);
       padding:8px 10px; border-radius:12px;
       pointer-events:none;
-      max-width: 92vw;
+      z-index:10;
+      max-width: calc(100vw - 24px);
+      line-height:1.7;
     }
-
-    .toast{
-      position:absolute;
-      top:62px; left:12px;
-      background: rgba(124,92,255,.16);
-      border: 1px solid rgba(124,92,255,.35);
-      color: #eaf0ff;
-      padding:10px 12px;
-      border-radius:14px;
-      font-weight:900;
-      font-size:16px;
-      pointer-events:none;
-      box-shadow: 0 20px 80px rgba(124,92,255,.18);
-      opacity:0;
-      transform: translateY(-6px);
-      transition: opacity .15s ease, transform .15s ease;
-    }
-    .toast.show{ opacity:1; transform: translateY(0); }
   </style>
 </head>
 <body>
-  <div id="wrap">
-    <div class="hint">راه رفتن: نگه دار (جلو/عقب) • پرش: تپ</div>
-    <div class="toast" id="toast">سلام</div>
-    <canvas id="c"></canvas>
+  <canvas id="c"></canvas>
+  <div id="toast">سلام</div>
+  <div class="hint">راه رفتن: نگه دار جلو/عقب • پرش: تپ</div>
 
-    <div class="ui">
-      <button class="btn small" id="btnBack">عقب</button>
-      <button class="btn" id="btnJump">پرش</button>
-      <button class="btn small" id="btnForward">جلو</button>
-    </div>
+  <div class="ui">
+    <button class="btn" id="btnBack">عقب</button>
+    <button class="btn" id="btnJump">پرش</button>
+    <button class="btn" id="btnForward">جلو</button>
   </div>
 
 <script>
@@ -100,23 +96,22 @@
 
   const groundY = () => Math.floor(H*0.78);
 
-  // جهان بی‌نهایت: player در مختصات جهان است، دوربین با او حرکت می‌کند
+  // جهان بی‌نهایت (فقط برای NPCها و حرکت)
   const world = {
     camX: 0,
-    playerX: 0, // جهان
-    nextNpcAt: 420,
-    npcs: [], // {x, greeted}
-    speedWorld: 0,
+    playerXWorld: 0,
+    npc: null, // فقط یک نفر در هر لحظه
+    npcState: 'waiting', // waiting -> greeted -> passed -> spawning
+    nextNpcWorldX: 520
   };
 
-  // بازیکن
   const player = {
-    x: 0, // جهان
+    x: 0, // world
     y: 0,
     w: 44, h: 70,
-    vx: 0, vy: 0,
+    vy: 0,
     onGround: false,
-    speed: 200,
+    speed: 210,
     jumpV: -520,
     gravity: 1350,
     faceDir: 1,
@@ -126,33 +121,26 @@
   function resetPlayer(){
     player.x = 140;
     player.y = groundY() - player.h;
-    player.vx = 0; player.vy = 0;
+    player.vy = 0;
     player.onGround = true;
     player.faceDir = 1;
     player.stepT = 0;
   }
   resetPlayer();
 
-  // کنترل‌ها (نگه‌داری جلو/عقب)
   let moveDir = 0; // -1 عقب، +1 جلو
-  function setMoveDir(dir){
-    moveDir = dir;
-  }
-
   function bindHold(btn, dir){
     btn.addEventListener('pointerdown', (e)=>{
       e.preventDefault();
       btn.setPointerCapture?.(e.pointerId);
-      setMoveDir(dir);
+      moveDir = dir;
     }, {passive:false});
-
     btn.addEventListener('pointerup', (e)=>{
       e.preventDefault();
-      setMoveDir(0);
+      moveDir = 0;
     }, {passive:false});
-
     btn.addEventListener('pointercancel', ()=>{
-      setMoveDir(0);
+      moveDir = 0;
     }, {passive:false});
   }
   bindHold(btnForward, +1);
@@ -166,30 +154,35 @@
     }
   });
 
-  function showHello(){
-    toast.textContent = "سلام";
+  function showToast(msg, ms=1100){
+    toast.textContent = msg;
     toast.classList.add('show');
-    clearTimeout(showHello._t);
-    showHello._t = setTimeout(()=>toast.classList.remove('show'), 900);
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=>toast.classList.remove('show'), ms);
   }
 
-  // ساخت آدم‌های روبه‌رو (آدمک با سلام وقتی نزدیک می‌شه)
-  function spawnNpc(x){
-    world.npcs.push({ x, greeted:false, colorAlt: Math.random()<.5 });
+  function spawnNextNpc(){
+    // فقط یک نفر: بعد از رد شدن، یکی جدید میاد
+    const x = world.nextNpcWorldX;
+    world.npc = {
+      x,
+      greeted: false,
+      dir: 1,
+      colorAlt: Math.random()<.5,
+      // state داخلی برای “رفتن جلو”
+      passed: false,
+      // برای تاخیر پیام‌ها
+      timer: 0
+    };
+    world.npcState = 'waiting';
+    // فاصله تا NPC بعدی
+    world.nextNpcWorldX = x + 520 + Math.random()*120;
   }
 
-  function ensureNpcs(){
-    while(world.npcs.length < 12){
-      const lastX = world.npcs.length ? world.npcs[world.npcs.length-1].x : world.nextNpcAt;
-      const nextX = lastX + 360 + Math.random()*220;
-      // چون جهان روبه جلو می‌ره، NPCها را قبل‌تر/بعد‌تر می‌ریزیم
-      spawnNpc(nextX);
-      world.nextNpcAt = nextX + 420;
-      if(world.npcs[0] && world.npcs[0].x < world.camX - 400) break;
-    }
-  }
+  // شروع: یک NPC اول
+  spawnNextNpc();
 
-  // رسم‌های ساده
+  // --- draw utils
   function roundRect(x,y,w,h,r){
     r = Math.min(r, w/2, h/2);
     ctx.beginPath();
@@ -211,14 +204,16 @@
     ctx.fillStyle = g;
     ctx.fillRect(0,0,W,H);
 
-    // خطوط نئون زمین
+    // زمین نئون
+    const gy = groundY();
+    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    ctx.fillRect(0, gy, W, H-gy);
+
     ctx.globalAlpha = 0.22;
     ctx.strokeStyle = 'rgba(124,92,255,.9)';
     ctx.lineWidth = 2;
 
-    const gy = groundY();
     const cam = world.camX;
-
     for(let i=0;i<10;i++){
       const y = gy - 130 - i*26;
       const wave = Math.sin(t*0.002 + i + cam*0.004)*6;
@@ -229,11 +224,7 @@
     }
     ctx.globalAlpha = 1;
 
-    // زمین
-    ctx.fillStyle = 'rgba(255,255,255,.05)';
-    ctx.fillRect(0, gy, W, H-gy);
-
-    // نوار خط زمین
+    // خط زمین
     ctx.strokeStyle = 'rgba(25,211,255,.55)';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -241,83 +232,84 @@
     ctx.lineTo(W, gy);
     ctx.stroke();
 
-    // موانع “دیوار” در جهان (حالت بسیار ساده: بدون گیر کردن، فقط برخورد فیزیکی)
-    // ما دیوار را واقعی با برخورد سخت نمی‌سازیم؛ فقط مرز صفحه نیست.
-    // اگر بخوای “سربه‌دیوار” واقعی هم بشه می‌تونم بعدش اضافه کنم.
+    // سایه
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath();
+    const pxScreen = player.x - world.camX + player.w/2;
+    ctx.ellipse(pxScreen, gy+6, 18, 8, 0, 0, Math.PI*2);
+    ctx.fill();
   }
 
-  function drawCartoon(xScreen, y, dir=1, tintA='#7c5cff', tintB='#19d3ff', wink=false){
-    const h = player.h;
-    const w = player.w;
+  function drawCartoon(xScreen, y, dir=1, tintA, tintB, wink=false){
+    const w = player.w, h = player.h;
 
     ctx.save();
-    // صورت و بدن
     if(dir === -1){
       ctx.translate(xScreen + w/2, 0);
       ctx.scale(-1,1);
       ctx.translate(-(xScreen + w/2), 0);
     }
 
-    // سایه
-    ctx.fillStyle = 'rgba(0,0,0,.35)';
     const gy = groundY();
-    ctx.beginPath();
-    ctx.ellipse(xScreen + w/2, gy + 6, 18, 8, 0, 0, Math.PI*2);
-    ctx.fill();
 
-    // سر
+    // head
     ctx.shadowColor = 'rgba(124,92,255,.7)';
     ctx.shadowBlur = 18;
     ctx.fillStyle = 'rgba(234,240,255,.92)';
     ctx.beginPath();
-    ctx.arc(xScreen + w/2, y - 10 + (wink?0:0), 18, 0, Math.PI*2);
+    ctx.arc(xScreen + w/2, y - 10, 18, 0, Math.PI*2);
     ctx.fill();
 
-    // چشم
+    // eyes
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#070a14';
-    const eyeY = y - 14;
     ctx.beginPath();
-    ctx.arc(xScreen + w/2 - 6, eyeY, 2.4, 0, Math.PI*2);
+    ctx.arc(xScreen + w/2 - 6, y - 14, 2.4, 0, Math.PI*2);
     ctx.fill();
-    // چشم دیگر (گاهی وینک)
     if(wink){
-      ctx.beginPath();
-      ctx.moveTo(xScreen + w/2 + 1.5, eyeY);
-      ctx.lineTo(xScreen + w/2 + 7, eyeY);
       ctx.strokeStyle = '#070a14';
       ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(xScreen + w/2 + 1.5, y - 14);
+      ctx.lineTo(xScreen + w/2 + 7, y - 14);
       ctx.stroke();
     }else{
       ctx.beginPath();
-      ctx.arc(xScreen + w/2 + 6, eyeY, 2.4, 0, Math.PI*2);
+      ctx.arc(xScreen + w/2 + 6, y - 14, 2.4, 0, Math.PI*2);
       ctx.fill();
     }
 
-    // بدن
+    // body
     ctx.fillStyle = tintA;
     ctx.strokeStyle = tintB;
     ctx.lineWidth = 3;
-
     roundRect(xScreen + 10, y + 10, w - 20, 40, 14);
     ctx.fill(); ctx.stroke();
 
-    // پاها
+    // arms
+    const arm = Math.sin(player.stepT*1.7)*6;
     ctx.strokeStyle = 'rgba(234,240,255,.85)';
-    ctx.lineWidth = 8;
+    ctx.lineWidth = 5;
     ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(xScreen + 14, y + 24);
+    ctx.lineTo(xScreen + 18 + (dir===1?arm:-arm), y + 18);
+    ctx.stroke();
 
+    // legs
+    const leg = Math.sin(player.stepT*1.9)*5;
+    ctx.lineWidth = 8;
     ctx.beginPath();
     ctx.moveTo(xScreen + 18, gy - 30);
-    ctx.lineTo(xScreen + 10, gy - 10);
+    ctx.lineTo(xScreen + 10 + (dir===1?-leg:leg), gy - 10);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(xScreen + w - 18, gy - 30);
-    ctx.lineTo(xScreen + w - 10, gy - 10);
+    ctx.lineTo(xScreen + w - 10 + (dir===1?leg:-leg), gy - 10);
     ctx.stroke();
 
-    // کفش‌ها
+    // shoes
     ctx.fillStyle = 'rgba(255,77,109,.75)';
     ctx.shadowColor = 'rgba(255,77,109,.55)';
     ctx.shadowBlur = 14;
@@ -332,24 +324,22 @@
   }
 
   function updateLogic(dt){
-    // حرکت جهان: جلو/عقب
-    const dir = moveDir;
-    player.faceDir = dir !== 0 ? dir : player.faceDir;
+    // move player in world
+    player.faceDir = (moveDir !== 0) ? moveDir : player.faceDir;
+    const vx = moveDir * player.speed;
 
-    // سرعت راه رفتن با محدودیت دیوار (مرز تصویر): ما مرز “صفحه” نمی‌ذاریم،
-    // ولی اجازه نمی‌دیم کاربر از داخل زمین/آسمون بره.
-    // پس عملاً هیچ “گیر ابدی” نمی‌گیریم.
-    player.vx = dir * player.speed;
+    player.x += vx * dt;
 
-    // فیزیک
+    // clamp: فعلاً فقط نگه‌دار که از پشت نیفته/بیرون نره (کادر جدید با NPC فقط جلو میاد)
+    player.x = Math.max(30, player.x);
+
+    // gravity
     if(!player.onGround){
       player.vy += player.gravity * dt;
       player.y += player.vy * dt;
     }
 
-    player.x += player.vx * dt;
-
-    // برخورد با زمین
+    // ground collision
     const gy = groundY();
     const floorY = gy - player.h;
     if(player.y >= floorY){
@@ -358,84 +348,80 @@
       player.onGround = true;
     }
 
-    // دوربین دنبال بازیکن
-    // camX = مکان جهان که روی صفحه دیده می‌شود
-    // ما بازیکن را حدوداً 25% از عرض نگه می‌داریم
+    // camera follow (player)
     const targetCam = player.x - (W*0.25);
     world.camX += (targetCam - world.camX) * Math.min(1, dt*8);
 
-    // آدمک‌ها را spawn و سلام را trigger کنیم
-    ensureNpcs();
-
-    const triggerDist = 70; // نزدیک که شد سلام
-    for(const npc of world.npcs){
-      // تبدیل به مختصات صفحه
+    // npc logic (یک نفر در هر لحظه)
+    if(world.npc){
+      const npc = world.npc;
+      // اگر پلیر به NPC نزدیک شد، سلام یک بار
       const npcScreenX = npc.x - world.camX;
-      // اگر داخل ناحیه جلو بازیکن شد
-      if(!npc.greeted){
-        const playerScreenX = player.x - world.camX;
-        if(Math.abs(npcScreenX - (playerScreenX + 22)) < triggerDist){
+      const playerScreenX = player.x - world.camX;
+
+      const passedNow = (playerScreenX > npcScreenX + 35); // رد شدن از جلوی NPC
+
+      if(world.npcState === 'waiting'){
+        if(!npc.greeted && Math.abs((playerScreenX+22) - (npcScreenX+22)) < 70){
           npc.greeted = true;
-          showHello();
+          world.npcState = 'greeted';
+          showToast('سلام', 900);
+        }
+      } else if(world.npcState === 'greeted'){
+        // وقتی رد شد، پیام اصلی را بده و NPC “برود جلو”
+        if(passedNow){
+          world.npcState = 'passed';
+          showToast('خوب دوست من خوش آمدی به چالش سنگین و خفن برو جلو تر', 1400);
+          // “رفتن جلو”: همینجا NPC رو از صفحه رد می‌کنیم (x را جلوتر می‌بریم)
+          npc.passed = true;
+          npc.x += 1200;
+        }
+      } else if(world.npcState === 'passed'){
+        // بعد از اینکه NPC از محدوده دور شد، یکی جدید spawn شود
+        if(npc.x - world.camX > W + 300){
+          spawnNextNpc();
         }
       }
     }
 
-    // حذف آدمک‌های خیلی دور پشت سر
-    world.npcs = world.npcs.filter(n => n.x > world.camX - 600);
+    // animation
+    const moving = (moveDir !== 0) && player.onGround;
+    player.stepT += (moving ? 1 : 0.3) * (1.0);
   }
 
   function drawLogic(t){
-    const gy = groundY();
     drawBackground(t);
 
-    // NPCها
-    for(const npc of world.npcs){
+    // npc draw (فقط یکی)
+    if(world.npc){
+      const npc = world.npc;
       const xScreen = npc.x - world.camX;
-      if(xScreen < -80 || xScreen > W+80) continue;
 
-      drawCartoon(
-        xScreen - 22,
-        gy - player.h,
-        1,
-        npc.colorAlt ? '#7c5cff' : 'rgba(25,211,255,.55)',
-        npc.colorAlt ? '#19d3ff' : 'rgba(124,92,255,.75)',
-        npc.greeted
-      );
+      if(xScreen > -120 && xScreen < W+120){
+        const gy = groundY();
+        drawCartoon(
+          xScreen - 22,
+          gy - player.h,
+          1,
+          npc.colorAlt ? 'rgba(124,92,255,.55)' : 'rgba(25,211,255,.40)',
+          npc.colorAlt ? 'rgba(25,211,255,.70)' : 'rgba(124,92,255,.75)',
+          false
+        );
+      }
     }
 
-    // بازیکن
+    // player draw
     const pxScreen = player.x - world.camX;
-
-    // اگر walking بخواد انیمیشن قدم داشته باشه:
-    const moving = moveDir !== 0 && player.onGround;
-    player.stepT += (moving ? 1 : 0.35) * (0.9);
-
-    // رسم بازیکن با چرخش سمت
-    ctx.save();
-    // انیمیشن کمی با موج
     const bob = player.onGround ? Math.sin(player.stepT*0.14)*3 : 0;
-    // دستکاری ی برای نمایش
-    drawCartoon(pxScreen, player.y + bob, player.faceDir);
-    ctx.restore();
-
-    // “دیوار” واقعی داخل دنیا نداریم؛ ولی اگر خواستی می‌تونیم چند مانع سفت هم اضافه کنیم
-    // که برخورد سخت داشته باشه و بعد برگشت بده.
-  }
-
-  // init NPCها در مسیر جلو
-  for(let i=0;i<7;i++){
-    spawnNpc(420 + i*(420 + Math.random()*60));
+    drawCartoon(pxScreen, player.y + bob, player.faceDir, 'rgba(124,92,255,.55)', 'rgba(25,211,255,.70)', false);
   }
 
   let last = performance.now();
   function loop(now){
     const dt = Math.min(0.033, (now-last)/1000);
     last = now;
-
     updateLogic(dt);
     drawLogic(now);
-
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
