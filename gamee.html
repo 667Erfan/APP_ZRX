@@ -69,6 +69,7 @@
       pointer-events:auto;
     }
     #overlay.show{ display:flex; }
+
     .card{
       width:min(560px, 96vw);
       background: rgba(255,255,255,.06);
@@ -168,7 +169,7 @@
     <div class="card">
       <h2>انتخاب کن</h2>
       <div style="color:rgba(234,240,255,.85);font-weight:900;margin-bottom:12px;line-height:1.7;text-align:center">
-        وقتی نزدیک شدی، فقط یکی را انتخاب کن:
+        1/2/3 = مرگ • 4 = ادامه
       </div>
 
       <div class="optList">
@@ -231,25 +232,19 @@
     gravity: 1350,
     faceDir: 1,
 
-    stepT: 0,          // انیمیشن فقط وقتی اجازه داشته باشه بالا میره
-    stepFrozen: false // فریز انیمیشن
+    stepT: 0,
+    stepFrozen: false
   };
 
   const world = {
     camX: 0,
-
-    // فقط 1 NPC
     npc: null,
-    npcState: 'idle', // idle -> greeted -> waitingChoice -> answered -> showingDid
+    npcState: 'idle', // idle -> waitingChoice -> afterChoice
 
     overlayOpen: false,
     didShowing: false,
 
-    // نمایش “آدم چاقو” کارتونی
-    showKnife: false,
-
-    // برای فریز انیمیشن NPC/چاقو
-    animFrozenValue: 0 // stepT را اینجا نگه می‌داریم
+    showKnife: false
   };
 
   let moveDir = 0; // -1 عقب، +1 جلو
@@ -304,13 +299,12 @@
     world.npc = {
       x: 520,
       greeted: false,
-      colorAlt: Math.random() < 0.5,
+      colorAlt: Math.random() < 0.5
     };
     world.npcState = 'idle';
   }
 
   function resetAll(){
-    // reset overlays
     overlay.classList.remove('show');
     result.classList.remove('show');
 
@@ -331,37 +325,58 @@
 
     player.stepT = 0;
     player.stepFrozen = false;
-    world.animFrozenValue = 0;
 
     spawnNpc();
     showToast('سلام', 650);
+  }
+
+  function openChoiceOverlay(){
+    world.overlayOpen = true;
+    overlay.classList.add('show');
+    // فریز انیمیشن
+    player.stepFrozen = true;
+  }
+
+  // این قسمت تغییر اصلی است:
+  // choice=4 => نمی‌میره (ادامه بازی)
+  // choice=1/2/3 => می‌میره (knife + DID)
+  function handleChoice(choiceStr){
+    const choice = Number(choiceStr);
+
+    // بستن overlay
+    world.overlayOpen = false;
+    overlay.classList.remove('show');
+
+    // باز کردن انیمیشن دوباره در صورت زنده ماندن
+    if(choice === 4){
+      // زنده می‌ماند: پیام مرموز، و ادامه بازی
+      world.didShowing = false;
+      world.showKnife = false;
+      world.npcState = 'afterChoice'; // دیگر سوال دوباره نیاید
+      player.stepFrozen = false;
+      showToast('اوکی! برو جلو', 1000);
+      return;
+    }
+
+    // مرگ: knife + DID
+    world.didShowing = true;
+    world.showKnife = true;
+    player.stepFrozen = true;
+
+    // بعد از کمی زمان DID
+    setTimeout(()=>{
+      world.showKnife = false;
+      resultSub.textContent = `انتخاب شما: ${choice}`;
+      result.classList.add('show');
+    }, 650);
   }
 
   // انتخاب‌ها
   document.querySelectorAll('.opt').forEach(el=>{
     el.addEventListener('click', ()=>{
       if(!world.overlayOpen) return;
-
       const choice = el.getAttribute('data-choice');
-
-      // فریز کامل انیمیشن
-      world.overlayOpen = false;
-      overlay.classList.remove('show');
-      world.didShowing = false; // هنوز DID نشان ندیم
-      world.showKnife = true;
-      world.npcState = 'answered';
-
-      // فریز قدم‌ها (هی تکون نخوره)
-      player.stepFrozen = true;
-      world.animFrozenValue = player.stepT;
-
-      // بعد از لحظه کوتاه DID رو نشون بده
-      setTimeout(()=>{
-        world.didShowing = true;
-        world.showKnife = false;
-        resultSub.textContent = `انتخاب شما: ${choice}`;
-        result.classList.add('show');
-      }, 650);
+      handleChoice(choice);
     });
   });
 
@@ -370,7 +385,6 @@
     resetAll();
   });
 
-  // رسم آدم کارتونی (در حالت knife قدم زدن خاموش است)
   function drawCartoon(xScreen, y, dir=1, tintA, tintB, opts={}){
     const w = player.w, h = player.h;
     const { showKnife=false } = opts;
@@ -382,8 +396,9 @@
       ctx.translate(-(xScreen + w/2), 0);
     }
 
-    // سایه
     const gy = groundY();
+
+    // سایه
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     ctx.beginPath();
     ctx.ellipse(xScreen + w/2, gy + 6, 18, 8, 0, 0, Math.PI*2);
@@ -411,7 +426,7 @@
     roundRect(xScreen + 10, y + 10, w - 20, 40, 14);
     ctx.fill(); ctx.stroke();
 
-    // arms/legs: اگر فریز باشه یا knife باشه، قدم‌ها نلرزن
+    // فریز قدم/دست وقتی knife یا overlay
     const t = (player.stepFrozen || showKnife) ? 0 : player.stepT;
     const arm = Math.sin(t*1.7)*6;
     const leg = Math.sin(t*1.9)*5;
@@ -449,7 +464,7 @@
     ctx.fill();
     ctx.shadowBlur = 0;
 
-    // knife (کارتونی)
+    // knife (فقط کارتونی)
     if(showKnife){
       ctx.strokeStyle = 'rgba(234,240,255,.95)';
       ctx.lineWidth = 6;
@@ -517,17 +532,13 @@
   function updateLogic(dt){
     const overlayFrozen = world.overlayOpen || world.didShowing;
 
-    // انیمیشن قدم‌ها باید فریز شود
-    if(overlayFrozen){
-      player.stepFrozen = true;
-    } else {
-      player.stepFrozen = false;
-    }
+    // قدم‌ها در overlay/result تکون نخورن
+    player.stepFrozen = overlayFrozen;
 
-    // حرکت پلیر فقط اگر overlay/result باز نباشد
     if(!overlayFrozen){
       player.faceDir = (moveDir !== 0) ? moveDir : player.faceDir;
 
+      // حرکت
       player.x += moveDir * player.speed * dt;
 
       // گرانش
@@ -548,17 +559,16 @@
       // دوربین
       const targetCam = player.x - (W*0.25);
       world.camX += (targetCam - world.camX) * Math.min(1, dt*8);
+
+      // انیمیشن قدم‌ها فقط وقتی حرکت می‌کنه
+      if(player.onGround && moveDir !== 0){
+        player.stepT += dt * 8.0;
+      }
     } else {
       moveDir = 0;
     }
 
-    // انیمیشن قدم‌ها: فقط وقتی مجاز است بالا بره
-    if(!overlayFrozen && player.onGround && moveDir !== 0){
-      player.stepT += 1.0 * dt * 8.0; // سرعت قدم
-    }
-    // اگر حرکت نیست یا overlay باز است، stepT تغییر نمی‌کند => تکون نخوره
-
-    // NPC: نزدیک که شد، فقط یک بار overlay باز می‌کنیم
+    // NPC / سوال فقط یک بار
     if(world.npc && world.npcState === 'idle'){
       const npc = world.npc;
 
@@ -570,12 +580,7 @@
         world.npcState = 'waitingChoice';
 
         showToast('سلام', 900);
-
-        // overlay وسط صفحه
-        setTimeout(()=>{
-          world.overlayOpen = true;
-          overlay.classList.add('show');
-        }, 200);
+        setTimeout(openChoiceOverlay, 200);
       }
     }
   }
@@ -585,11 +590,10 @@
 
     const gy = groundY();
 
-    // NPC
+    // NPC (تا قبل از سوال/مرگ رسم میشه)
     if(world.npc && !world.didShowing){
       const npc = world.npc;
       const xScreen = npc.x - world.camX;
-
       if(xScreen > -140 && xScreen < W+140){
         drawCartoon(
           xScreen - 22,
@@ -617,11 +621,9 @@
       { showKnife:false }
     );
 
-    // آدم چاقو فقط وقتی انتخاب شده و نتیجه نیومده
+    // آدم چاقو فقط وقتی مرگ شده (برای هر گزینه 1/2/3)
     if(world.showKnife){
-      // وسط صفحه
       const targetScreenX = (W/2) - player.w/2;
-      // خیلی ثابت، قدم‌ها هم با showKnife خاموشه
       const y = gy - player.h;
       drawCartoon(
         targetScreenX,
