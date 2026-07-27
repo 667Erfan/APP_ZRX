@@ -21,10 +21,9 @@
     .ui{
       position:fixed; inset:0; pointer-events:none;
       display:flex; flex-direction:column; justify-content:space-between;
-      padding:14px; gap:10px;
+      padding:12px; gap:10px;
     }
     .topbar{display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between;}
-    .row{display:flex; gap:10px; flex-wrap:wrap;}
     .panel{
       pointer-events:auto;
       background:var(--glass);
@@ -36,7 +35,8 @@
     }
     .chip{font-weight:900;font-size:12px;white-space:nowrap}
     .screen{
-      width:min(900px,96vw); margin:0 auto;
+      width:min(900px,96vw);
+      margin:0 auto;
       display:none; pointer-events:auto;
       background:rgba(255,255,255,.03);
       border:1px solid rgba(255,255,255,.14);
@@ -48,10 +48,15 @@
     .title{font-size:28px;font-weight:1100;margin:10px 0 12px;letter-spacing:.6px}
     .sub{color:var(--muted);line-height:1.8;font-size:13px}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-    @media (max-width:720px){.grid{grid-template-columns:1fr}}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}.title{font-size:24px}}
     .card{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px}
     .card h3{margin:0 0 6px;font-size:16px}
-    .btn{cursor:pointer;border:0;border-radius:14px;padding:12px 16px;font-weight:1000;color:#071018;background:linear-gradient(135deg,var(--n1),var(--n2));box-shadow:0 14px 40px rgba(124,92,255,.30); transition:transform .07s ease;}
+    .btn{
+      cursor:pointer;border:0;border-radius:14px;padding:12px 16px;font-weight:1000;color:#071018;
+      background:linear-gradient(135deg,var(--n1),var(--n2));
+      box-shadow:0 14px 40px rgba(124,92,255,.30);
+      transition:transform .07s ease;
+    }
     .btn:active{transform:scale(.98)}
     .btn.ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid rgba(255,255,255,.14);box-shadow:none}
     .btnrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
@@ -87,20 +92,22 @@
   <div class="screen show" id="homeScreen">
     <div class="title">NEON GAME HUB</div>
     <div class="sub">
-      ۲ بازی: <b>NEON RUN</b> و <b>AIM SURGE</b>.
-      <br/>AIM: تپ/کلیک روی هدف‌ها برای پولک. اگر بمب باشه HP کم میشه.
+      <b>NEON RUN</b>: حرکت + پرش و جمع‌آوری پولک (برخورد = کم شدن جان)
+      <br/>
+      <b>AIM SURGE</b>: ۳۰ ثانیه تپ/کلیک روی هدف‌ها
+      <br/>اگر <b>بمب</b> را بزنید HP کم می‌شود.
     </div>
 
     <div class="grid">
       <div class="card">
         <h3>1) NEON RUN</h3>
-        <div class="sub" style="margin-top:6px">پولک جمع کن. برخورد = کم شدن جان.</div>
+        <div class="sub" style="margin-top:6px">کلیدهای A/D و Space (موبایل: دکمه پرش)</div>
         <div class="btnrow"><button class="btn" id="btnRun">بازی کن</button></div>
       </div>
 
       <div class="card">
         <h3>2) AIM SURGE</h3>
-        <div class="sub" style="margin-top:6px">۳۰ ثانیه: هدف‌های نئونی. بمب‌ها HP کم می‌کنن.</div>
+        <div class="sub" style="margin-top:6px">روی هدف‌ها تپ/کلیک کن (۳۰ ثانیه)</div>
         <div class="btnrow"><button class="btn" id="btnAim">بازی کن</button></div>
       </div>
     </div>
@@ -116,7 +123,7 @@
   </div>
 
   <div class="bottom">
-    <div class="help" id="helpBox"><b>ترفند:</b> هر پولک → پیشرفت لول.</div>
+    <div class="help" id="helpBox"><b>ترفند:</b> پولک → پیشرفت لول.</div>
     <div class="bar">
       <div class="mini"><span>پیشرفت لول</span><span id="progTxt">0/0</span></div>
       <div class="meter"><span id="progBar"></span></div>
@@ -125,20 +132,19 @@
 </div>
 
 <div class="mobileJump">
-  <button class="jumpBtn" id="jumpBtn">پرش</button>
+  <div class="jumpBtn" id="jumpBtn">پرش</div>
 </div>
 
 <script>
 (() => {
-  // ====== Prevent mobile scroll/jitter ======
-  // (حالت تکون/پرش معمولا از scroll یا touchmove بدون جلوگیری میاد)
+  // جلوگیری از تکان/اسکرول موبایل
   document.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
   document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:false});
 
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
 
-  // UI
+  // UI elements
   const scoreEl = document.getElementById('score');
   const coinsEl = document.getElementById('coins');
   const levelEl = document.getElementById('level');
@@ -182,15 +188,22 @@
     stars.length=0;
     const count = Math.floor((W*H)/45000);
     for(let i=0;i<count;i++){
-      stars.push({x:rand(0,W),y:rand(0,H),r:rand(.6,2.2),a:rand(.05,.22),
-        vx:rand(-.15,.15),vy:rand(.3,1.0),hue:Math.random()<.5?260:195});
+      stars.push({
+        x:rand(0,W), y:rand(0,H),
+        r:rand(.6,2.2), a:rand(.05,.22),
+        vx:rand(-.15,.15), vy:rand(.3,1.0),
+        hue:Math.random()<0.5 ? 260 : 195
+      });
     }
   }
 
   // Shared meta
   const game={
-    mode:'run',
-    score:0, coins:0, level:1, hp:3,
+    mode:'run', // run | aim
+    score:0,
+    coins:0,
+    level:1,
+    hp:3,
     needCoins(){ return 10 + (this.level-1)*6; }
   };
 
@@ -201,36 +214,44 @@
     hpEl.textContent = game.hp|0;
 
     const total = game.needCoins();
-    const cur = game.coins % total;
+    const cur = total ? (game.coins % total) : 0;
     progTxt.textContent = `${cur}/${total}`;
     progBar.style.width = total ? ((cur/total)*100).toFixed(1)+'%' : '0%';
   }
 
-  function showHome(){ homeScreen.classList.add('show'); overScreen.classList.remove('show'); }
-  function showOver(){ homeScreen.classList.remove('show'); overScreen.classList.add('show'); }
+  function showHome(){
+    homeScreen.classList.add('show');
+    overScreen.classList.remove('show');
+  }
+  function showOver(){
+    homeScreen.classList.remove('show');
+    overScreen.classList.add('show');
+  }
 
   function loseGame(reason){
-    game.hp = Math.max(0, game.hp);
-    game.mode = game.mode; // keep
+    game.hp = Math.max(0, game.hp|0);
+    game.mode = game.mode;
+    stateTxt.textContent = 'بازی تمام شد!';
     finalStats.textContent = `امتیازت: ${game.score|0} | پولک: ${game.coins|0} | لول: ${game.level|0}` + (reason?` | ${reason}`:'');
-    stateTxt.textContent='بازی تمام شد';
     showOver();
-    current.running=false;
+    run.running=false;
     aim.running=false;
   }
 
-  // Input
+  // Input (RUN)
   const keys={left:false,right:false};
   window.addEventListener('keydown',(e)=>{
     if(e.code==='KeyA') keys.left=true;
     if(e.code==='KeyD') keys.right=true;
-    if(e.code==='Space'){ e.preventDefault(); if(game.mode==='run') runJump(); }
+    if(e.code==='Space'){
+      e.preventDefault();
+      if(game.mode==='run') runJump();
+    }
   }, {passive:false});
-
   window.addEventListener('keyup',(e)=>{
     if(e.code==='KeyA') keys.left=false;
     if(e.code==='KeyD') keys.right=false;
-  }, {passive:true});
+  });
 
   jumpBtn.addEventListener('pointerdown',(e)=>{
     e.preventDefault();
@@ -242,7 +263,7 @@
     running:false,
     time:0,
     speedBase:220,
-    player:{x:0,y:0,r:14,vx:0,vy:0,onGround:true,invuln:0,moveSpeed:540,jumpForce:520,jumpCooldown:0},
+    player:{x:0,y:0,r:14,vx:0,vy:0,onGround:true,invuln:0,jumpCooldown:0,moveSpeed:540,jumpForce:520},
     coins:[],
     obstacles:[]
   };
@@ -250,22 +271,34 @@
   function spawnCoin(initial){
     const x=rand(30,W-30);
     const y=initial?rand(H*0.10,H*0.52):-30-rand(0,H*0.55);
-    run.coins.push({x,y,r:rand(10,13),hue:Math.random()<.5?260:195,rot:rand(0,Math.PI*2),wob:rand(0,Math.PI*2),alive:true});
+    run.coins.push({
+      x,y,r:rand(10,13),
+      hue:Math.random()<0.5?260:195,
+      rot:rand(0,Math.PI*2),
+      wob:rand(0,Math.PI*2),
+      alive:true
+    });
   }
 
   function spawnObstacle(initial){
     const x=rand(30,W-30);
     const y=initial?rand(H*0.10,H*0.52):-80-rand(0,H*0.65);
     const w=rand(26,46), h=rand(18,34);
-    run.obstacles.push({x,y,w,h,kind:Math.random()<.5?'bar':'block',phase:rand(0,Math.PI*2),alive:true});
+    run.obstacles.push({
+      x,y,w,h,
+      kind:Math.random()<0.5?'bar':'block',
+      phase:rand(0,Math.PI*2),
+      alive:true
+    });
   }
 
   function circleRectHit(cx,cy,cr, rx,ry, rw,rh){
     const left=rx-rw/2, right=rx+rw/2;
     const top=ry-rh/2, bottom=ry+rh/2;
-    const nx=clamp(cx,left,right), ny=clamp(cy,top,bottom);
+    const nx=clamp(cx,left,right);
+    const ny=clamp(cy,top,bottom);
     const dx=cx-nx, dy=cy-ny;
-    return dx*dx+dy*dy<=cr*cr;
+    return dx*dx+dy*dy <= cr*cr;
   }
 
   function runJump(){
@@ -282,15 +315,17 @@
     game.mode='run';
     game.score=0; game.coins=0; game.level=1; game.hp=3;
     updateHUD();
+
     initStars();
 
     run.running=true; run.time=0;
     run.coins.length=0; run.obstacles.length=0;
-
     const p=run.player;
     p.x=W/2; p.y=H*0.72;
     p.vx=0; p.vy=0;
-    p.onGround=true; p.invuln=1.4; p.jumpCooldown=0;
+    p.onGround=true;
+    p.invuln=1.4;
+    p.jumpCooldown=0;
 
     for(let i=0;i<14;i++) spawnCoin(true);
     for(let i=0;i<8;i++) spawnObstacle(true);
@@ -298,17 +333,11 @@
     stateTxt.textContent='در حال اجرا...';
     helpBox.innerHTML='<b>NEON RUN:</b> پولک جمع کن. برخورد = کم شدن جان.';
     showHome();
-    homeScreen.classList.add('show');
-    overScreen.classList.remove('show');
-    // hide home overlay by switching screen visibility
-    homeScreen.classList.remove('show');
-    // ensure not shown
-    // (we rely on canvas visuals; UI overlays can stay off)
-    homeScreen.classList.remove('show');
+    homeScreen.classList.add('show'); // keep UI visible
     overScreen.classList.remove('show');
   }
 
-  function runLose(){
+  function runLoseTick(){
     const p=run.player;
     if(p.invuln>0) return;
     game.hp--;
@@ -318,28 +347,28 @@
     if(game.hp<=0) loseGame('بدون جان');
   }
 
-  // ================= AIM SURGE (with bombs) =================
+  // ================= AIM SURGE (bomb + fixed spawn) =================
   const aim={
     running:false,
     totalTime:30,
     timeLeft:30,
     time:0,
     difficulty:1,
-    targets:[]
+    targets:[], // targets include {bomb:true/false}
   };
 
   function aimSpawnTarget(){
     const pad=60;
-    const x=rand(pad,W-pad);
-    const y=rand(pad,H-pad);
-    const size=rand(14,28) + aim.difficulty*2;
+    const x=rand(pad, W-pad);
+    const y=rand(pad, H-pad);
+    const size=rand(14, 28) + aim.difficulty*2;
 
-    // bombs: higher difficulty => more bombs
+    // bomb chance increases with difficulty
     const bombChance = clamp(0.18 + (aim.difficulty-1)*0.06, 0.15, 0.55);
     const isBomb = Math.random() < bombChance;
 
     aim.targets.push({
-      x,y,r:size,
+      x, y, r:size,
       alive:true,
       rot:rand(0,Math.PI*2),
       wob:rand(0,Math.PI*2),
@@ -347,10 +376,16 @@
     });
   }
 
+  function aimCap(){
+    // fixed cap -> prevents explosion
+    return clamp(10 + Math.floor(aim.difficulty*0.8), 10, 18);
+  }
+
   function aimStart(){
     game.mode='aim';
     game.score=0; game.coins=0; game.level=1; game.hp=3;
     updateHUD();
+
     initStars();
 
     aim.running=true;
@@ -362,12 +397,12 @@
     for(let i=0;i<10;i++) aimSpawnTarget();
 
     stateTxt.textContent='AIM SURGE - شروع!';
-    helpBox.innerHTML='<b>AIM SURGE:</b> روی هدف‌های نئونی تپ کن. اگر بمب باشه HP کم میشه.';
-    homeScreen.classList.remove('show');
+    helpBox.innerHTML='<b>AIM SURGE:</b> روی هدف‌ها تپ کن. اگر بمب باشه HP کم میشه.';
+    showHome();
     overScreen.classList.remove('show');
   }
 
-  function aimApplyHit(x,y){
+  function aimHit(x,y){
     if(!aim.running) return;
 
     const mx=clamp(x,0,W);
@@ -378,37 +413,39 @@
       if(!t.alive) continue;
       const dx=mx-t.x, dy=my-t.y;
       const d2=dx*dx+dy*dy;
-      if(d2<=t.r*t.r && d2<bestD){ bestD=d2; best=t; }
+      if(d2<=t.r*t.r && d2<bestD){
+        bestD=d2; best=t;
+      }
     }
-    if(!best) return;
+    if(!best) return; // نکته: اگر روی هیچ هدفی نزنی، اسپاون جدید هم اضافه نمیشه
 
     best.alive=false;
 
     if(best.bomb){
-      // bomb damage
       game.hp--;
-      stateTxt.textContent='بمب خوردی!';
       updateHUD();
+      stateTxt.textContent='بمب خوردی!';
       if(game.hp<=0) loseGame('بمب‌ها');
-      return;
+    }else{
+      game.score += 15;
+      game.coins += 1;
+      updateHUD();
+
+      const total=game.needCoins();
+      if(game.coins % total === 0){
+        game.level++;
+        aim.difficulty = 1 + (game.level-1)*0.35;
+        stateTxt.textContent=`لول ${game.level} (سخت‌تر)`;
+        aim.timeLeft = Math.min(aim.totalTime, aim.timeLeft + 2);
+      }
     }
 
-    // normal hit
-    game.score += 15;
-    game.coins += 1;
-    updateHUD();
-
-    const total=game.needCoins();
-    if(game.coins % total === 0){
-      game.level++;
-      aim.difficulty = 1 + (game.level-1)*0.35;
-      stateTxt.textContent=`لول ${game.level} (سخت‌تر)`;
-      aim.timeLeft = Math.min(aim.totalTime, aim.timeLeft + 2);
+    // فقط تا سقف ثابت با 1 تا جایگزین کمبود را پر می‌کنیم
+    const cap = aimCap();
+    const aliveCount = aim.targets.reduce((a,t)=>a+(t.alive?1:0),0);
+    if(aliveCount < cap){
+      aimSpawnTarget();
     }
-
-    // keep target count
-    const alive = aim.targets.reduce((a,t)=>a+(t.alive?1:0),0);
-    while(alive < 10){ aimSpawnTarget(); break; }
   }
 
   canvas.addEventListener('pointerdown',(e)=>{
@@ -417,8 +454,8 @@
     const x=e.clientX-rect.left;
     const y=e.clientY-rect.top;
     e.preventDefault();
-    aimApplyHit(x,y);
-  },{passive:false});
+    aimHit(x,y);
+  }, {passive:false});
 
   // ================= Drawing =================
   function glowLine(x1,y1,x2,y2,color,th=2){
@@ -427,18 +464,22 @@
     ctx.lineWidth=th;
     ctx.shadowColor=color;
     ctx.shadowBlur=18;
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x2,y2);
+    ctx.stroke();
     ctx.restore();
   }
 
   function neonRing(x,y,r,outer,inner){
     ctx.save();
-    ctx.shadowBlur=26; ctx.shadowColor=outer;
+    ctx.shadowBlur=26;
+    ctx.shadowColor=outer;
     ctx.fillStyle=outer;
     ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
 
     ctx.shadowBlur=0;
-    ctx.fillStyle=inner||'rgba(124,92,255,.22)';
+    ctx.fillStyle=inner || 'rgba(124,92,255,.22)';
     ctx.beginPath(); ctx.arc(x,y,r*0.6,0,Math.PI*2); ctx.fill();
 
     ctx.strokeStyle='rgba(255,255,255,.18)';
@@ -452,7 +493,8 @@
     ctx.fillRect(0,0,W,H);
 
     const horizon = H*0.2 + Math.sin(t*0.6)*6;
-    ctx.save(); ctx.globalAlpha=0.18;
+    ctx.save();
+    ctx.globalAlpha=0.18;
     for(let i=0;i<22;i++){
       const tt=i/21;
       const yy=lerp(horizon,H*0.92,tt);
@@ -478,6 +520,7 @@
     const pr=p.r*(1+0.06*Math.sin(run.time*6));
     const inv=p.invuln>0;
 
+    // player
     ctx.save();
     ctx.globalAlpha = inv ? (0.65+0.35*Math.sin(run.time*20)*0.5) : 1;
 
@@ -514,11 +557,12 @@
     // obstacles
     for(const o of run.obstacles){
       if(!o.alive) continue;
-      const t=run.time*2+o.phase;
+      const t=run.time*2 + o.phase;
       const wob=Math.sin(t)*6;
-      const x=o.x+wob*0.35, y=o.y;
+      const x=o.x + wob*0.35, y=o.y;
 
-      ctx.save(); ctx.translate(x,y);
+      ctx.save();
+      ctx.translate(x,y);
 
       const gg=ctx.createLinearGradient(0,-o.h/2,o.w,o.h/2);
       gg.addColorStop(0,'rgba(255,77,109,.30)');
@@ -528,25 +572,35 @@
       ctx.fillStyle=gg;
       ctx.strokeStyle='rgba(255,77,109,.85)';
       ctx.lineWidth=2;
-      ctx.shadowColor='rgba(255,77,109,.85)'; ctx.shadowBlur=28;
+      ctx.shadowColor='rgba(255,77,109,.85)';
+      ctx.shadowBlur=28;
 
       const w=o.w,h=o.h, rr=10;
+
       ctx.beginPath();
-      ctx.moveTo(-w/2+rr,-h/2);
-      ctx.arcTo(w/2,-h/2,w/2,h/2,rr);
-      ctx.arcTo(w/2,h/2,-w/2,h/2,rr);
-      ctx.arcTo(-w/2,h/2,-w/2,-h/2,rr);
-      ctx.arcTo(-w/2,-h/2,w/2,-h/2,rr);
+      if(o.kind==='bar'){
+        ctx.moveTo(-w/2+rr,-h/2);
+        ctx.arcTo(w/2,-h/2,w/2,h/2,rr);
+        ctx.arcTo(w/2,h/2,-w/2,h/2,rr);
+        ctx.arcTo(-w/2,h/2,-w/2,-h/2,rr);
+        ctx.arcTo(-w/2,-h/2,w/2,-h/2,rr);
+      }else{
+        ctx.moveTo(-w/2+rr,-h/2);
+        ctx.arcTo(w/2,-h/2,w/2,h/2,rr);
+        ctx.arcTo(w/2,h/2,-w/2,h/2,rr);
+        ctx.arcTo(-w/2,h/2,-w/2,-h/2,rr);
+        ctx.arcTo(-w/2,-h/2,w/2,-h/2,rr);
+      }
       ctx.closePath();
       ctx.fill(); ctx.stroke();
 
       ctx.restore();
-      glowLine(x-o.w/2,y-o.h/2,x+o.w/2,y+o.h/2,'rgba(255,77,109,.35)',1.5);
+      glowLine(x-o.w/2,y-o.h/2, x+o.w/2,y+o.h/2,'rgba(255,77,109,.35)',1.5);
     }
   }
 
   function drawAim(){
-    // time
+    // timer
     ctx.save();
     ctx.fillStyle='rgba(234,240,255,.85)';
     ctx.font='900 18px Tahoma,Arial';
@@ -559,13 +613,17 @@
 
       const pulse=0.85+0.15*Math.sin((aim.totalTime-aim.timeLeft)*6 + t.wob);
       const r=t.r*pulse;
+
       const isBomb=t.bomb;
 
-      // bomb = red/orange theme
-      const outer = isBomb ? `hsla(5,100%,70%,.95)` : (t.hue===260?`hsla(260,100%,70%,.95)`:`hsla(195,100%,70%,.95)`);
-      const inner = isBomb ? 'rgba(255,77,109,.22)' : (t.hue===260?'rgba(124,92,255,.22)':'rgba(25,211,255,.22)');
+      const outer = isBomb
+        ? `hsla(5,100%,70%,.95)`
+        : (t.hue===260?`hsla(260,100%,70%,.95)`:`hsla(195,100%,70%,.95)`);
 
-      // ring
+      const inner = isBomb
+        ? 'rgba(255,77,109,.22)'
+        : (t.hue===260?'rgba(124,92,255,.22)':'rgba(25,211,255,.22)');
+
       ctx.save();
       ctx.translate(t.x,t.y);
       ctx.rotate(t.rot + Math.sin((aim.totalTime-aim.timeLeft)*3 + t.wob)*0.35);
@@ -575,22 +633,19 @@
       ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
       neonRing(0,0,r*0.65,outer,inner);
 
-      // bomb rays
-      for(let i=0;i<(isBomb?10:8);i++){
-        const ang=Math.PI*2*i/(isBomb?10:8);
+      const rays = isBomb ? 10 : 8;
+      for(let i=0;i<rays;i++){
+        const ang=Math.PI*2*i/rays;
         glowLine(Math.cos(ang)*r*0.2,Math.sin(ang)*r*0.2,Math.cos(ang)*r*0.95,Math.sin(ang)*r*0.95,outer,1);
       }
 
-      // bomb icon
       if(isBomb){
         ctx.save();
         ctx.strokeStyle='rgba(255,255,255,.7)';
         ctx.lineWidth=2;
         ctx.beginPath();
-        ctx.moveTo(-r*0.35, -r*0.35);
-        ctx.lineTo(r*0.35, r*0.35);
-        ctx.moveTo(r*0.35, -r*0.35);
-        ctx.lineTo(-r*0.35, r*0.35);
+        ctx.moveTo(-r*0.35,-r*0.35); ctx.lineTo(r*0.35,r*0.35);
+        ctx.moveTo(r*0.35,-r*0.35); ctx.lineTo(-r*0.35,r*0.35);
         ctx.stroke();
         ctx.restore();
       }
@@ -600,38 +655,45 @@
   }
 
   // ================= Loop =================
-  function tick(dt){
+  let last=performance.now();
+  function frame(now){
+    const dt=Math.min(0.033,(now-last)/1000);
+    last=now;
+
     // stars drift
     for(const s of stars){
       s.x += s.vx*dt*60;
       s.y += s.vy*dt*60*(game.mode==='aim'?0.9:1.0);
       if(s.y>H+10){ s.y=-10; s.x=rand(0,W); s.vx=rand(-0.15,0.15); }
-      if(s.x< -10) s.x=W+10;
-      if(s.x> W+10) s.x=-10;
+      if(s.x<-10) s.x=W+10;
+      if(s.x>W+10) s.x=-10;
     }
 
     drawBackground(run.time + aim.time);
 
+    // RUN update
     if(game.mode==='run' && run.running){
       run.time += dt;
       run.speedBase = 220 + (game.level-1)*34;
 
       const p=run.player;
-
       const moveX=(keys.left?-1:0)+(keys.right?1:0);
       const ax = moveX!==0 ? moveX*p.moveSpeed : 0;
       p.vx = lerp(p.vx, ax, clamp(dt*10,0,1));
 
-      // cooldowns
       if(p.jumpCooldown>0) p.jumpCooldown=Math.max(0,p.jumpCooldown-dt);
       p.vy += 1350*dt;
 
       p.x += p.vx*dt;
       p.y += p.vy*dt;
-      p.x = clamp(p.x, 18, W-18);
+      p.x = clamp(p.x,18,W-18);
 
       const floor=H*0.82;
-      if(p.y>floor){ p.y=floor; p.vy=0; p.onGround=true; }
+      if(p.y>floor){
+        p.y=floor;
+        p.vy=0;
+        p.onGround=true;
+      }
       if(p.invuln>0) p.invuln=Math.max(0,p.invuln-dt);
 
       const scroll=(run.speedBase + game.level*22)*dt;
@@ -661,11 +723,14 @@
         if(o.y>H+80) o.alive=false;
 
         if(circleRectHit(p.x,p.y,p.r, o.x,o.y,o.w,o.h)){
-          runLose();
+          // damage (no invuln spam)
+          if(p.invuln<=0){
+            runLoseTick();
+          }
         }
       }
 
-      // density
+      // keep density
       let aliveCoins=run.coins.reduce((a,c)=>a+(c.alive?1:0),0);
       let aliveObs=run.obstacles.reduce((a,o)=>a+(o.alive?1:0),0);
       const needCoins=18 + game.level*2;
@@ -676,17 +741,15 @@
       drawRun();
     }
 
+    // AIM update
     if(game.mode==='aim' && aim.running){
       aim.time += dt;
       aim.timeLeft -= dt;
 
-      // keep enough targets (some will be bombs)
-      const alive = aim.targets.reduce((a,t)=>a+(t.alive?1:0),0);
-      const want = clamp(10 + Math.floor(aim.difficulty*0.8), 10, 18);
-      while(alive < want){
-        aimSpawnTarget();
-        break;
-      }
+      // keep target count with fixed cap (no while explosion)
+      const cap = aimCap();
+      const aliveCount = aim.targets.reduce((a,t)=>a+(t.alive?1:0),0);
+      if(aliveCount < cap) aimSpawnTarget();
 
       if(aim.timeLeft<=0){
         aim.running=false;
@@ -697,42 +760,39 @@
 
       drawAim();
     }
+
+    requestAnimationFrame(frame);
   }
 
-  let last=performance.now();
-  function loop(now){
-    const dt=Math.min(0.033,(now-last)/1000);
-    last=now;
-    tick(dt);
-    requestAnimationFrame(loop);
-  }
-
-  // Menu
+  // Buttons
   btnRun.addEventListener('click', ()=>{
-    // start run
     runStart();
+    homeScreen.classList.add('show');
+    overScreen.classList.remove('show');
   });
   btnAim.addEventListener('click', ()=>{
-    // start aim
     aimStart();
+    homeScreen.classList.add('show');
+    overScreen.classList.remove('show');
   });
   restartBtn.addEventListener('click', ()=>{
     if(game.mode==='aim') aimStart();
     else runStart();
   });
   homeBtn.addEventListener('click', ()=>{
-    run.running=false; aim.running=false;
-    showHome();
+    run.running=false;
+    aim.running=false;
     game.mode='run';
     stateTxt.textContent='آماده';
     helpBox.innerHTML='<b>ترفند:</b> هر پولک → پیشرفت لول.';
+    showHome();
   });
 
   // Init
   initStars();
   updateHUD();
   showHome();
-  requestAnimationFrame(loop);
+  requestAnimationFrame(frame);
 })();
 </script>
 </body>
