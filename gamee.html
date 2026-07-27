@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Cartoon Runner - Question</title>
+  <title>Game - Cartoon Runner</title>
   <style>
     html, body { height: 100%; margin: 0; overflow: hidden; background:#070a14; touch-action:none; }
     canvas { width:100%; height:100%; display:block; }
@@ -69,7 +69,6 @@
       pointer-events:auto;
     }
     #overlay.show{ display:flex; }
-
     .card{
       width:min(560px, 96vw);
       background: rgba(255,255,255,.06);
@@ -78,12 +77,19 @@
       backdrop-filter: blur(8px);
       box-shadow: 0 30px 120px rgba(0,0,0,.65);
       padding:16px;
+      text-align:center;
     }
     .card h2{
       margin:0 0 10px;
       font-size:20px;
       color:#eaf0ff;
       letter-spacing:.2px;
+    }
+    .menuText{
+      color: rgba(234,240,255,.85);
+      font-weight:900;
+      margin-bottom:12px;
+      line-height:1.7;
       text-align:center;
     }
     .optList{ display:flex; flex-direction:column; gap:10px; }
@@ -150,6 +156,48 @@
       user-select:none;
     }
     #restart:active{ transform: scale(.98); }
+
+    /* Shoot UI */
+    #shootWrap{
+      position:fixed;
+      left:12px; top:12px;
+      z-index:20;
+      display:none;
+      pointer-events:none;
+    }
+    #shootBar{
+      pointer-events:none;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      color:#eaf0ff;
+      font-weight:1000;
+      padding:10px 12px;
+      border-radius:14px;
+    }
+    #shootAmmo{
+      color: #aefcff;
+    }
+    #shootBtnRow{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      justify-content:flex-start;
+      pointer-events:auto;
+    }
+    #btnShoot{
+      width:160px;
+      height:64px;
+      border-radius:18px;
+      border: 0;
+      background: linear-gradient(135deg, #7c5cff, #19d3ff);
+      box-shadow:0 18px 55px rgba(124,92,255,.30);
+      color:#071018;
+      font-weight:1100;
+      font-size:18px;
+      cursor:pointer;
+      user-select:none;
+    }
+    #btnShoot:active{ transform: scale(.98); }
   </style>
 </head>
 <body>
@@ -164,28 +212,25 @@
     <button class="btn small" id="btnForward">جلو</button>
   </div>
 
-  <!-- Question overlay -->
-  <div id="overlay">
-    <div class="card">
-      <h2>انتخاب کن</h2>
-      <div style="color:rgba(234,240,255,.85);font-weight:900;margin-bottom:12px;line-height:1.7;text-align:center">
-        1/2/3 = مرگ • 4 = ادامه
-      </div>
-
-      <div class="optList">
-        <div class="opt" data-choice="1">تو می‌خوای زندگی کنی ؟</div>
-        <div class="opt" data-choice="2">۲ میخوای بمیری ؟</div>
-        <div class="opt" data-choice="3">۳ میخوای یکی بکشی ؟</div>
-        <div class="opt" data-choice="4">۴ هیچ کدوم</div>
-      </div>
+  <div id="shootWrap">
+    <div id="shootBar">تیر: <span id="shootAmmo">20</span></div>
+    <div id="shootBtnRow">
+      <button id="btnShoot">شوت</button>
     </div>
   </div>
 
-  <!-- Result overlay -->
+  <div id="overlay">
+    <div class="card">
+      <h2 id="menuTitle">انتخاب کن</h2>
+      <div class="menuText" id="menuText"></div>
+      <div class="optList" id="optList"></div>
+    </div>
+  </div>
+
   <div id="result">
     <div class="resultCard">
       <div class="did" id="didText">DID</div>
-      <div class="subtxt" id="resultSub">انتخاب ثبت شد.</div>
+      <div class="subtxt" id="resultSub">...</div>
       <button id="restart">بازی مجدد</button>
     </div>
   </div>
@@ -201,11 +246,19 @@
 
   const toast = document.getElementById('toast');
   const overlay = document.getElementById('overlay');
-  const result = document.getElementById('result');
-  const restartBtn = document.getElementById('restart');
-  const resultSub = document.getElementById('resultSub');
+  const menuTitle = document.getElementById('menuTitle');
+  const menuText = document.getElementById('menuText');
+  const optList = document.getElementById('optList');
 
-  let W=0, H=0, dpr=1;
+  const result = document.getElementById('result');
+  const resultSub = document.getElementById('resultSub');
+  const restartBtn = document.getElementById('restart');
+
+  const shootWrap = document.getElementById('shootWrap');
+  const shootAmmoEl = document.getElementById('shootAmmo');
+  const btnShoot = document.getElementById('btnShoot');
+
+  let W=0,H=0,dpr=1;
   function resize(){
     dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
     W = Math.floor(window.innerWidth);
@@ -231,23 +284,46 @@
     jumpV: -520,
     gravity: 1350,
     faceDir: 1,
-
     stepT: 0,
-    stepFrozen: false
+    stepFrozen: true
   };
 
-  const world = {
+  // دشمن/آدمک در حالت تیراندازی
+  const target = {
+    active:false,
+    x: 560,     // موقع شروع در جهان
+    y: 0,
+    speed: 140,
+    alive:true,
+    hit:false
+  };
+
+  const S = {
     camX: 0,
-    npc: null,
-    npcState: 'idle', // idle -> waitingChoice -> afterChoice
 
-    overlayOpen: false,
-    didShowing: false,
+    // مرحله‌ها:
+    // 0: انتظار برای نزدیک شدن آدمک اول (بعد از اون، سوال 1/2 میاد)
+    // 1: شو از کلت: شوت مود و نزدیک شدن target
+    stage: 0,
 
-    showKnife: false
+    overlayOpen:false,
+    didShowing:false,
+    choiceStep: 0,     // برای سوال 1 و 2
+    choiceLocked:false,
+
+    npc: null,         // آدمک اول
+    npcGreeted:false,
+
+    showGun:false,
+    showEnergy:false,
+
+    shootMode:false,
+    ammo: 20,
+
+    freezeForResult: false
   };
 
-  let moveDir = 0; // -1 عقب، +1 جلو
+  let moveDir = 0;
 
   function showToast(msg, ms=900){
     toast.textContent = msg;
@@ -256,33 +332,39 @@
     showToast._t = setTimeout(()=>toast.classList.remove('show'), ms);
   }
 
-  function bindHold(btn, dir){
-    btn.addEventListener('pointerdown', (e)=>{
-      e.preventDefault();
-      btn.setPointerCapture?.(e.pointerId);
-      moveDir = dir;
-    }, {passive:false});
+  function setOverlay(open, title, text, options){
+    S.overlayOpen = open;
+    overlay.classList.toggle('show', open);
+    if(!open) return;
 
-    btn.addEventListener('pointerup', (e)=>{
-      e.preventDefault();
-      moveDir = 0;
-    }, {passive:false});
+    S.choiceLocked = false;
+    menuTitle.textContent = title;
+    menuText.textContent = text || '';
+    optList.innerHTML = '';
 
-    btn.addEventListener('pointercancel', ()=>{
-      moveDir = 0;
-    }, {passive:false});
+    options.forEach(opt=>{
+      const d = document.createElement('div');
+      d.className = 'opt';
+      d.textContent = opt.label;
+      d.dataset.value = opt.value;
+      d.onclick = ()=>{
+        if(S.choiceLocked) return;
+        S.choiceLocked = true;
+        opt.onClick?.(opt.value);
+      };
+      optList.appendChild(d);
+    });
   }
-  bindHold(btnForward, +1);
-  bindHold(btnBack, -1);
 
-  btnJump.addEventListener('click', (e)=>{
-    e.preventDefault();
-    if(world.overlayOpen || world.didShowing) return;
-    if(player.onGround){
-      player.vy = player.jumpV;
-      player.onGround = false;
-    }
-  });
+  function setResult(subText){
+    S.didShowing = true;
+    resultSub.textContent = subText;
+    result.classList.add('show');
+  }
+  function clearResult(){
+    S.didShowing = false;
+    result.classList.remove('show');
+  }
 
   function roundRect(x,y,w,h,r){
     r = Math.min(r, w/2, h/2);
@@ -295,101 +377,12 @@
     ctx.closePath();
   }
 
-  function spawnNpc(){
-    world.npc = {
-      x: 520,
-      greeted: false,
-      colorAlt: Math.random() < 0.5
-    };
-    world.npcState = 'idle';
-  }
-
-  function resetAll(){
-    overlay.classList.remove('show');
-    result.classList.remove('show');
-
-    world.camX = 0;
-    world.npc = null;
-    world.npcState = 'idle';
-    world.overlayOpen = false;
-    world.didShowing = false;
-    world.showKnife = false;
-
-    moveDir = 0;
-
-    player.x = 140;
-    player.y = groundY() - player.h;
-    player.vy = 0;
-    player.onGround = true;
-    player.faceDir = 1;
-
-    player.stepT = 0;
-    player.stepFrozen = false;
-
-    spawnNpc();
-    showToast('سلام', 650);
-  }
-
-  function openChoiceOverlay(){
-    world.overlayOpen = true;
-    overlay.classList.add('show');
-    // فریز انیمیشن
-    player.stepFrozen = true;
-  }
-
-  // این قسمت تغییر اصلی است:
-  // choice=4 => نمی‌میره (ادامه بازی)
-  // choice=1/2/3 => می‌میره (knife + DID)
-  function handleChoice(choiceStr){
-    const choice = Number(choiceStr);
-
-    // بستن overlay
-    world.overlayOpen = false;
-    overlay.classList.remove('show');
-
-    // باز کردن انیمیشن دوباره در صورت زنده ماندن
-    if(choice === 4){
-      // زنده می‌ماند: پیام مرموز، و ادامه بازی
-      world.didShowing = false;
-      world.showKnife = false;
-      world.npcState = 'afterChoice'; // دیگر سوال دوباره نیاید
-      player.stepFrozen = false;
-      showToast('اوکی! برو جلو', 1000);
-      return;
-    }
-
-    // مرگ: knife + DID
-    world.didShowing = true;
-    world.showKnife = true;
-    player.stepFrozen = true;
-
-    // بعد از کمی زمان DID
-    setTimeout(()=>{
-      world.showKnife = false;
-      resultSub.textContent = `انتخاب شما: ${choice}`;
-      result.classList.add('show');
-    }, 650);
-  }
-
-  // انتخاب‌ها
-  document.querySelectorAll('.opt').forEach(el=>{
-    el.addEventListener('click', ()=>{
-      if(!world.overlayOpen) return;
-      const choice = el.getAttribute('data-choice');
-      handleChoice(choice);
-    });
-  });
-
-  restartBtn.addEventListener('click', ()=>{
-    result.classList.remove('show');
-    resetAll();
-  });
-
-  function drawCartoon(xScreen, y, dir=1, tintA, tintB, opts={}){
+  function drawCartoon(xScreen, y, dir=1, opts={}){
     const w = player.w, h = player.h;
-    const { showKnife=false } = opts;
+    const { showGun=false } = opts;
 
     ctx.save();
+
     if(dir === -1){
       ctx.translate(xScreen + w/2, 0);
       ctx.scale(-1,1);
@@ -398,7 +391,7 @@
 
     const gy = groundY();
 
-    // سایه
+    // shadow
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     ctx.beginPath();
     ctx.ellipse(xScreen + w/2, gy + 6, 18, 8, 0, 0, Math.PI*2);
@@ -411,23 +404,23 @@
     ctx.beginPath();
     ctx.arc(xScreen + w/2, y - 10, 18, 0, Math.PI*2);
     ctx.fill();
+    ctx.shadowBlur = 0;
 
     // eyes
-    ctx.shadowBlur = 0;
     ctx.fillStyle = '#070a14';
     const eyeY = y - 14;
     ctx.beginPath(); ctx.arc(xScreen + w/2 - 6, eyeY, 2.4, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(xScreen + w/2 + 6, eyeY, 2.4, 0, Math.PI*2); ctx.fill();
 
     // body
-    ctx.fillStyle = tintA;
-    ctx.strokeStyle = tintB;
+    ctx.fillStyle = 'rgba(124,92,255,.55)';
+    ctx.strokeStyle = 'rgba(25,211,255,.70)';
     ctx.lineWidth = 3;
     roundRect(xScreen + 10, y + 10, w - 20, 40, 14);
     ctx.fill(); ctx.stroke();
 
-    // فریز قدم/دست وقتی knife یا overlay
-    const t = (player.stepFrozen || showKnife) ? 0 : player.stepT;
+    // arms/legs
+    const t = (player.stepFrozen || S.freezeForResult || S.didShowing) ? 0 : player.stepT;
     const arm = Math.sin(t*1.7)*6;
     const leg = Math.sin(t*1.9)*5;
 
@@ -442,6 +435,7 @@
 
     // legs
     ctx.lineWidth = 8;
+    ctx.strokeStyle = 'rgba(234,240,255,.85)';
     ctx.beginPath();
     ctx.moveTo(xScreen + 18, gy - 30);
     ctx.lineTo(xScreen + 10 + (dir===1?-leg:leg), gy - 10);
@@ -456,37 +450,45 @@
     ctx.fillStyle = 'rgba(255,77,109,.75)';
     ctx.shadowColor = 'rgba(255,77,109,.55)';
     ctx.shadowBlur = 14;
-    ctx.beginPath();
-    ctx.roundRect(xScreen + 10, gy - 12, 18, 10, 6);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.roundRect(xScreen + w - 28, gy - 12, 18, 10, 6);
-    ctx.fill();
+    ctx.beginPath(); ctx.roundRect(xScreen + 10, gy - 12, 18, 10, 6); ctx.fill();
+    ctx.beginPath(); ctx.roundRect(xScreen + w - 28, gy - 12, 18, 10, 6); ctx.fill();
     ctx.shadowBlur = 0;
 
-    // knife (فقط کارتونی)
-    if(showKnife){
+    // gun (cartoon)
+    if(showGun){
       ctx.strokeStyle = 'rgba(234,240,255,.95)';
       ctx.lineWidth = 6;
       ctx.lineCap = 'round';
-      ctx.shadowBlur = 18;
-      ctx.shadowColor = 'rgba(25,211,255,.65)';
 
-      const kx = xScreen + (dir===1 ? w-10 : 10);
+      const kx = xScreen + (dir===1 ? w-8 : 8);
       const ky = y + 22;
 
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = 'rgba(25,211,255,.65)';
       ctx.beginPath();
       ctx.moveTo(kx, ky);
-      ctx.lineTo(kx + (dir===1 ? 26 : -26), ky - 10);
+      ctx.lineTo(kx + (dir===1 ? 24 : -24), ky - 10);
       ctx.stroke();
 
       ctx.shadowBlur = 0;
-      ctx.fillStyle = 'rgba(255,77,109,.9)';
+      ctx.fillStyle = 'rgba(124,92,255,.65)';
       ctx.beginPath();
-      ctx.roundRect(kx + (dir===1 ? 10 : -10) - 6, ky - 2, 12, 10, 4);
+      ctx.roundRect(kx + (dir===1 ? 8 : -8) - 6, ky - 2, 12, 10, 4);
       ctx.fill();
     }
 
+    ctx.restore();
+  }
+
+  function drawNPC(){
+    const npc = S.npc;
+    if(!npc) return;
+
+    const xScreen = npc.x - S.camX;
+    const gy = groundY();
+    // NPC ساده
+    ctx.save();
+    drawCartoon(xScreen - 18, gy - player.h, 1, {});
     ctx.restore();
   }
 
@@ -500,12 +502,9 @@
     ctx.fillRect(0,0,W,H);
 
     const gy = groundY();
-
-    // زمین
     ctx.fillStyle = 'rgba(255,255,255,.05)';
     ctx.fillRect(0, gy, W, H-gy);
 
-    // خط زمین
     ctx.strokeStyle = 'rgba(25,211,255,.55)';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -513,11 +512,10 @@
     ctx.lineTo(W, gy);
     ctx.stroke();
 
-    // نئون‌ها
     ctx.globalAlpha = 0.22;
     ctx.strokeStyle = 'rgba(124,92,255,.9)';
     ctx.lineWidth = 2;
-    const cam = world.camX;
+    const cam = S.camX;
     for(let i=0;i<10;i++){
       const y = gy - 130 - i*26;
       const wave = Math.sin(t*0.002 + i + cam*0.004)*6;
@@ -529,25 +527,202 @@
     ctx.globalAlpha = 1;
   }
 
-  function updateLogic(dt){
-    const overlayFrozen = world.overlayOpen || world.didShowing;
+  function spawnNpc(){
+    S.npc = { x: 560, greeted:false, colorAlt: Math.random()<0.5 };
+    S.npcGreeted = false;
+  }
 
-    // قدم‌ها در overlay/result تکون نخورن
-    player.stepFrozen = overlayFrozen;
+  function spawnTarget(){
+    target.active = true;
+    target.alive = true;
+    target.hit = false;
+    target.x = 560;
+    target.y = 0;
+  }
 
-    if(!overlayFrozen){
+  function resetAll(){
+    clearResult();
+    setOverlay(false);
+
+    S.stage = 0;
+    S.overlayOpen = false;
+    S.didShowing = false;
+    S.choiceStep = 0;
+    S.choiceLocked = false;
+
+    S.camX = 0;
+
+    S.npc = null;
+    S.npcGreeted = false;
+
+    S.showGun = false;
+    S.freezeForResult = false;
+
+    S.shootMode = false;
+    S.ammo = 20;
+    shootWrap.style.display = 'none';
+
+    target.active = false;
+    target.alive = false;
+    target.hit = false;
+
+    moveDir = 0;
+
+    player.x = 140;
+    player.y = groundY() - player.h;
+    player.vy = 0;
+    player.onGround = true;
+    player.faceDir = 1;
+    player.stepT = 0;
+    player.stepFrozen = false;
+
+    spawnNpc();
+    showToast('سلام', 650);
+  }
+
+  function setOverlay(open){
+    // overload
+    S.overlayOpen = open;
+    overlay.classList.toggle('show', open);
+    if(!open){
+      S.choiceLocked = false;
+    }
+  }
+
+  function openStageQuestions(){
+    // سوال‌ها: ۱: کلت می‌خوای؟  ۲: کلت نمیخوام
+    // مرحله 0: وقتی رفت نزدیک آدمک، این منو میاد
+    setOverlay(true, 'انتخاب کن', 'وقتی نزدیک می‌شی، انتخاب کن.', [
+      {
+        value:'want',
+        label:'سوال ۱: کلت می‌خوای؟',
+        onClick: ()=>{
+          // بر اساس درخواست: کلیک => وارد شوت مود
+          startShootMode();
+        }
+      },
+      {
+        value:'no',
+        label:'سوال ۲: کلت نمیخوام',
+        onClick: ()=>{
+          // اگر کلت نخواست => DID + بازی مجدد
+          // (بدون خشونت واقعی)
+          S.showGun = false;
+          S.freezeForResult = true;
+          setTimeout(()=>{ S.freezeForResult = false; }, 50);
+          setTimeout(()=>{
+            setResult('DID — بازی مجدد');
+          }, 500);
+        }
+      }
+    ]);
+  }
+
+  function startShootMode(){
+    // وارد مرحله شوت
+    setOverlay(false);
+    S.showGun = true;
+    S.shootMode = true;
+    S.stage = 1;
+    S.ammo = 20;
+    shootAmmoEl.textContent = String(S.ammo);
+    shootWrap.style.display = 'block';
+
+    // target ظاهر می‌شود
+    spawnTarget();
+
+    // فریز انیمیشن پلیر فقط در overlay بوده؛ الان اجازه داریم
+    player.stepFrozen = false;
+    showToast('۲۰ تیر داری. شوت کن یا نزدیک میشه!', 1200);
+  }
+
+  function endShootModeToNext(){
+    // پلیر موفق شده: target از صحنه حذف میشه و دوباره سوال میاد (طبق درخواست “بعدش رفت جلو یک آدم بیاد…”)
+    S.showGun = false;
+    S.shootMode = false;
+    shootWrap.style.display = 'none';
+    target.active = false;
+
+    // مرحله بعد: دوباره آدمک اول نزدیک میاد و سوال میاد
+    S.stage = 0;
+    spawnNpc();
+    S.npcGreeted = false;
+
+    showToast('رفت جلو... دوباره نزدیک شدی!', 900);
+  }
+
+  // input
+  function bindHold(btn, dir){
+    btn.addEventListener('pointerdown', (e)=>{
+      e.preventDefault();
+      btn.setPointerCapture?.(e.pointerId);
+      moveDir = dir;
+    }, {passive:false});
+    btn.addEventListener('pointerup', (e)=>{
+      e.preventDefault();
+      moveDir = 0;
+    }, {passive:false});
+    btn.addEventListener('pointercancel', ()=> moveDir = 0, {passive:false});
+  }
+  bindHold(btnForward, +1);
+  bindHold(btnBack, -1);
+
+  btnJump.addEventListener('click', (e)=>{
+    e.preventDefault();
+    if(S.overlayOpen || S.didShowing || S.shootMode) return;
+    if(player.onGround){
+      player.vy = player.jumpV;
+      player.onGround = false;
+    }
+  });
+
+  btnShoot.addEventListener('click', ()=>{
+    if(!S.shootMode) return;
+    if(S.overlayOpen || S.didShowing) return;
+    if(target.active && target.alive && !target.hit){
+      if(S.ammo <= 0){
+        showToast('تیر تموم!', 800);
+        return;
+      }
+      // هر کلیک = ۱ تیر
+      S.ammo -= 1;
+      shootAmmoEl.textContent = String(S.ammo);
+
+      target.hit = true;
+      // target (آدمک) حذف نمایشی میشه
+      setTimeout(()=>{
+        // “حذف” بعد از کمی تأخیر برای حس
+        target.alive = false;
+        target.active = false;
+        endShootModeToNext();
+      }, 320);
+    }
+  });
+
+  restartBtn.addEventListener('click', ()=>{
+    clearResult();
+    resetAll();
+  });
+
+  // game loop
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min(0.033, (now-last)/1000);
+    last = now;
+
+    const frozen = S.overlayOpen || S.didShowing || S.freezeForResult || S.shootMode;
+    player.stepFrozen = frozen;
+
+    if(!frozen){
       player.faceDir = (moveDir !== 0) ? moveDir : player.faceDir;
 
-      // حرکت
       player.x += moveDir * player.speed * dt;
 
-      // گرانش
       if(!player.onGround){
         player.vy += player.gravity * dt;
         player.y += player.vy * dt;
       }
 
-      // زمین
       const gy = groundY();
       const floorY = gy - player.h;
       if(player.y >= floorY){
@@ -556,100 +731,107 @@
         player.onGround = true;
       }
 
-      // دوربین
-      const targetCam = player.x - (W*0.25);
-      world.camX += (targetCam - world.camX) * Math.min(1, dt*8);
-
-      // انیمیشن قدم‌ها فقط وقتی حرکت می‌کنه
       if(player.onGround && moveDir !== 0){
-        player.stepT += dt * 8.0;
+        player.stepT += dt * 8;
       }
+
+      const targetCam = player.x - (W*0.25);
+      S.camX += (targetCam - S.camX) * Math.min(1, dt*8);
     } else {
       moveDir = 0;
     }
 
-    // NPC / سوال فقط یک بار
-    if(world.npc && world.npcState === 'idle'){
-      const npc = world.npc;
+    // نزدیک شدن NPC و باز شدن منو سوال
+    if(S.stage === 0 && S.npc && !S.npcGreeted){
+      const npcScreenX = S.npc.x - S.camX;
+      const playerScreenX = player.x - S.camX;
 
-      const npcScreenX = npc.x - world.camX;
-      const playerScreenX = player.x - world.camX;
+      if(Math.abs((playerScreenX+22) - (npcScreenX+22)) < 70){
+        S.npcGreeted = true;
+        showToast('سلام', 700);
 
-      if(!npc.greeted && Math.abs((playerScreenX+22) - (npcScreenX+22)) < 70){
-        npc.greeted = true;
-        world.npcState = 'waitingChoice';
-
-        showToast('سلام', 900);
-        setTimeout(openChoiceOverlay, 200);
+        setTimeout(()=>{
+          openStageQuestions();
+        }, 220);
       }
     }
-  }
 
-  function drawLogic(t){
-    drawBackground(t);
+    // منطق شوت مود و نزدیک شدن target
+    if(S.shootMode && target.active && target.alive && !target.hit){
+      // target از سمت راست به سمت پلیر میاد (در جهان)
+      // سرعت بر اساس dt
+      const approach = target.speed * dt;
+      target.x -= approach;
 
-    const gy = groundY();
-
-    // NPC (تا قبل از سوال/مرگ رسم میشه)
-    if(world.npc && !world.didShowing){
-      const npc = world.npc;
-      const xScreen = npc.x - world.camX;
-      if(xScreen > -140 && xScreen < W+140){
-        drawCartoon(
-          xScreen - 22,
-          gy - player.h,
-          1,
-          npc.colorAlt ? 'rgba(124,92,255,.55)' : 'rgba(25,211,255,.40)',
-          npc.colorAlt ? 'rgba(25,211,255,.70)' : 'rgba(124,92,255,.75)',
-          { showKnife:false }
-        );
+      // اگر به نزدیک رسید => DID + بازی مجدد
+      const dist = Math.abs((target.x) - (player.x));
+      if(dist < 48){
+        // DID
+        S.didShowing = true;
+        setResult('DID — نزدیک شدی (باید شوت می‌کردی)');
       }
+    }
+
+    // draw
+    drawBackground(now);
+
+    // NPC اول
+    if(S.stage === 0 && S.npc && !S.didShowing){
+      drawNPC();
+    }
+
+    // target (آدمکِ نزدیک‌شونده)
+    if(S.shootMode && target.active && target.alive && !S.didShowing){
+      const xScreen = target.x - S.camX;
+      const gy = groundY();
+      drawCartoon(xScreen - 10, gy - player.h, 1, {});
+      // افکت نزدیک شدن
+      ctx.save();
+      ctx.strokeStyle = 'rgba(25,211,255,.35)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(xScreen, gy - player.h + 18, 34, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
     }
 
     // player
-    const pxScreen = player.x - world.camX;
-    const bob = (!world.overlayOpen && !world.didShowing && player.onGround)
-      ? Math.sin(player.stepT*0.14)*3
-      : 0;
+    const pxScreen = player.x - S.camX;
+    const gy = groundY();
+    const bob = (!S.overlayOpen && !S.didShowing && !S.shootMode && player.onGround)
+      ? Math.sin(player.stepT*0.14)*3 : 0;
 
-    drawCartoon(
-      pxScreen,
-      player.y + bob,
-      player.faceDir,
-      'rgba(124,92,255,.55)',
-      'rgba(25,211,255,.70)',
-      { showKnife:false }
-    );
+    drawCartoon(pxScreen, player.y + bob, S.showGun ? 1 : player.faceDir, { showGun: S.showGun });
 
-    // آدم چاقو فقط وقتی مرگ شده (برای هر گزینه 1/2/3)
-    if(world.showKnife){
-      const targetScreenX = (W/2) - player.w/2;
-      const y = gy - player.h;
-      drawCartoon(
-        targetScreenX,
-        y,
-        1,
-        'rgba(255,77,109,.28)',
-        'rgba(25,211,255,.70)',
-        { showKnife:true }
-      );
+    // energy hint (نمایشی)
+    if(S.shootMode && S.ammo < 20 && target.active && target.alive){
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = 'rgba(25,211,255,.9)';
+      ctx.fillRect(0, 0, W, 1);
+      ctx.restore();
     }
-  }
 
-  // init
-  resetAll();
-
-  let last = performance.now();
-  function loop(now){
-    const dt = Math.min(0.033, (now-last)/1000);
-    last = now;
-
-    updateLogic(dt);
-    drawLogic(now);
+    // اگر DID آمد باید فریز کامل
+    if(S.didShowing){
+      // nothing extra
+    }
 
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
+
+  // quick guards for overlay close
+  function setOverlay(open){
+    S.overlayOpen = open;
+    overlay.classList.toggle('show', open);
+    if(!open){
+      S.choiceLocked = false;
+    }
+  }
+
+  // start
+  resetAll();
 })();
 </script>
 </body>
