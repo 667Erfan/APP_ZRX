@@ -57,45 +57,6 @@
       line-height:1.7;
     }
 
-    #shootWrap{
-      position:fixed; left:12px; top:12px;
-      z-index:20;
-      display:none;
-      pointer-events:none;
-    }
-    #shootBar{
-      pointer-events:none;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.14);
-      color:#eaf0ff;
-      font-weight:1000;
-      padding:10px 12px;
-      border-radius:14px;
-      white-space:nowrap;
-    }
-    #shootAmmo{ color:#aefcff; }
-    #shootBtnRow{
-      margin-top:10px;
-      display:flex;
-      gap:10px;
-      justify-content:flex-start;
-      pointer-events:auto;
-    }
-    #btnShoot{
-      width:160px; height:64px;
-      border-radius:18px;
-      border:0;
-      background: linear-gradient(135deg, #7c5cff, #19d3ff);
-      box-shadow:0 18px 55px rgba(124,92,255,.30);
-      color:#071018;
-      font-weight:1100;
-      font-size:18px;
-      cursor:pointer;
-      user-select:none;
-      touch-action:none;
-    }
-    #btnShoot:active{ transform: scale(.98); }
-
     #overlay{
       position:fixed; inset:0;
       background: rgba(0,0,0,.55);
@@ -191,6 +152,45 @@
       user-select:none;
     }
     #restart:active{ transform: scale(.98); }
+
+    #shootWrap{
+      position:fixed; left:12px; top:12px;
+      z-index:20;
+      display:none;
+      pointer-events:none;
+    }
+    #shootBar{
+      pointer-events:none;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.14);
+      color:#eaf0ff;
+      font-weight:1000;
+      padding:10px 12px;
+      border-radius:14px;
+      white-space:nowrap;
+    }
+    #shootAmmo{ color:#aefcff; }
+    #shootBtnRow{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      justify-content:flex-start;
+      pointer-events:auto;
+    }
+    #btnShoot{
+      width:160px; height:64px;
+      border-radius:18px;
+      border:0;
+      background: linear-gradient(135deg, #7c5cff, #19d3ff);
+      box-shadow:0 18px 55px rgba(124,92,255,.30);
+      color:#071018;
+      font-weight:1100;
+      font-size:18px;
+      cursor:pointer;
+      user-select:none;
+      touch-action:none;
+    }
+    #btnShoot:active{ transform: scale(.98); }
   </style>
 </head>
 <body>
@@ -285,7 +285,7 @@
 
   const target = {
     active:false,
-    x: 1000,           // ✅ دورتر از قبل تا ۲۰ ثانیه وقت واقعی داشته باشی
+    x: 1000,
     speed: 140,
     alive:false,
     hit:false
@@ -298,18 +298,21 @@
     overlayOpen:false,
     didShowing:false,
 
-    npcQuestionOpened:false,
+    npcQuestionOpened:false, // برای جلوگیری از تکرار سوال
 
+    // shoot
     showGun:false,
     shootMode:false,
     ammo: 20,
 
     transitionLock:false,
 
-    // ✅ تایمر ۲۰ ثانیه
-    shootTimeLimit: 20,      // ثانیه
-    shootTimer: 0,           // ثانیه سپری شده
-    didAllowed: false       // بعد از گذشت زمان اجازه DID
+    shootTimeLimit: 20,
+    shootTimer: 0,
+    didAllowed: false,
+
+    // ✅ وقتی موفق میشیم، تا ریست کامل انجام نشده منطق‌های دیگر اجرا نشه
+    victoryLock:false
   };
 
   let moveDir = 0;
@@ -324,33 +327,13 @@
   function setOverlay(open, title='', text='', options=[]){
     S.overlayOpen = open;
     overlay.classList.toggle('show', open);
-    if(!open){
-      return;
-    }
-    menuTitle.textContent = title;
-    menuText.textContent = text || '';
-    optList.innerHTML = '';
-    options.forEach(opt=>{
-      const d = document.createElement('div');
-      d.className = 'opt';
-      d.textContent = opt.label;
-      d.onclick = ()=>{
-        opt.onClick?.();
-      };
-      optList.appendChild(d);
-    });
-  }
-
-  function setOverlaySafe(open, title='', text='', options=[]){
-    // نسخه با قفل ساده برای اینکه دوبار کلیک نشه
-    S.overlayOpen = open;
-    overlay.classList.toggle('show', open);
     if(!open) return;
 
-    let locked = false;
     menuTitle.textContent = title;
     menuText.textContent = text || '';
     optList.innerHTML = '';
+
+    let locked = false;
     options.forEach(opt=>{
       const d = document.createElement('div');
       d.className = 'opt';
@@ -364,14 +347,15 @@
     });
   }
 
+  function clearResult(){
+    S.didShowing = false;
+    result.classList.remove('show');
+  }
+
   function setResult(subText){
     S.didShowing = true;
     resultSub.textContent = subText;
     result.classList.add('show');
-  }
-  function clearResult(){
-    S.didShowing = false;
-    result.classList.remove('show');
   }
 
   function roundRect(x,y,w,h,r){
@@ -388,35 +372,42 @@
   function drawCartoon(xScreen, y, dir=1, opts={}){
     const w = player.w, h = player.h;
     ctx.save();
+
     if(dir === -1){
       ctx.translate(xScreen + w/2, 0);
       ctx.scale(-1,1);
       ctx.translate(-(xScreen + w/2), 0);
     }
+
     const gy = groundY();
 
+    // shadow
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     ctx.beginPath();
     ctx.ellipse(xScreen + w/2, gy + 6, 18, 8, 0, 0, Math.PI*2);
     ctx.fill();
 
+    // head
     ctx.fillStyle = 'rgba(234,240,255,.92)';
     ctx.beginPath();
     ctx.arc(xScreen + w/2, y - 10, 18, 0, Math.PI*2);
     ctx.fill();
 
+    // eyes
     ctx.fillStyle = '#070a14';
     const eyeY = y - 14;
     ctx.beginPath(); ctx.arc(xScreen + w/2 - 6, eyeY, 2.4, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.arc(xScreen + w/2 + 6, eyeY, 2.4, 0, Math.PI*2); ctx.fill();
 
+    // body
     ctx.fillStyle = 'rgba(124,92,255,.55)';
     ctx.strokeStyle = 'rgba(25,211,255,.70)';
     ctx.lineWidth = 3;
     roundRect(xScreen + 10, y + 10, w - 20, 40, 14);
     ctx.fill(); ctx.stroke();
 
-    const frozen = player.stepFrozen || S.didShowing || S.overlayOpen;
+    // limbs
+    const frozen = player.stepFrozen || S.didShowing || S.overlayOpen || S.victoryLock;
     const stepT = frozen ? 0 : player.stepT;
     const arm = Math.sin(stepT*1.7)*6;
     const leg = Math.sin(stepT*1.9)*5;
@@ -441,10 +432,12 @@
     ctx.lineTo(xScreen + w - 10 + (dir===1?leg:-leg), gy - 10);
     ctx.stroke();
 
+    // shoes
     ctx.fillStyle = 'rgba(255,77,109,.75)';
     ctx.beginPath(); ctx.roundRect(xScreen + 10, gy - 12, 18, 10, 6); ctx.fill();
     ctx.beginPath(); ctx.roundRect(xScreen + w - 28, gy - 12, 18, 10, 6); ctx.fill();
 
+    // gun (cartoon) - نمایشی
     if(opts.showGun){
       ctx.strokeStyle = 'rgba(234,240,255,.95)';
       ctx.lineWidth = 6;
@@ -496,6 +489,7 @@
     ctx.lineTo(W, gy);
     ctx.stroke();
 
+    // waves
     ctx.globalAlpha = 0.22;
     ctx.strokeStyle = 'rgba(124,92,255,.9)';
     ctx.lineWidth = 2;
@@ -522,35 +516,39 @@
     target.active = true;
     target.alive = true;
     target.hit = false;
-    target.x = 1000;  // ✅ شروع دور
+    target.x = 1000; // ✅ دور شروع میشه که ۲۰ ثانیه وقت باشه
   }
 
   function resetAll(){
+    S.victoryLock = false;
+    S.transitionLock = false;
+
+    setResult(''); // not shown; just to ensure didShowing false? we'll clear:
     clearResult();
-    setOverlay(false);
+
+    overlay.classList.remove('show');
+    S.overlayOpen = false;
 
     S.stage = 0;
-    S.overlayOpen = false;
-    S.didShowing = false;
-
-    S.npcQuestionOpened = false;
-
     S.showGun = false;
     S.shootMode = false;
     S.ammo = 20;
     shootWrap.style.display = 'none';
 
-    S.camX = 0;
-
-    npc.active = false;
-    npc.greeted = false;
-
-    target.active = false;
-    target.alive = false;
-    target.hit = false;
+    S.npcQuestionOpened = false;
 
     S.shootTimer = 0;
     S.didAllowed = false;
+
+    S.camX = 0;
+
+    npc.active = false;
+    target.active = false;
+
+    npc.greeted = false;
+
+    target.alive = false;
+    target.hit = false;
 
     moveDir = 0;
 
@@ -567,24 +565,29 @@
   }
 
   function openStageQuestions(){
-    setOverlaySafe(true, 'انتخاب کن', 'وقتی نزدیک می‌شی، انتخاب کن.', [
+    setOverlay(true, 'انتخاب کن', 'وقتی نزدیک می‌شی، انتخاب کن.', [
       { label:'سوال ۱: کلت می‌خوای؟', onClick: ()=> startShootMode() },
       { label:'سوال ۲: کلت نمی‌خوام', onClick: ()=>{
-        setResult('DID — بازی مجدد');
         setOverlay(false);
         showToast('DID', 800);
+        setResult('DID — بازی مجدد');
       } }
     ]);
   }
 
   function startShootMode(){
-    if(S.transitionLock) return;
+    if(S.transitionLock || S.victoryLock) return;
     S.transitionLock = true;
 
     setOverlay(false);
+    S.overlayOpen = false;
+
+    // مرحله شوت
     S.stage = 1;
     S.showGun = true;
     S.shootMode = true;
+    S.victoryLock = false;
+
     S.ammo = 20;
     shootAmmoEl.textContent = '20';
     shootWrap.style.display = 'block';
@@ -594,14 +597,15 @@
 
     spawnTarget();
 
-    player.stepFrozen = false;
-
     showToast('۲۰ ثانیه وقت داری! شوت کن یا نزدیک میشه!', 1300);
 
-    setTimeout(()=>{ S.transitionLock = false; }, 50);
+    setTimeout(()=>{ S.transitionLock = false; }, 80);
   }
 
-  function endShootModeToNext(){
+  function doVictoryAndReset(){
+    // ✅ موفقیت: هیچ منوی NPC نباید بیاد؛ ریست کنترل‌شده
+    S.victoryLock = true;
+
     S.showGun = false;
     S.shootMode = false;
     shootWrap.style.display = 'none';
@@ -610,10 +614,27 @@
     target.alive = false;
     target.hit = true;
 
+    // اجازه DID یا NPC سوال دیگه نمی‌دیم چون victoryLock تداخل رو می‌بنده
     S.stage = 0;
-    spawnNpc();
+    S.npcQuestionOpened = true; // تا در همین فریم‌ها سوال دوباره باز نشه
 
-    showToast('رفت جلو... دوباره نزدیک شدی!', 900);
+    showToast('موفق شدی!', 800);
+
+    setTimeout(()=>{
+      resetAll();
+    }, 900);
+  }
+
+  function doDID(){
+    if(S.victoryLock) return;
+    S.didAllowed = false;
+    S.shootMode = false;
+    S.showGun = false;
+    shootWrap.style.display = 'none';
+    target.active = false;
+
+    setResult('DID — باید شوت می‌کردی');
+    showToast('DID', 900);
   }
 
   // input
@@ -644,6 +665,8 @@
   btnShoot.addEventListener('click', ()=>{
     if(!S.shootMode) return;
     if(S.overlayOpen || S.didShowing) return;
+    if(S.victoryLock) return;
+
     if(!target.active || !target.alive || target.hit) return;
 
     if(S.ammo <= 0){
@@ -651,16 +674,15 @@
       return;
     }
 
-    // ✅ هر کلیک ۱ تیر
     S.ammo -= 1;
     shootAmmoEl.textContent = String(S.ammo);
 
+    // در این سناریو: اولین شوت موفق = پایان
     target.hit = true;
     target.alive = false;
     target.active = false;
 
-    // ✅ فقط پایان مرحله (بدون DID)
-    setTimeout(()=>endShootModeToNext(), 260);
+    setTimeout(()=>doVictoryAndReset(), 200);
   });
 
   restartBtn.addEventListener('click', ()=> resetAll());
@@ -671,7 +693,7 @@
     const dt = Math.min(0.033, (now-last)/1000);
     last = now;
 
-    const frozen = S.overlayOpen || S.didShowing; // در شوت مود فریز نمی‌کنیم
+    const frozen = S.overlayOpen || S.didShowing || S.victoryLock;
     player.stepFrozen = frozen;
 
     if(!frozen){
@@ -701,8 +723,8 @@
       moveDir = 0;
     }
 
-    // npc menu trigger فقط یکبار
-    if(S.stage === 0 && npc.active && !S.didShowing && !S.shootMode && !S.overlayOpen){
+    // سوال NPC فقط یکبار
+    if(S.stage === 0 && npc.active && !S.didShowing && !S.shootMode && !S.overlayOpen && !S.victoryLock){
       const npcScreenX = npc.x - S.camX;
       const playerScreenX = player.x - S.camX;
       const near = Math.abs((playerScreenX + 22) - (npcScreenX + 22)) < 70;
@@ -714,25 +736,20 @@
       }
     }
 
-    // shoot mode
-    if(S.stage === 1 && S.shootMode && target.active && target.alive && !S.didShowing){
+    // shoot mode logic
+    if(S.stage === 1 && S.shootMode && target.active && !S.didShowing && !S.victoryLock){
       S.shootTimer += dt;
+      target.x -= target.speed * dt;
+
       if(S.shootTimer >= S.shootTimeLimit){
         S.didAllowed = true;
       }
 
-      // حرکت آدمک به سمت پلیر
-      target.x -= target.speed * dt;
-
-      // فقط بعد از پایان ۲۰ ثانیه DID فعال میشه
       if(S.didAllowed){
+        // شرط DID: اگر تا پایان زمان شوت نکردی و نزدیک شدی
         const dist = Math.abs(target.x - player.x);
         if(dist < 48){
-          setOverlay(false);
-          shootWrap.style.display = 'none';
-          S.showGun = false;
-          S.shootMode = false;
-          setResult('DID — باید شوت می‌کردی');
+          doDID();
         }
       }
     }
@@ -740,11 +757,11 @@
     // draw
     drawBackground(now);
 
-    if(S.stage === 0 && npc.active && !S.didShowing){
+    if(S.stage === 0 && npc.active && !S.didShowing && !S.victoryLock){
       drawNPC();
     }
 
-    if(S.stage === 1 && target.active && target.alive && !S.didShowing){
+    if(S.stage === 1 && target.active && target.alive && !S.didShowing && !S.victoryLock){
       const xScreen = target.x - S.camX;
       const gy = groundY();
 
@@ -762,7 +779,7 @@
 
     const pxScreen = player.x - S.camX;
     const gy = groundY();
-    const bob = (!S.overlayOpen && !S.didShowing && !S.shootMode && player.onGround)
+    const bob = (!S.overlayOpen && !S.didShowing && !S.shootMode && !S.victoryLock && player.onGround)
       ? Math.sin(player.stepT*0.14)*3 : 0;
 
     drawCartoon(pxScreen, player.y + bob, player.faceDir, { showGun: S.showGun });
