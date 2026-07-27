@@ -3,49 +3,74 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Cartoon Player</title>
+  <title>Cartoon Runner</title>
   <style>
     html, body { height: 100%; margin: 0; overflow: hidden; background:#070a14; touch-action:none; }
     #wrap { position:fixed; inset:0; display:flex; flex-direction:column; }
     canvas { flex:1; width:100%; height:100%; display:block; }
+
     .ui {
-      position: absolute; left: 0; right: 0; bottom: 14px;
-      display:flex; justify-content:center; gap:14px; pointer-events:none;
-      padding:0 14px;
+      position:absolute; left:0; right:0; bottom:14px;
+      display:flex; justify-content:center; gap:12px;
+      pointer-events:none;
+      padding:0 12px;
     }
-    .btn {
+    .btn{
       pointer-events:auto;
-      width: 120px; height: 74px; border-radius:18px;
+      width:128px; height:74px;
+      border-radius:18px;
       background: rgba(255,255,255,.06);
       border: 1px solid rgba(255,255,255,.18);
-      color: #eaf0ff;
-      font-weight: 900;
-      font-size: 18px;
+      color:#eaf0ff;
+      font-weight:900; font-size:18px;
       box-shadow: 0 16px 40px rgba(0,0,0,.35);
-      user-select:none;
-      -webkit-user-select:none;
+      user-select:none; -webkit-user-select:none;
       touch-action:none;
     }
-    .btn:active { transform: scale(.98); }
-    .hint {
+    .btn:active{ transform: scale(.98); }
+    .btn.small{ width:110px; }
+
+    .hint{
       position:absolute; top:12px; left:12px;
-      color: rgba(234,240,255,.75); font-family: Tahoma, Arial;
+      color: rgba(234,240,255,.75);
+      font-family: Tahoma, Arial;
       font-weight:700; font-size:13px;
       background: rgba(255,255,255,.05);
       border: 1px solid rgba(255,255,255,.10);
       padding:8px 10px; border-radius:12px;
       pointer-events:none;
+      max-width: 92vw;
     }
+
+    .toast{
+      position:absolute;
+      top:62px; left:12px;
+      background: rgba(124,92,255,.16);
+      border: 1px solid rgba(124,92,255,.35);
+      color: #eaf0ff;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900;
+      font-size:16px;
+      pointer-events:none;
+      box-shadow: 0 20px 80px rgba(124,92,255,.18);
+      opacity:0;
+      transform: translateY(-6px);
+      transition: opacity .15s ease, transform .15s ease;
+    }
+    .toast.show{ opacity:1; transform: translateY(0); }
   </style>
 </head>
 <body>
   <div id="wrap">
-    <div class="hint">راه رفتن: نگه دار | پرش: تپ کن</div>
+    <div class="hint">راه رفتن: نگه دار (جلو/عقب) • پرش: تپ</div>
+    <div class="toast" id="toast">سلام</div>
     <canvas id="c"></canvas>
 
     <div class="ui">
-      <button class="btn" id="btnWalk">راه رفتن</button>
+      <button class="btn small" id="btnBack">عقب</button>
       <button class="btn" id="btnJump">پرش</button>
+      <button class="btn small" id="btnForward">جلو</button>
     </div>
   </div>
 
@@ -54,8 +79,10 @@
   const canvas = document.getElementById('c');
   const ctx = canvas.getContext('2d');
 
-  const btnWalk = document.getElementById('btnWalk');
+  const btnForward = document.getElementById('btnForward');
+  const btnBack = document.getElementById('btnBack');
   const btnJump = document.getElementById('btnJump');
+  const toast = document.getElementById('toast');
 
   let W=0,H=0,dpr=1;
   function resize(){
@@ -71,188 +98,98 @@
   window.addEventListener('resize', resize);
   resize();
 
-  // زمین
   const groundY = () => Math.floor(H*0.78);
 
-  // بازیکن کارتونی
+  // جهان بی‌نهایت: player در مختصات جهان است، دوربین با او حرکت می‌کند
+  const world = {
+    camX: 0,
+    playerX: 0, // جهان
+    nextNpcAt: 420,
+    npcs: [], // {x, greeted}
+    speedWorld: 0,
+  };
+
+  // بازیکن
   const player = {
-    x: W*0.25, y: 0,
+    x: 0, // جهان
+    y: 0,
     w: 44, h: 70,
     vx: 0, vy: 0,
     onGround: false,
-    speed: 170,     // سرعت راه رفتن
-    jumpV: -520,    // سرعت پرش
+    speed: 200,
+    jumpV: -520,
     gravity: 1350,
-    faceDir: 1,     // 1 راست, -1 چپ
+    faceDir: 1,
     stepT: 0
   };
 
-  player.y = groundY() - player.h;
+  function resetPlayer(){
+    player.x = 140;
+    player.y = groundY() - player.h;
+    player.vx = 0; player.vy = 0;
+    player.onGround = true;
+    player.faceDir = 1;
+    player.stepT = 0;
+  }
+  resetPlayer();
 
-  // کنترل راه رفتن
-  let walking = false;
-  function setWalking(v){ walking = v; }
+  // کنترل‌ها (نگه‌داری جلو/عقب)
+  let moveDir = 0; // -1 عقب، +1 جلو
+  function setMoveDir(dir){
+    moveDir = dir;
+  }
 
-  btnWalk.addEventListener('pointerdown', (e)=>{
+  function bindHold(btn, dir){
+    btn.addEventListener('pointerdown', (e)=>{
+      e.preventDefault();
+      btn.setPointerCapture?.(e.pointerId);
+      setMoveDir(dir);
+    }, {passive:false});
+
+    btn.addEventListener('pointerup', (e)=>{
+      e.preventDefault();
+      setMoveDir(0);
+    }, {passive:false});
+
+    btn.addEventListener('pointercancel', ()=>{
+      setMoveDir(0);
+    }, {passive:false});
+  }
+  bindHold(btnForward, +1);
+  bindHold(btnBack, -1);
+
+  btnJump.addEventListener('click', (e)=>{
     e.preventDefault();
-    btnWalk.setPointerCapture?.(e.pointerId);
-    setWalking(true);
-  }, {passive:false});
-  btnWalk.addEventListener('pointerup', (e)=>{
-    e.preventDefault();
-    setWalking(false);
-  }, {passive:false});
-  btnWalk.addEventListener('pointercancel', ()=> setWalking(false));
-
-  // کنترل پرش
-  function tryJump(){
     if(player.onGround){
       player.vy = player.jumpV;
       player.onGround = false;
     }
-  }
-  btnJump.addEventListener('click', (e)=>{
-    e.preventDefault();
-    tryJump();
   });
 
-  // رسم زمین و پس‌زمینه
-  function drawBackground(t){
-    ctx.clearRect(0,0,W,H);
-
-    // آسمان
-    const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#070a14');
-    g.addColorStop(1,'#0d1533');
-    ctx.fillStyle = g;
-    ctx.fillRect(0,0,W,H);
-
-    // نور نئون
-    ctx.globalAlpha = 0.20;
-    ctx.strokeStyle = 'rgba(124,92,255,.9)';
-    ctx.lineWidth = 2;
-    for(let i=0;i<8;i++){
-      const y = groundY() - 140 - i*26;
-      ctx.beginPath();
-      ctx.moveTo(-20, y + Math.sin(t*0.001 + i)*6);
-      ctx.lineTo(W+20, y + Math.sin(t*0.001 + i)*6);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-
-    // زمین
-    const gy = groundY();
-    ctx.fillStyle = 'rgba(255,255,255,.05)';
-    ctx.fillRect(0, gy, W, H-gy);
-
-    // خط زمین
-    ctx.strokeStyle = 'rgba(25,211,255,.55)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, gy);
-    ctx.lineTo(W, gy);
-    ctx.stroke();
-
-    // سایه
-    const shadowW = 38 * (player.onGround ? 1 : 0.75);
-    const shadowH = 10;
-    ctx.fillStyle = 'rgba(0,0,0,.35)';
-    ctx.beginPath();
-    ctx.ellipse(player.x + player.w/2, gy + 6, shadowW/2, shadowH/2, 0, 0, Math.PI*2);
-    ctx.fill();
+  function showHello(){
+    toast.textContent = "سلام";
+    toast.classList.add('show');
+    clearTimeout(showHello._t);
+    showHello._t = setTimeout(()=>toast.classList.remove('show'), 900);
   }
 
-  function drawPlayer(t){
-    // حرکت
-    const x = player.x;
-    const y = player.y;
-    const gy = groundY();
-
-    // چرخش/انیمیشن قدم
-    player.stepT += (player.onGround ? 1 : 0.4) * (walking ? 0.18 : 0.06);
-
-    // بدن
-    ctx.save();
-
-    // اگر روبه چپ باشه، مختصات برعکس
-    if(player.faceDir === -1){
-      ctx.translate(x + player.w/2, 0);
-      ctx.scale(-1,1);
-      ctx.translate(-(x + player.w/2), 0);
-    }
-
-    // بدن اصلی
-    // سر
-    const headR = 18;
-    const bob = player.onGround ? Math.max(0, Math.sin(player.stepT)*3) : 0;
-    ctx.fillStyle = 'rgba(234,240,255,.92)';
-    ctx.shadowColor = 'rgba(124,92,255,.75)';
-    ctx.shadowBlur = 18;
-
-    ctx.beginPath();
-    ctx.arc(x + player.w/2, y - 10 + bob, headR, 0, Math.PI*2);
-    ctx.fill();
-
-    // چشم‌ها
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#070a14';
-    ctx.beginPath(); ctx.arc(x + player.w/2 - 6, y - 14 + bob, 2.4, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(x + player.w/2 + 6, y - 14 + bob, 2.4, 0, Math.PI*2); ctx.fill();
-
-    // بدن
-    ctx.fillStyle = 'rgba(124,92,255,.55)';
-    ctx.strokeStyle = 'rgba(25,211,255,.65)';
-    ctx.lineWidth = 3;
-
-    const bodyX = x + 10, bodyY = y + 10;
-    roundRect(bodyX, bodyY, player.w - 20, 40, 14);
-    ctx.fill(); ctx.stroke();
-
-    // دست‌ها
-    const armSwing = walking ? Math.sin(player.stepT*1.6) : 0;
-    ctx.strokeStyle = 'rgba(234,240,255,.85)';
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-
-    // چپ/راست بودن بدن
-    ctx.beginPath();
-    ctx.moveTo(x + 14, bodyY + 14);
-    ctx.lineTo(x + 18 + armSwing*6, bodyY + 8);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(x + player.w - 14, bodyY + 14);
-    ctx.lineTo(x + player.w - 18 - armSwing*6, bodyY + 8);
-    ctx.stroke();
-
-    // پاها
-    const legSwing = walking ? Math.sin(player.stepT*1.8) : 0;
-    ctx.lineWidth = 8;
-
-    // پا 1
-    ctx.beginPath();
-    ctx.moveTo(x + 18, gy - 30);
-    ctx.lineTo(x + 18 - legSwing*6, gy - 10);
-    ctx.stroke();
-
-    // پا 2
-    ctx.beginPath();
-    ctx.moveTo(x + player.w - 18, gy - 30);
-    ctx.lineTo(x + player.w - 18 + legSwing*6, gy - 10);
-    ctx.stroke();
-
-    // کفش‌ها
-    ctx.fillStyle = 'rgba(255,77,109,.75)';
-    ctx.shadowColor = 'rgba(255,77,109,.55)';
-    ctx.shadowBlur = 14;
-    ctx.beginPath();
-    ctx.roundRect(x + 10, gy - 12, 18, 10, 6); ctx.fill();
-    ctx.beginPath();
-    ctx.roundRect(x + player.w - 28, gy - 12, 18, 10, 6); ctx.fill();
-
-    ctx.restore();
+  // ساخت آدم‌های روبه‌رو (آدمک با سلام وقتی نزدیک می‌شه)
+  function spawnNpc(x){
+    world.npcs.push({ x, greeted:false, colorAlt: Math.random()<.5 });
   }
 
+  function ensureNpcs(){
+    while(world.npcs.length < 12){
+      const lastX = world.npcs.length ? world.npcs[world.npcs.length-1].x : world.nextNpcAt;
+      const nextX = lastX + 360 + Math.random()*220;
+      // چون جهان روبه جلو می‌ره، NPCها را قبل‌تر/بعد‌تر می‌ریزیم
+      spawnNpc(nextX);
+      world.nextNpcAt = nextX + 420;
+      if(world.npcs[0] && world.npcs[0].x < world.camX - 400) break;
+    }
+  }
+
+  // رسم‌های ساده
   function roundRect(x,y,w,h,r){
     r = Math.min(r, w/2, h/2);
     ctx.beginPath();
@@ -264,26 +201,153 @@
     ctx.closePath();
   }
 
-  // فیزیک
-  let last = performance.now();
-  function loop(now){
-    const dt = Math.min(0.033, (now - last)/1000);
-    last = now;
+  function drawBackground(t){
+    ctx.clearRect(0,0,W,H);
 
-    // سرعت راه رفتن: فقط راست در این نسخه (می‌تونم چپ/راستش هم اضافه کنم)
-    player.vx = walking ? player.speed : 0;
-    if(player.vx !== 0) player.faceDir = 1;
+    // آسمان
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#070a14');
+    g.addColorStop(1,'#0d1533');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
 
-    player.x += player.vx * dt;
+    // خطوط نئون زمین
+    ctx.globalAlpha = 0.22;
+    ctx.strokeStyle = 'rgba(124,92,255,.9)';
+    ctx.lineWidth = 2;
 
-    // محدود داخل صفحه
-    player.x = Math.max(10, Math.min(W - player.w - 10, player.x));
+    const gy = groundY();
+    const cam = world.camX;
 
-    // گرانش
+    for(let i=0;i<10;i++){
+      const y = gy - 130 - i*26;
+      const wave = Math.sin(t*0.002 + i + cam*0.004)*6;
+      ctx.beginPath();
+      ctx.moveTo(-20 - (cam%60), y + wave);
+      ctx.lineTo(W+20 - (cam%60), y + wave);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // زمین
+    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    ctx.fillRect(0, gy, W, H-gy);
+
+    // نوار خط زمین
+    ctx.strokeStyle = 'rgba(25,211,255,.55)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.lineTo(W, gy);
+    ctx.stroke();
+
+    // موانع “دیوار” در جهان (حالت بسیار ساده: بدون گیر کردن، فقط برخورد فیزیکی)
+    // ما دیوار را واقعی با برخورد سخت نمی‌سازیم؛ فقط مرز صفحه نیست.
+    // اگر بخوای “سربه‌دیوار” واقعی هم بشه می‌تونم بعدش اضافه کنم.
+  }
+
+  function drawCartoon(xScreen, y, dir=1, tintA='#7c5cff', tintB='#19d3ff', wink=false){
+    const h = player.h;
+    const w = player.w;
+
+    ctx.save();
+    // صورت و بدن
+    if(dir === -1){
+      ctx.translate(xScreen + w/2, 0);
+      ctx.scale(-1,1);
+      ctx.translate(-(xScreen + w/2), 0);
+    }
+
+    // سایه
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    const gy = groundY();
+    ctx.beginPath();
+    ctx.ellipse(xScreen + w/2, gy + 6, 18, 8, 0, 0, Math.PI*2);
+    ctx.fill();
+
+    // سر
+    ctx.shadowColor = 'rgba(124,92,255,.7)';
+    ctx.shadowBlur = 18;
+    ctx.fillStyle = 'rgba(234,240,255,.92)';
+    ctx.beginPath();
+    ctx.arc(xScreen + w/2, y - 10 + (wink?0:0), 18, 0, Math.PI*2);
+    ctx.fill();
+
+    // چشم
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#070a14';
+    const eyeY = y - 14;
+    ctx.beginPath();
+    ctx.arc(xScreen + w/2 - 6, eyeY, 2.4, 0, Math.PI*2);
+    ctx.fill();
+    // چشم دیگر (گاهی وینک)
+    if(wink){
+      ctx.beginPath();
+      ctx.moveTo(xScreen + w/2 + 1.5, eyeY);
+      ctx.lineTo(xScreen + w/2 + 7, eyeY);
+      ctx.strokeStyle = '#070a14';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }else{
+      ctx.beginPath();
+      ctx.arc(xScreen + w/2 + 6, eyeY, 2.4, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    // بدن
+    ctx.fillStyle = tintA;
+    ctx.strokeStyle = tintB;
+    ctx.lineWidth = 3;
+
+    roundRect(xScreen + 10, y + 10, w - 20, 40, 14);
+    ctx.fill(); ctx.stroke();
+
+    // پاها
+    ctx.strokeStyle = 'rgba(234,240,255,.85)';
+    ctx.lineWidth = 8;
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(xScreen + 18, gy - 30);
+    ctx.lineTo(xScreen + 10, gy - 10);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(xScreen + w - 18, gy - 30);
+    ctx.lineTo(xScreen + w - 10, gy - 10);
+    ctx.stroke();
+
+    // کفش‌ها
+    ctx.fillStyle = 'rgba(255,77,109,.75)';
+    ctx.shadowColor = 'rgba(255,77,109,.55)';
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.roundRect(xScreen + 10, gy - 12, 18, 10, 6);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(xScreen + w - 28, gy - 12, 18, 10, 6);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function updateLogic(dt){
+    // حرکت جهان: جلو/عقب
+    const dir = moveDir;
+    player.faceDir = dir !== 0 ? dir : player.faceDir;
+
+    // سرعت راه رفتن با محدودیت دیوار (مرز تصویر): ما مرز “صفحه” نمی‌ذاریم،
+    // ولی اجازه نمی‌دیم کاربر از داخل زمین/آسمون بره.
+    // پس عملاً هیچ “گیر ابدی” نمی‌گیریم.
+    player.vx = dir * player.speed;
+
+    // فیزیک
     if(!player.onGround){
       player.vy += player.gravity * dt;
       player.y += player.vy * dt;
     }
+
+    player.x += player.vx * dt;
 
     // برخورد با زمین
     const gy = groundY();
@@ -294,12 +358,86 @@
       player.onGround = true;
     }
 
-    drawBackground(now);
-    drawPlayer(now);
+    // دوربین دنبال بازیکن
+    // camX = مکان جهان که روی صفحه دیده می‌شود
+    // ما بازیکن را حدوداً 25% از عرض نگه می‌داریم
+    const targetCam = player.x - (W*0.25);
+    world.camX += (targetCam - world.camX) * Math.min(1, dt*8);
+
+    // آدمک‌ها را spawn و سلام را trigger کنیم
+    ensureNpcs();
+
+    const triggerDist = 70; // نزدیک که شد سلام
+    for(const npc of world.npcs){
+      // تبدیل به مختصات صفحه
+      const npcScreenX = npc.x - world.camX;
+      // اگر داخل ناحیه جلو بازیکن شد
+      if(!npc.greeted){
+        const playerScreenX = player.x - world.camX;
+        if(Math.abs(npcScreenX - (playerScreenX + 22)) < triggerDist){
+          npc.greeted = true;
+          showHello();
+        }
+      }
+    }
+
+    // حذف آدمک‌های خیلی دور پشت سر
+    world.npcs = world.npcs.filter(n => n.x > world.camX - 600);
+  }
+
+  function drawLogic(t){
+    const gy = groundY();
+    drawBackground(t);
+
+    // NPCها
+    for(const npc of world.npcs){
+      const xScreen = npc.x - world.camX;
+      if(xScreen < -80 || xScreen > W+80) continue;
+
+      drawCartoon(
+        xScreen - 22,
+        gy - player.h,
+        1,
+        npc.colorAlt ? '#7c5cff' : 'rgba(25,211,255,.55)',
+        npc.colorAlt ? '#19d3ff' : 'rgba(124,92,255,.75)',
+        npc.greeted
+      );
+    }
+
+    // بازیکن
+    const pxScreen = player.x - world.camX;
+
+    // اگر walking بخواد انیمیشن قدم داشته باشه:
+    const moving = moveDir !== 0 && player.onGround;
+    player.stepT += (moving ? 1 : 0.35) * (0.9);
+
+    // رسم بازیکن با چرخش سمت
+    ctx.save();
+    // انیمیشن کمی با موج
+    const bob = player.onGround ? Math.sin(player.stepT*0.14)*3 : 0;
+    // دستکاری ی برای نمایش
+    drawCartoon(pxScreen, player.y + bob, player.faceDir);
+    ctx.restore();
+
+    // “دیوار” واقعی داخل دنیا نداریم؛ ولی اگر خواستی می‌تونیم چند مانع سفت هم اضافه کنیم
+    // که برخورد سخت داشته باشه و بعد برگشت بده.
+  }
+
+  // init NPCها در مسیر جلو
+  for(let i=0;i<7;i++){
+    spawnNpc(420 + i*(420 + Math.random()*60));
+  }
+
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min(0.033, (now-last)/1000);
+    last = now;
+
+    updateLogic(dt);
+    drawLogic(now);
 
     requestAnimationFrame(loop);
   }
-
   requestAnimationFrame(loop);
 })();
 </script>
