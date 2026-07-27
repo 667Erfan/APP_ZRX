@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Cartoon Player</title>
+  <style>
+    html, body { height: 100%; margin: 0; overflow: hidden; background:#070a14; touch-action:none; }
+    #wrap { position:fixed; inset:0; display:flex; flex-direction:column; }
+    canvas { flex:1; width:100%; height:100%; display:block; }
+    .ui {
+      position: absolute; left: 0; right: 0; bottom: 14px;
+      display:flex; justify-content:center; gap:14px; pointer-events:none;
+      padding:0 14px;
+    }
+    .btn {
+      pointer-events:auto;
+      width: 120px; height: 74px; border-radius:18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.18);
+      color: #eaf0ff;
+      font-weight: 900;
+      font-size: 18px;
+      box-shadow: 0 16px 40px rgba(0,0,0,.35);
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action:none;
+    }
+    .btn:active { transform: scale(.98); }
+    .hint {
+      position:absolute; top:12px; left:12px;
+      color: rgba(234,240,255,.75); font-family: Tahoma, Arial;
+      font-weight:700; font-size:13px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      padding:8px 10px; border-radius:12px;
+      pointer-events:none;
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <div class="hint">راه رفتن: نگه دار | پرش: تپ کن</div>
+    <canvas id="c"></canvas>
+
+    <div class="ui">
+      <button class="btn" id="btnWalk">راه رفتن</button>
+      <button class="btn" id="btnJump">پرش</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('c');
+  const ctx = canvas.getContext('2d');
+
+  const btnWalk = document.getElementById('btnWalk');
+  const btnJump = document.getElementById('btnJump');
+
+  let W=0,H=0,dpr=1;
+  function resize(){
+    dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    W = Math.floor(window.innerWidth);
+    H = Math.floor(window.innerHeight);
+    canvas.width = Math.floor(W*dpr);
+    canvas.height = Math.floor(H*dpr);
+    canvas.style.width = W+'px';
+    canvas.style.height = H+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // زمین
+  const groundY = () => Math.floor(H*0.78);
+
+  // بازیکن کارتونی
+  const player = {
+    x: W*0.25, y: 0,
+    w: 44, h: 70,
+    vx: 0, vy: 0,
+    onGround: false,
+    speed: 170,     // سرعت راه رفتن
+    jumpV: -520,    // سرعت پرش
+    gravity: 1350,
+    faceDir: 1,     // 1 راست, -1 چپ
+    stepT: 0
+  };
+
+  player.y = groundY() - player.h;
+
+  // کنترل راه رفتن
+  let walking = false;
+  function setWalking(v){ walking = v; }
+
+  btnWalk.addEventListener('pointerdown', (e)=>{
+    e.preventDefault();
+    btnWalk.setPointerCapture?.(e.pointerId);
+    setWalking(true);
+  }, {passive:false});
+  btnWalk.addEventListener('pointerup', (e)=>{
+    e.preventDefault();
+    setWalking(false);
+  }, {passive:false});
+  btnWalk.addEventListener('pointercancel', ()=> setWalking(false));
+
+  // کنترل پرش
+  function tryJump(){
+    if(player.onGround){
+      player.vy = player.jumpV;
+      player.onGround = false;
+    }
+  }
+  btnJump.addEventListener('click', (e)=>{
+    e.preventDefault();
+    tryJump();
+  });
+
+  // رسم زمین و پس‌زمینه
+  function drawBackground(t){
+    ctx.clearRect(0,0,W,H);
+
+    // آسمان
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#070a14');
+    g.addColorStop(1,'#0d1533');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // نور نئون
+    ctx.globalAlpha = 0.20;
+    ctx.strokeStyle = 'rgba(124,92,255,.9)';
+    ctx.lineWidth = 2;
+    for(let i=0;i<8;i++){
+      const y = groundY() - 140 - i*26;
+      ctx.beginPath();
+      ctx.moveTo(-20, y + Math.sin(t*0.001 + i)*6);
+      ctx.lineTo(W+20, y + Math.sin(t*0.001 + i)*6);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // زمین
+    const gy = groundY();
+    ctx.fillStyle = 'rgba(255,255,255,.05)';
+    ctx.fillRect(0, gy, W, H-gy);
+
+    // خط زمین
+    ctx.strokeStyle = 'rgba(25,211,255,.55)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.lineTo(W, gy);
+    ctx.stroke();
+
+    // سایه
+    const shadowW = 38 * (player.onGround ? 1 : 0.75);
+    const shadowH = 10;
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath();
+    ctx.ellipse(player.x + player.w/2, gy + 6, shadowW/2, shadowH/2, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function drawPlayer(t){
+    // حرکت
+    const x = player.x;
+    const y = player.y;
+    const gy = groundY();
+
+    // چرخش/انیمیشن قدم
+    player.stepT += (player.onGround ? 1 : 0.4) * (walking ? 0.18 : 0.06);
+
+    // بدن
+    ctx.save();
+
+    // اگر روبه چپ باشه، مختصات برعکس
+    if(player.faceDir === -1){
+      ctx.translate(x + player.w/2, 0);
+      ctx.scale(-1,1);
+      ctx.translate(-(x + player.w/2), 0);
+    }
+
+    // بدن اصلی
+    // سر
+    const headR = 18;
+    const bob = player.onGround ? Math.max(0, Math.sin(player.stepT)*3) : 0;
+    ctx.fillStyle = 'rgba(234,240,255,.92)';
+    ctx.shadowColor = 'rgba(124,92,255,.75)';
+    ctx.shadowBlur = 18;
+
+    ctx.beginPath();
+    ctx.arc(x + player.w/2, y - 10 + bob, headR, 0, Math.PI*2);
+    ctx.fill();
+
+    // چشم‌ها
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#070a14';
+    ctx.beginPath(); ctx.arc(x + player.w/2 - 6, y - 14 + bob, 2.4, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(x + player.w/2 + 6, y - 14 + bob, 2.4, 0, Math.PI*2); ctx.fill();
+
+    // بدن
+    ctx.fillStyle = 'rgba(124,92,255,.55)';
+    ctx.strokeStyle = 'rgba(25,211,255,.65)';
+    ctx.lineWidth = 3;
+
+    const bodyX = x + 10, bodyY = y + 10;
+    roundRect(bodyX, bodyY, player.w - 20, 40, 14);
+    ctx.fill(); ctx.stroke();
+
+    // دست‌ها
+    const armSwing = walking ? Math.sin(player.stepT*1.6) : 0;
+    ctx.strokeStyle = 'rgba(234,240,255,.85)';
+    ctx.lineWidth = 5;
+    ctx.lineCap = 'round';
+
+    // چپ/راست بودن بدن
+    ctx.beginPath();
+    ctx.moveTo(x + 14, bodyY + 14);
+    ctx.lineTo(x + 18 + armSwing*6, bodyY + 8);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.moveTo(x + player.w - 14, bodyY + 14);
+    ctx.lineTo(x + player.w - 18 - armSwing*6, bodyY + 8);
+    ctx.stroke();
+
+    // پاها
+    const legSwing = walking ? Math.sin(player.stepT*1.8) : 0;
+    ctx.lineWidth = 8;
+
+    // پا 1
+    ctx.beginPath();
+    ctx.moveTo(x + 18, gy - 30);
+    ctx.lineTo(x + 18 - legSwing*6, gy - 10);
+    ctx.stroke();
+
+    // پا 2
+    ctx.beginPath();
+    ctx.moveTo(x + player.w - 18, gy - 30);
+    ctx.lineTo(x + player.w - 18 + legSwing*6, gy - 10);
+    ctx.stroke();
+
+    // کفش‌ها
+    ctx.fillStyle = 'rgba(255,77,109,.75)';
+    ctx.shadowColor = 'rgba(255,77,109,.55)';
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.roundRect(x + 10, gy - 12, 18, 10, 6); ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(x + player.w - 28, gy - 12, 18, 10, 6); ctx.fill();
+
+    ctx.restore();
+  }
+
+  function roundRect(x,y,w,h,r){
+    r = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+
+  // فیزیک
+  let last = performance.now();
+  function loop(now){
+    const dt = Math.min(0.033, (now - last)/1000);
+    last = now;
+
+    // سرعت راه رفتن: فقط راست در این نسخه (می‌تونم چپ/راستش هم اضافه کنم)
+    player.vx = walking ? player.speed : 0;
+    if(player.vx !== 0) player.faceDir = 1;
+
+    player.x += player.vx * dt;
+
+    // محدود داخل صفحه
+    player.x = Math.max(10, Math.min(W - player.w - 10, player.x));
+
+    // گرانش
+    if(!player.onGround){
+      player.vy += player.gravity * dt;
+      player.y += player.vy * dt;
+    }
+
+    // برخورد با زمین
+    const gy = groundY();
+    const floorY = gy - player.h;
+    if(player.y >= floorY){
+      player.y = floorY;
+      player.vy = 0;
+      player.onGround = true;
+    }
+
+    drawBackground(now);
+    drawPlayer(now);
+
+    requestAnimationFrame(loop);
+  }
+
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
