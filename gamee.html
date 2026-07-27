@@ -3,34 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Cartoon Runner - NPC Dialogue</title>
+  <title>Cartoon Runner - Question</title>
   <style>
     html, body { height: 100%; margin: 0; overflow: hidden; background:#070a14; touch-action:none; }
     canvas { width:100%; height:100%; display:block; }
-    #toast{
-      position:fixed; left:12px; top:12px;
-      background: rgba(124,92,255,.18);
-      border: 1px solid rgba(124,92,255,.35);
-      color:#eaf0ff;
-      padding:10px 12px;
-      border-radius:14px;
-      font-weight:900;
-      font-size:16px;
-      max-width: calc(100vw - 24px);
-      line-height:1.5;
-      pointer-events:none;
-      opacity:0;
-      transform: translateY(-8px);
-      transition: opacity .18s ease, transform .18s ease;
-      z-index:10;
-    }
-    #toast.show{ opacity:1; transform: translateY(0); }
 
     .ui{
       position:fixed; left:0; right:0; bottom:14px;
       display:flex; justify-content:center; gap:12px; padding:0 12px;
-      pointer-events:none;
-      z-index:10;
+      pointer-events:none; z-index:10;
     }
     .btn{
       pointer-events:auto;
@@ -45,6 +26,8 @@
       touch-action:none;
     }
     .btn:active{ transform: scale(.98); }
+    .btn.small{ width:110px; height:64px; font-size:16px; }
+
     .hint{
       position:fixed; top:92px; left:12px;
       color: rgba(234,240,255,.75);
@@ -52,22 +35,153 @@
       background: rgba(255,255,255,.05);
       border: 1px solid rgba(255,255,255,.10);
       padding:8px 10px; border-radius:12px;
-      pointer-events:none;
-      z-index:10;
+      pointer-events:none; z-index:10;
       max-width: calc(100vw - 24px);
       line-height:1.7;
     }
+
+    #toast{
+      position:fixed; left:12px; top:12px;
+      background: rgba(124,92,255,.18);
+      border: 1px solid rgba(124,92,255,.35);
+      color:#eaf0ff;
+      padding:10px 12px;
+      border-radius:14px;
+      font-weight:900; font-size:16px;
+      max-width: calc(100vw - 24px);
+      line-height:1.5;
+      pointer-events:none;
+      opacity:0;
+      transform: translateY(-8px);
+      transition: opacity .18s ease, transform .18s ease;
+      z-index:10;
+    }
+    #toast.show{ opacity:1; transform: translateY(0); }
+
+    /* Question overlay */
+    #overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center; justify-content:center;
+      z-index:50;
+      padding:18px;
+    }
+    #overlay.show{ display:flex; }
+    .card{
+      width:min(520px, 96vw);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 30px 120px rgba(0,0,0,.65);
+      padding:16px;
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size:20px;
+      color:#eaf0ff;
+      letter-spacing:.2px;
+    }
+    .optList{ display:flex; flex-direction:column; gap:10px; }
+    .opt{
+      border-radius:14px;
+      padding:12px 12px;
+      font-weight:900;
+      font-size:17px;
+      color:#eaf0ff;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.16);
+      cursor:pointer;
+      user-select:none;
+    }
+    .opt:active{ transform: scale(.99); }
+
+    /* Result overlay */
+    #result{
+      display:none;
+      align-items:center; justify-content:center;
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.60);
+      z-index:60;
+      padding:18px;
+    }
+    #result.show{ display:flex; }
+    .resultCard{
+      width:min(520px, 96vw);
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:18px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 30px 120px rgba(0,0,0,.65);
+      padding:16px;
+      text-align:center;
+    }
+    .did{
+      font-size:48px;
+      font-weight:1100;
+      color:#eaf0ff;
+      margin:8px 0 4px;
+      letter-spacing:2px;
+    }
+    .subtxt{
+      color: rgba(234,240,255,.75);
+      font-weight:800;
+      font-size:14px;
+      line-height:1.8;
+      margin:0 0 14px;
+    }
+    #restart{
+      width:220px;
+      height:66px;
+      border-radius:18px;
+      border:0;
+      font-weight:1000;
+      font-size:18px;
+      color:#071018;
+      background: linear-gradient(135deg, #7c5cff, #19d3ff);
+      box-shadow:0 18px 55px rgba(124,92,255,.30);
+      cursor:pointer;
+      user-select:none;
+    }
+    #restart:active{ transform: scale(.98); }
   </style>
 </head>
 <body>
   <canvas id="c"></canvas>
+
   <div id="toast">سلام</div>
   <div class="hint">راه رفتن: نگه دار جلو/عقب • پرش: تپ</div>
 
   <div class="ui">
-    <button class="btn" id="btnBack">عقب</button>
+    <button class="btn small" id="btnBack">عقب</button>
     <button class="btn" id="btnJump">پرش</button>
-    <button class="btn" id="btnForward">جلو</button>
+    <button class="btn small" id="btnForward">جلو</button>
+  </div>
+
+  <!-- Question overlay -->
+  <div id="overlay">
+    <div class="card">
+      <h2>انتخاب کن</h2>
+      <div style="color:rgba(234,240,255,.8);font-weight:800;margin-bottom:12px;line-height:1.7">
+        اگر اینجا تصمیم بگیری، نتیجه نمایش داده میشه.
+      </div>
+      <div class="optList">
+        <div class="opt" data-choice="1">تو می‌خوای زندگی کنی ؟</div>
+        <div class="opt" data-choice="2">۲ میخوای بمیری ؟</div>
+        <div class="opt" data-choice="3">۳ میخوای یکی بکشی ؟</div>
+        <div class="opt" data-choice="4">۴ هیچ کدوم</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result overlay -->
+  <div id="result">
+    <div class="resultCard">
+      <div class="did" id="didText">DID</div>
+      <div class="subtxt" id="resultSub">انتخاب ثبت شد.</div>
+      <button id="restart">بازی مجدد</button>
+    </div>
   </div>
 
 <script>
@@ -79,6 +193,11 @@
   const btnBack = document.getElementById('btnBack');
   const btnJump = document.getElementById('btnJump');
   const toast = document.getElementById('toast');
+
+  const overlay = document.getElementById('overlay');
+  const result = document.getElementById('result');
+  const restartBtn = document.getElementById('restart');
+  const resultSub = document.getElementById('resultSub');
 
   let W=0,H=0,dpr=1;
   function resize(){
@@ -96,21 +215,27 @@
 
   const groundY = () => Math.floor(H*0.78);
 
-  // جهان بی‌نهایت (فقط برای NPCها و حرکت)
   const world = {
     camX: 0,
+    // حرکت و دوربین
     playerXWorld: 0,
-    npc: null, // فقط یک نفر در هر لحظه
-    npcState: 'waiting', // waiting -> greeted -> passed -> spawning
-    nextNpcWorldX: 520
+    npc: null, // فقط ۱ نفر
+    npcState: 'idle', // idle -> greeted -> waitingChoice -> killed -> next?
+    nextNpcWorldX: 520,
+
+    // حالت‌ها
+    overlayOpen: false,
+    killedShow: false,
+    killTimer: 0,
+    killedX: 0
   };
 
   const player = {
-    x: 0, // world
-    y: 0,
+    x: 140, // world
+    y: groundY() - 70,
     w: 44, h: 70,
     vy: 0,
-    onGround: false,
+    onGround: true,
     speed: 210,
     jumpV: -520,
     gravity: 1350,
@@ -118,17 +243,45 @@
     stepT: 0
   };
 
-  function resetPlayer(){
+  function resetAll(){
+    overlay.classList.remove('show');
+    result.classList.remove('show');
+    world.overlayOpen = false;
+    world.killedShow = false;
+    world.killTimer = 0;
+    world.npcState = 'idle';
+    world.camX = 0;
+    world.npc = null;
+
     player.x = 140;
     player.y = groundY() - player.h;
     player.vy = 0;
     player.onGround = true;
     player.faceDir = 1;
     player.stepT = 0;
+
+    world.nextNpcWorldX = 520;
+    spawnFirstNpc();
+    moveDir = 0;
+
+    showToast('سلام');
   }
-  resetPlayer();
+
+  function spawnFirstNpc(){
+    world.npc = {
+      x: world.nextNpcWorldX,
+      greeted: false,
+      // حرکت NPC بعد از سلام
+      moveAfterGreet: false,
+      // حذف شدن NPC بعد از سوال
+      removed: false,
+      colorAlt: Math.random()<.5
+    };
+    // بعداً قرار بود نفرات بیشتر بیاد، ولی این نسخه فقط اولی رو نگه می‌داره
+  }
 
   let moveDir = 0; // -1 عقب، +1 جلو
+
   function bindHold(btn, dir){
     btn.addEventListener('pointerdown', (e)=>{
       e.preventDefault();
@@ -139,50 +292,55 @@
       e.preventDefault();
       moveDir = 0;
     }, {passive:false});
-    btn.addEventListener('pointercancel', ()=>{
-      moveDir = 0;
-    }, {passive:false});
+    btn.addEventListener('pointercancel', ()=> moveDir = 0, {passive:false});
   }
+
   bindHold(btnForward, +1);
   bindHold(btnBack, -1);
 
   btnJump.addEventListener('click', (e)=>{
     e.preventDefault();
+    if(world.overlayOpen || result.classList.contains('show')) return;
     if(player.onGround){
       player.vy = player.jumpV;
       player.onGround = false;
     }
   });
 
-  function showToast(msg, ms=1100){
+  function showToast(msg, ms=900){
     toast.textContent = msg;
     toast.classList.add('show');
     clearTimeout(showToast._t);
     showToast._t = setTimeout(()=>toast.classList.remove('show'), ms);
   }
 
-  function spawnNextNpc(){
-    // فقط یک نفر: بعد از رد شدن، یکی جدید میاد
-    const x = world.nextNpcWorldX;
-    world.npc = {
-      x,
-      greeted: false,
-      dir: 1,
-      colorAlt: Math.random()<.5,
-      // state داخلی برای “رفتن جلو”
-      passed: false,
-      // برای تاخیر پیام‌ها
-      timer: 0
-    };
-    world.npcState = 'waiting';
-    // فاصله تا NPC بعدی
-    world.nextNpcWorldX = x + 520 + Math.random()*120;
-  }
+  // انتخاب‌ها
+  document.querySelectorAll('.opt').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      if(world.overlayOpen === false) return;
+      const choice = el.getAttribute('data-choice');
 
-  // شروع: یک NPC اول
-  spawnNextNpc();
+      world.overlayOpen = false;
+      overlay.classList.remove('show');
 
-  // --- draw utils
+      // نمایش آدم با چاقو (کشتن)
+      world.killedShow = true;
+      world.killTimer = 0;
+      world.killedX = player.x + 40; // نزدیک پلیر
+
+      // پیام DID
+      resultSub.textContent = `انتخاب شما: ${choice}`;
+      setTimeout(()=>{
+        result.classList.add('show');
+      }, 420);
+    });
+  });
+
+  restartBtn.addEventListener('click', ()=>{
+    result.classList.remove('show');
+    resetAll();
+  });
+
   function roundRect(x,y,w,h,r){
     r = Math.min(r, w/2, h/2);
     ctx.beginPath();
@@ -197,22 +355,30 @@
   function drawBackground(t){
     ctx.clearRect(0,0,W,H);
 
-    // آسمان
     const g = ctx.createLinearGradient(0,0,0,H);
     g.addColorStop(0,'#070a14');
     g.addColorStop(1,'#0d1533');
     ctx.fillStyle = g;
     ctx.fillRect(0,0,W,H);
 
-    // زمین نئون
     const gy = groundY();
+
+    // زمین
     ctx.fillStyle = 'rgba(255,255,255,.05)';
     ctx.fillRect(0, gy, W, H-gy);
 
+    // خط زمین
+    ctx.strokeStyle = 'rgba(25,211,255,.55)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(0, gy);
+    ctx.lineTo(W, gy);
+    ctx.stroke();
+
+    // نئون‌های پس‌زمینه
     ctx.globalAlpha = 0.22;
     ctx.strokeStyle = 'rgba(124,92,255,.9)';
     ctx.lineWidth = 2;
-
     const cam = world.camX;
     for(let i=0;i<10;i++){
       const y = gy - 130 - i*26;
@@ -223,24 +389,9 @@
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
-
-    // خط زمین
-    ctx.strokeStyle = 'rgba(25,211,255,.55)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(0, gy);
-    ctx.lineTo(W, gy);
-    ctx.stroke();
-
-    // سایه
-    ctx.fillStyle = 'rgba(0,0,0,.35)';
-    ctx.beginPath();
-    const pxScreen = player.x - world.camX + player.w/2;
-    ctx.ellipse(pxScreen, gy+6, 18, 8, 0, 0, Math.PI*2);
-    ctx.fill();
   }
 
-  function drawCartoon(xScreen, y, dir=1, tintA, tintB, wink=false){
+  function drawCartoon(xScreen, y, dir=1, tintA, tintB, wink=false, showKnife=false){
     const w = player.w, h = player.h;
 
     ctx.save();
@@ -250,9 +401,14 @@
       ctx.translate(-(xScreen + w/2), 0);
     }
 
+    // سایه
     const gy = groundY();
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.beginPath();
+    ctx.ellipse(xScreen + w/2, gy + 6, 18, 8, 0, 0, Math.PI*2);
+    ctx.fill();
 
-    // head
+    // سر
     ctx.shadowColor = 'rgba(124,92,255,.7)';
     ctx.shadowBlur = 18;
     ctx.fillStyle = 'rgba(234,240,255,.92)';
@@ -260,43 +416,46 @@
     ctx.arc(xScreen + w/2, y - 10, 18, 0, Math.PI*2);
     ctx.fill();
 
-    // eyes
+    // چشم
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#070a14';
+    const eyeY = y - 14;
     ctx.beginPath();
-    ctx.arc(xScreen + w/2 - 6, y - 14, 2.4, 0, Math.PI*2);
+    ctx.arc(xScreen + w/2 - 6, eyeY, 2.4, 0, Math.PI*2);
     ctx.fill();
+
     if(wink){
       ctx.strokeStyle = '#070a14';
       ctx.lineWidth = 3;
       ctx.beginPath();
-      ctx.moveTo(xScreen + w/2 + 1.5, y - 14);
-      ctx.lineTo(xScreen + w/2 + 7, y - 14);
+      ctx.moveTo(xScreen + w/2 + 1.5, eyeY);
+      ctx.lineTo(xScreen + w/2 + 7, eyeY);
       ctx.stroke();
     }else{
       ctx.beginPath();
-      ctx.arc(xScreen + w/2 + 6, y - 14, 2.4, 0, Math.PI*2);
+      ctx.arc(xScreen + w/2 + 6, eyeY, 2.4, 0, Math.PI*2);
       ctx.fill();
     }
 
-    // body
+    // بدن
     ctx.fillStyle = tintA;
     ctx.strokeStyle = tintB;
     ctx.lineWidth = 3;
     roundRect(xScreen + 10, y + 10, w - 20, 40, 14);
     ctx.fill(); ctx.stroke();
 
-    // arms
+    // بازو
     const arm = Math.sin(player.stepT*1.7)*6;
     ctx.strokeStyle = 'rgba(234,240,255,.85)';
     ctx.lineWidth = 5;
     ctx.lineCap = 'round';
+
     ctx.beginPath();
     ctx.moveTo(xScreen + 14, y + 24);
     ctx.lineTo(xScreen + 18 + (dir===1?arm:-arm), y + 18);
     ctx.stroke();
 
-    // legs
+    // پا
     const leg = Math.sin(player.stepT*1.9)*5;
     ctx.lineWidth = 8;
     ctx.beginPath();
@@ -309,7 +468,7 @@
     ctx.lineTo(xScreen + w - 10 + (dir===1?leg:-leg), gy - 10);
     ctx.stroke();
 
-    // shoes
+    // کفش
     ctx.fillStyle = 'rgba(255,77,109,.75)';
     ctx.shadowColor = 'rgba(255,77,109,.55)';
     ctx.shadowBlur = 14;
@@ -319,109 +478,160 @@
     ctx.beginPath();
     ctx.roundRect(xScreen + w - 28, gy - 12, 18, 10, 6);
     ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // چاقو (فقط نمایش کارتونی)
+    if(showKnife){
+      ctx.strokeStyle = 'rgba(234,240,255,.95)';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.shadowBlur = 18;
+      ctx.shadowColor = 'rgba(25,211,255,.65)';
+      const kx = xScreen + (dir===1 ? w-10 : 10);
+      const ky = y + 22;
+      ctx.beginPath();
+      ctx.moveTo(kx, ky);
+      ctx.lineTo(kx + (dir===1 ? 26 : -26), ky - 10);
+      ctx.stroke();
+
+      // دسته
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = 'rgba(255,77,109,.9)';
+      ctx.beginPath();
+      ctx.roundRect(kx + (dir===1 ? 10 : -10) - 6, ky - 2, 12, 10, 4);
+      ctx.fill();
+    }
 
     ctx.restore();
   }
 
   function updateLogic(dt){
-    // move player in world
-    player.faceDir = (moveDir !== 0) ? moveDir : player.faceDir;
-    const vx = moveDir * player.speed;
+    const overlayFrozen = world.overlayOpen || result.classList.contains('show');
 
-    player.x += vx * dt;
+    if(!overlayFrozen){
+      player.faceDir = (moveDir !== 0) ? moveDir : player.faceDir;
 
-    // clamp: فعلاً فقط نگه‌دار که از پشت نیفته/بیرون نره (کادر جدید با NPC فقط جلو میاد)
-    player.x = Math.max(30, player.x);
+      // حرکت
+      player.x += moveDir * player.speed * dt;
 
-    // gravity
-    if(!player.onGround){
-      player.vy += player.gravity * dt;
-      player.y += player.vy * dt;
+      // گرانش
+      if(!player.onGround){
+        player.vy += player.gravity * dt;
+        player.y += player.vy * dt;
+      }
+
+      // زمین
+      const gy = groundY();
+      const floorY = gy - player.h;
+      if(player.y >= floorY){
+        player.y = floorY;
+        player.vy = 0;
+        player.onGround = true;
+      }
+
+      // دوربین
+      const targetCam = player.x - (W*0.25);
+      world.camX += (targetCam - world.camX) * Math.min(1, dt*8);
+    } else {
+      // اگر overlay بازه، حرکت رو نگه دار
+      moveDir = 0;
     }
 
-    // ground collision
-    const gy = groundY();
-    const floorY = gy - player.h;
-    if(player.y >= floorY){
-      player.y = floorY;
-      player.vy = 0;
-      player.onGround = true;
-    }
+    // انیمیشن
+    const moving = (moveDir !== 0) && player.onGround && !overlayFrozen;
+    player.stepT += (moving ? 1 : 0.3) * (1.0);
 
-    // camera follow (player)
-    const targetCam = player.x - (W*0.25);
-    world.camX += (targetCam - world.camX) * Math.min(1, dt*8);
-
-    // npc logic (یک نفر در هر لحظه)
-    if(world.npc){
+    // NPC + سوال‌ها
+    if(world.npc && world.npcState !== 'killed'){
       const npc = world.npc;
-      // اگر پلیر به NPC نزدیک شد، سلام یک بار
       const npcScreenX = npc.x - world.camX;
       const playerScreenX = player.x - world.camX;
 
-      const passedNow = (playerScreenX > npcScreenX + 35); // رد شدن از جلوی NPC
-
-      if(world.npcState === 'waiting'){
+      // وقتی اولین آدمک نزدیک شد:
+      if(world.npcState === 'idle'){
+        // فقط همین NPC باشد (دیگه چیزی spawn نمی‌کنیم، پس "حذف همه" در عمل یعنی فقط همین می‌مونه)
         if(!npc.greeted && Math.abs((playerScreenX+22) - (npcScreenX+22)) < 70){
           npc.greeted = true;
-          world.npcState = 'greeted';
+          world.npcState = 'waitingChoice';
+
           showToast('سلام', 900);
-        }
-      } else if(world.npcState === 'greeted'){
-        // وقتی رد شد، پیام اصلی را بده و NPC “برود جلو”
-        if(passedNow){
-          world.npcState = 'passed';
-          showToast('خوب دوست من خوش آمدی به چالش سنگین و خفن برو جلو تر', 1400);
-          // “رفتن جلو”: همینجا NPC رو از صفحه رد می‌کنیم (x را جلوتر می‌بریم)
-          npc.passed = true;
-          npc.x += 1200;
-        }
-      } else if(world.npcState === 'passed'){
-        // بعد از اینکه NPC از محدوده دور شد، یکی جدید spawn شود
-        if(npc.x - world.camX > W + 300){
-          spawnNextNpc();
+
+          // سوال وسط صفحه (هنگام نزدیک شدن اولی)
+          setTimeout(()=>{
+            overlay.classList.add('show');
+            world.overlayOpen = true;
+          }, 250);
+
+          // حذف "بقیه آدمک‌ها": چون فقط یکی داریم، کاری لازم نیست.
+          // ولی برای مطابقت با درخواست، هر چیزی دیگری بود حذف می‌شد.
         }
       }
-    }
 
-    // animation
-    const moving = (moveDir !== 0) && player.onGround;
-    player.stepT += (moving ? 1 : 0.3) * (1.0);
+      // NPC بعد از باز شدن overlay چیزی نمی‌کشه تا انتخاب انجام شه
+      if(world.killedShow){
+        world.killTimer += dt;
+      }
+    }
   }
 
   function drawLogic(t){
     drawBackground(t);
 
-    // npc draw (فقط یکی)
-    if(world.npc){
+    const gy = groundY();
+
+    // NPC
+    if(world.npc && !world.npc.removed){
       const npc = world.npc;
       const xScreen = npc.x - world.camX;
-
       if(xScreen > -120 && xScreen < W+120){
-        const gy = groundY();
         drawCartoon(
           xScreen - 22,
           gy - player.h,
           1,
           npc.colorAlt ? 'rgba(124,92,255,.55)' : 'rgba(25,211,255,.40)',
           npc.colorAlt ? 'rgba(25,211,255,.70)' : 'rgba(124,92,255,.75)',
+          false,
           false
         );
       }
     }
 
-    // player draw
+    // player
     const pxScreen = player.x - world.camX;
     const bob = player.onGround ? Math.sin(player.stepT*0.14)*3 : 0;
-    drawCartoon(pxScreen, player.y + bob, player.faceDir, 'rgba(124,92,255,.55)', 'rgba(25,211,255,.70)', false);
+    drawCartoon(pxScreen, player.y + bob, player.faceDir, 'rgba(124,92,255,.55)', 'rgba(25,211,255,.70)', false, false);
+
+    // آدمی که بعد از انتخاب میاد با چاقو
+    if(world.killedShow && !world.npc.removed){
+      // نمایش فقط نزدیک همان لحظه روی صفحه وسط
+      const targetScreenX = W/2 - player.w/2;
+      const yy = gy - player.h;
+
+      // انیمیشن خیلی ساده
+      const alpha = 1;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      drawCartoon(targetScreenX, yy, 1,
+        'rgba(255,77,109,.30)',
+        'rgba(25,211,255,.70)',
+        false,
+        true // چاقو
+      );
+      ctx.restore();
+    }
   }
+
+  // init
+  resetAll();
 
   let last = performance.now();
   function loop(now){
     const dt = Math.min(0.033, (now-last)/1000);
     last = now;
+
     updateLogic(dt);
     drawLogic(now);
+
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
