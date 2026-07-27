@@ -649,3 +649,144 @@
 </script>
 </body>
 </html>..
+// ================= AIM MODE (فقط اضافه میشه) =================
+const aim = {
+  totalTime: 30,
+  timeLeft: 30,
+  running: false,
+  targets: [],
+  bullets: [], // برای افکت
+  difficulty: 1,
+
+  player: {
+    // نقطه نشانه‌گیری با لمس/کلیک
+    aimX: 0,
+    aimY: 0,
+    radius: 10
+  }
+};
+
+function aimResetMeta(){
+  hub.resetMeta(); // از همون متادیتای هاب پولک/امتیاز استفاده می‌کنه
+  aim.timeLeft = aim.totalTime;
+  aim.running = true;
+  aim.targets.length = 0;
+  aim.bullets.length = 0;
+  aim.difficulty = 1;
+  stateTxt.textContent = "AIM SURGE - شروع!";
+  helpBox.innerHTML = "<strong>AIM SURGE:</strong> روی هدف‌ها تپ/کلیک کن تا پولک بگیری. ۳۰ ثانیه!";
+  updateHUD();
+}
+
+function aimSpawnTarget(){
+  const pad = 60;
+  const x = rand(pad, W - pad);
+  const y = rand(pad, H - pad);
+  const size = rand(14, 28) + aim.difficulty * 2;
+
+  const hue = Math.random() < 0.5 ? 260 : 195; // بنفش/سایان
+  aim.targets.push({
+    x, y,
+    r: size,
+    hue,
+    alive: true,
+    rot: rand(0, Math.PI*2),
+    wob: rand(0, Math.PI*2)
+  });
+}
+
+function aimHit(mx, my){
+  // نزدیک‌ترین هدف که کلیک شده
+  let best = null;
+  let bestD = Infinity;
+
+  for(const t of aim.targets){
+    if(!t.alive) continue;
+    const dx = mx - t.x;
+    const dy = my - t.y;
+    const d = dx*dx + dy*dy;
+    if(d <= (t.r*t.r) && d < bestD){
+      bestD = d;
+      best = t;
+    }
+  }
+  if(!best) return false;
+
+  best.alive = false;
+
+  // ✅ امتیاز/پولک مثل NEON RUN: هر هدف = پولک
+  // (می‌تونیم امتیاز بیشتر بدیم)
+  hub.score += 15;
+  hub.coins += 1;
+
+  // پیشرفت/لول هم با همین کوین‌ها انجام میشه
+  updateHUD();
+
+  if(hub.coins % run.needCoins() === 0){ // از همون تابع needCoins استفاده می‌کنیم
+    hub.level++;
+    aim.difficulty = 1 + (hub.level-1) * 0.35;
+    stateTxt.textContent = `لول ${hub.level} (سخت‌تر!)`;
+    // زمان رو هم کمی طولانی‌تر کن (اختیاری)
+    aim.timeLeft = Math.min(aim.totalTime, aim.timeLeft + 2);
+  }
+  return true;
+}
+
+function drawAIM(){
+  // پس‌زمینه
+  ctx.fillStyle='rgba(0,0,0,.22)';
+  ctx.fillRect(0,0,W,H);
+
+  // پلیر/نقطه نشانه‌گیری
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  const aR = aim.player.radius;
+  ctx.shadowBlur = 26;
+  ctx.shadowColor = 'rgba(25,211,255,.7)';
+  ctx.fillStyle = 'rgba(25,211,255,.25)';
+  ctx.beginPath();
+  ctx.arc(aim.player.aimX, aim.player.aimY, aR*1.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(234,240,255,.65)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(aim.player.aimX, aim.player.aimY, aR, 0, Math.PI*2);
+  ctx.stroke();
+  ctx.restore();
+
+  // اهداف
+  for(const t of aim.targets){
+    if(!t.alive) continue;
+
+    const pulse = 0.85 + 0.15*Math.sin(aim.timeLeft*6 + t.wob);
+    const r = t.r * pulse;
+    const outer = t.hue===260 ? `hsla(260,100%,70%,.95)` : `hsla(195,100%,70%,.95)`;
+    const inner = t.hue===260 ? 'rgba(124,92,255,.22)' : 'rgba(25,211,255,.22)';
+
+    ctx.save();
+    ctx.translate(t.x,t.y);
+    ctx.rotate(t.rot + Math.sin((aim.totalTime-aim.timeLeft)*3 + t.wob)*0.35);
+
+    ctx.shadowBlur = 26;
+    ctx.shadowColor = outer;
+    ctx.strokeStyle = outer;
+    ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+
+    // دوتایی نور
+    ctx.fillStyle = outer;
+    ctx.globalAlpha = 0.22;
+    ctx.beginPath(); ctx.arc(0,0,r*0.75,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+
+    // مرکز
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = inner;
+    ctx.beginPath(); ctx.arc(0,0,r*0.35,0,Math.PI*2); ctx.fill();
+
+    ctx.restore();
+  }
+}
+
+// ================= END AIM MODE =================
