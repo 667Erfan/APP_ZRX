@@ -16,7 +16,7 @@
       background:linear-gradient(180deg,var(--bg0),var(--bg1));
       position:fixed; inset:0;
     }
-    #c{position:fixed;inset:0;width:100%;height:100%;display:block}
+    #c{position:fixed;inset:0;width:100%;height:100%;display:block; touch-action:none;}
 
     .ui{
       position:fixed; inset:0; pointer-events:none;
@@ -60,14 +60,6 @@
     .mini{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-bottom:8px}
     .meter{height:10px;border-radius:999px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.10);overflow:hidden;position:relative}
     .meter span{display:block;height:100%;width:0%;background:linear-gradient(90deg,rgba(124,92,255,.9),rgba(25,211,255,.9));box-shadow:0 0 26px rgba(124,92,255,.35)}
-    .mobileJump{position:fixed;left:14px;right:14px;bottom:14px;display:flex;justify-content:center;pointer-events:none;}
-    .jumpBtn{
-      width:92px;height:92px;border-radius:24px;background:rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.18);color:var(--text);
-      display:none; pointer-events:auto; touch-action:manipulation;
-      align-items:center;justify-content:center;flex-direction:column;font-weight:1000;
-    }
-    @media (max-width:720px){.jumpBtn{display:flex}}
   </style>
 </head>
 <body>
@@ -123,16 +115,13 @@
   </div>
 </div>
 
-<div class="mobileJump">
-  <button class="jumpBtn" id="jumpBtn">پرش</button>
-</div>
-
 <script>
 (() => {
   document.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
   document.addEventListener('gesturestart', (e)=>e.preventDefault(), {passive:false});
 
   const canvas = document.getElementById('c');
+  canvas.style.touchAction = 'none'; // <-- فیکس موبایل
   const ctx = canvas.getContext('2d');
 
   const scoreEl = document.getElementById('score');
@@ -151,7 +140,6 @@
   const btnAim = document.getElementById('btnAim');
   const restartBtn = document.getElementById('restartBtn');
   const homeBtn = document.getElementById('homeBtn');
-  const jumpBtn = document.getElementById('jumpBtn');
 
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   const rand=(a,b)=>a+Math.random()*(b-a);
@@ -213,11 +201,9 @@
   }
 
   function loseGame(reason){
-    game.hp = Math.max(0, game.hp);
     finalStats.textContent = `امتیازت: ${game.score|0} | پولک: ${game.coins|0} | لول: ${game.level|0}` + (reason?` | ${reason}`:'');
     stateTxt.textContent='بازی تمام شد';
     showOver();
-    game.mode = game.mode;
   }
 
   const keys={left:false,right:false};
@@ -232,9 +218,15 @@
     if(e.code==='KeyD') keys.right=false;
   }, {passive:true});
 
-  jumpBtn.addEventListener('pointerdown',(e)=>{
-    e.preventDefault();
-    if(game.mode==='run') runJump();
+  btnRun.addEventListener('click', runStart);
+  btnAim.addEventListener('click', aimStart);
+  restartBtn.addEventListener('click', ()=>{ if(game.mode==='aim') aimStart(); else runStart(); });
+  homeBtn.addEventListener('click', ()=>{
+    run.running=false; aim.running=false;
+    game.mode='run';
+    stateTxt.textContent='آماده';
+    helpBox.innerHTML='<b>ترفند:</b> هر پولک → پیشرفت لول.';
+    showHome();
   });
 
   // ================= NEON RUN =================
@@ -284,7 +276,6 @@
     updateHUD();
     initStars();
 
-    aim.running=false;
     run.running=true; run.time=0;
     run.coins.length=0; run.obstacles.length=0;
 
@@ -309,7 +300,7 @@
     p.invuln=1.1;
     updateHUD();
     stateTxt.textContent='برخورد!';
-    if(game.hp<=0) loseGame('بدون جان');
+    if(game.hp<=0) { loseGame('بدون جان'); }
   }
 
   // ================= AIM SURGE =================
@@ -328,13 +319,11 @@
     const y=rand(pad,H-pad);
     const size=rand(14,28) + aim.difficulty*2;
 
-    // bomb chance increases with difficulty
     const bombChance = clamp(0.18 + (aim.difficulty-1)*0.06, 0.15, 0.55);
     const isBomb = Math.random() < bombChance;
 
-    // blue (coins) chance for non-bomb
-    const blueChance = clamp(0.55 - (aim.difficulty-1)*0.06, 0.30, 0.70);
-    const isBlue = !isBomb && (Math.random() < blueChance);
+    const blueChance = clamp(0.70 - (aim.difficulty-1)*0.05, 0.40, 0.85);
+    const isBlue = !isBomb && Math.random() < blueChance;
 
     aim.targets.push({
       x,y,r:size,
@@ -343,7 +332,7 @@
       wob:rand(0,Math.PI*2),
       bomb:isBomb,
       type:isBomb ? 'bomb' : (isBlue ? 'blue' : 'normal'),
-      hue:isBomb ? 5 : (isBlue ? 260 : 195) // 260=بنفش نئونی، 195=فیروزه
+      hue:isBomb ? 5 : (isBlue ? 260 : 195)
     });
   }
 
@@ -385,7 +374,6 @@
 
     best.alive=false;
 
-    // bomb: only HP decreases (no coins)
     if(best.bomb){
       game.hp--;
       stateTxt.textContent='بمب خوردی!';
@@ -394,16 +382,14 @@
       return;
     }
 
-    // non-bomb:
     if(best.type === 'blue'){
+      game.coins += 1;
       game.score += 15;
-      game.coins += 1;           // پولک فقط با آبی
       stateTxt.textContent='پولک آبی!';
     }else{
-      game.score += 8;           // normal فقط امتیاز
+      game.score += 8;
       stateTxt.textContent='امتیاز!';
     }
-
     updateHUD();
 
     const total=game.needCoins();
@@ -413,18 +399,20 @@
       stateTxt.textContent=`لول ${game.level} (سخت‌تر)`;
       aim.timeLeft = Math.min(aim.totalTime, aim.timeLeft + 2);
     }
-
-    // keep targets count
-    const alive = aim.targets.reduce((a,t)=>a+(t.alive?1:0),0);
-    while(alive < 10){ aimSpawnTarget(); break; }
   }
 
+  // ======= فیکس موبایل: pointerdown AIM =======
+  let aimPointerLock=false;
   canvas.addEventListener('pointerdown',(e)=>{
     if(game.mode!=='aim' || !aim.running) return;
-    const rect=canvas.getBoundingClientRect();
-    const x=e.clientX-rect.left;
-    const y=e.clientY-rect.top;
+    if(aimPointerLock) return;
+    aimPointerLock=true;
+    setTimeout(()=>{ aimPointerLock=false; }, 60);
+
     e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
     aimApplyHit(x,y);
   },{passive:false});
 
@@ -504,6 +492,7 @@
       if(!c.alive) continue;
       const pulse=0.6+0.4*Math.sin(run.time*3+c.wob);
       const r=c.r*(0.9+0.12*pulse);
+
       const outer=c.hue===260?`hsla(260,100%,70%,${0.9*pulse})`:`hsla(195,100%,70%,${0.9*pulse})`;
       const inner=c.hue===260?'rgba(124,92,255,.25)':'rgba(25,211,255,.25)';
 
@@ -540,7 +529,7 @@
       ctx.arcTo(w/2,-h/2,w/2,h/2,rr);
       ctx.arcTo(w/2,h/2,-w/2,h/2,rr);
       ctx.arcTo(-w/2,h/2,-w/2,-h/2,rr);
-      ctx.arcTo(-w/2,-h/2,w/2,-h/2,rr);
+      ctx.arcTo(-w/2,-h/2,w/2,-h/2,w?rr:rr,rr);
       ctx.closePath();
       ctx.fill(); ctx.stroke();
 
@@ -642,7 +631,7 @@
           game.coins += 1;
           updateHUD();
           const total=game.needCoins();
-          if(game.coins % total === 0) game.level++;
+          if(total>0 && game.coins % total === 0) game.level++;
         }
       }
 
@@ -696,17 +685,7 @@
     requestAnimationFrame(loop);
   }
 
-  btnRun.addEventListener('click', runStart);
-  btnAim.addEventListener('click', aimStart);
-  restartBtn.addEventListener('click', ()=>{ if(game.mode==='aim') aimStart(); else runStart(); });
-  homeBtn.addEventListener('click', ()=>{
-    run.running=false;
-    aim.running=false;
-    game.mode='run';
-    stateTxt.textContent='آماده';
-    helpBox.innerHTML='<b>ترفند:</b> هر پولک → پیشرفت لول.';
-    showHome();
-  });
+  function runJumpTap(){ if(game.mode==='run') runJump(); }
 
   initStars();
   updateHUD();
