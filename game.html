@@ -3,29 +3,50 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"/>
-  <title>Blue Coin Aim Game</title>
+  <title>Aim Game - Coins HP</title>
   <style>
     html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:sans-serif;}
     #wrap{position:relative;width:100vw;height:100vh;}
-    canvas{display:block;width:100vw;height:100vh;touch-action:none;}
+    canvas{display:block;width:100vw;height:100vh;touch-action:none;background:#000;}
     #hud{
       position:absolute;left:12px;top:12px;
       color:#fff;font-size:14px;line-height:1.6;
       user-select:none;pointer-events:none;
       text-shadow:0 2px 10px rgba(0,0,0,.6);
     }
+    #panel{
+      position:absolute;left:50%;top:50%;
+      transform:translate(-50%,-50%);
+      width:min(520px,92vw);
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.18);
+      border-radius:16px;
+      padding:18px;
+      color:#fff;
+      text-align:center;
+      box-shadow:0 20px 60px rgba(0,0,0,.55);
+    }
+    #title{font-size:22px;font-weight:800;margin-bottom:10px;}
+    #sub{opacity:.85;font-size:14px;margin-bottom:14px;}
     #btn{
-      position:absolute;right:12px;top:12px;
-      padding:10px 14px;border-radius:12px;
+      margin:0 auto;
+      display:inline-block;
+      padding:12px 18px;border-radius:12px;
       border:1px solid rgba(255,255,255,.25);
-      background:rgba(0,0,0,.35);color:#fff;
-      cursor:pointer;user-select:none;
+      background:rgba(255,255,255,.08);
+      color:#fff;cursor:pointer;font-weight:700;
+      user-select:none;
     }
     #btn:active{transform:translateY(1px);}
-    #centerMsg{
+    #msg{
+      margin-top:10px;
+      opacity:.9;font-size:13px;
+      min-height:18px;
+    }
+    #centerOverlay{
       position:absolute;inset:0;
       display:flex;align-items:center;justify-content:center;
-      color:#fff;font-size:38px;font-weight:800;
+      color:#fff;font-size:40px;font-weight:900;
       pointer-events:none;opacity:0;
       text-shadow:0 10px 40px rgba(0,0,0,.8);
       transition:opacity .2s ease;
@@ -36,54 +57,40 @@
   <div id="wrap">
     <canvas id="c"></canvas>
     <div id="hud"></div>
-    <div id="btn">Start</div>
-    <div id="centerMsg"></div>
+
+    <div id="panel">
+      <div id="title">AIM Game</div>
+      <div id="sub">روی هدف‌ها کلیک کن. پولک آبی = Coins + Score، قرمز (!) = HP کم می‌کنه.</div>
+      <div id="btn">Start</div>
+      <div id="msg"></div>
+    </div>
+
+    <div id="centerOverlay"></div>
   </div>
 
 <script>
 (() => {
   const canvas = document.getElementById('c');
   const hud = document.getElementById('hud');
+  const panel = document.getElementById('panel');
   const btn = document.getElementById('btn');
-  const centerMsg = document.getElementById('centerMsg');
+  const msg = document.getElementById('msg');
+  const centerOverlay = document.getElementById('centerOverlay');
 
-  // world coordinates
+  // World size (draw + hit uses این‌ها)
   const W = 1000, H = 600;
 
-  // DPR-resize
   let dpr = 1;
   const ctx = canvas.getContext('2d', { alpha: false });
 
   function resize(){
     dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
     const rect = canvas.getBoundingClientRect();
-    canvas.width  = Math.floor(rect.width  * dpr);
+    canvas.width  = Math.floor(rect.width * dpr);
     canvas.height = Math.floor(rect.height * dpr);
   }
-  window.addEventListener('resize', resize, {passive:true});
+  window.addEventListener('resize', resize, { passive: true });
   resize();
-
-  // game state
-  const game = {
-    running:false,
-    timeLeft:30,
-    hp:100,
-    score:0,
-    coins:0,
-    targets:[],
-    nextId:1,
-    spawnAcc:0
-  };
-
-  // aim rules
-  const aim = {
-    maxTargets: 40,      // جلوی آشفتگی
-    spawnEvery: 0.18,   // اسپاون کنترل‌شده
-    blueChance: 0.55,   // زیاد کلیک هم حذف کنه، باز میاد
-    bombChance: 0.18,   // بمب‌ها کم‌تر
-    normalChance: 0.27, // بقیه زرد
-    radius: 16
-  };
 
   const COLORS = {
     bg: '#0b0b10',
@@ -91,8 +98,59 @@
     bomb: '#ff3a3a',
     normal: '#ffd24a',
     ring: 'rgba(255,255,255,.22)',
-    shadow: 'rgba(0,0,0,.35)'
   };
+
+  const game = {
+    running: false,
+    mode: 'aim',
+    timeLeft: 30,
+    score: 0,
+    coins: 0,
+    hp: 100,
+    targets: [],
+    nextId: 1,
+
+    // spawn timer
+    spawnAcc: 0,
+  };
+
+  const aim = {
+    radius: 16,
+    maxTargets: 45,
+    spawnEvery: 0.18,
+
+    // Chance per spawn
+    blueChance: 0.52,
+    bombChance: 0.18,
+    normalChance: 0.30,
+
+    // hit
+    clickHitExtra: 0, // می‌تونی 2 بدی اگر می‌خوای راحت‌تر بزنه
+  };
+
+  function resetState(){
+    game.running = false;
+    game.mode = 'aim';
+    game.timeLeft = 30;
+    game.score = 0;
+    game.coins = 0;
+    game.hp = 100;
+    game.targets.length = 0;
+    game.nextId = 1;
+    game.spawnAcc = 0;
+    centerOverlay.style.opacity = 0;
+    panel.style.display = 'block';
+    msg.textContent = '';
+  }
+
+  function start(){
+    resetState();
+    game.running = true;
+    panel.style.display = 'none';
+    msg.textContent = 'Good luck!';
+  }
+
+  btn.addEventListener('click', start);
 
   function clientToWorld(clientX, clientY){
     const rect = canvas.getBoundingClientRect();
@@ -101,30 +159,18 @@
     return { x: px * W, y: py * H };
   }
 
-  function reset(){
-    game.running = true;
-    game.timeLeft = 30;
-    game.hp = 100;
-    game.score = 0;
-    game.coins = 0;
-    game.targets.length = 0;
-    game.nextId = 1;
-    game.spawnAcc = 0;
-    btn.textContent = 'Running...';
-    centerMsg.style.opacity = 0;
-  }
-
   function spawnOne(){
     if (!game.running) return;
     if (game.targets.length >= aim.maxTargets) return;
 
     const r = aim.radius;
     const pad = r + 10;
-    const x = pad + Math.random() * (W - 2*pad);
-    const y = pad + Math.random() * (H - 2*pad);
+    const x = pad + Math.random() * (W - 2 * pad);
+    const y = pad + Math.random() * (H - 2 * pad);
 
     const roll = Math.random();
     let type = 'normal';
+
     if (roll < aim.blueChance) type = 'blue';
     else if (roll < aim.blueChance + aim.bombChance) type = 'bomb';
 
@@ -135,54 +181,57 @@
     game.targets.push({ id: game.nextId++, x, y, r, type, color });
   }
 
-  // hit only nearest target under pointer
+  // nearest hit (فقط یکی حذف می‌شود)
   function hitAt(wx, wy){
-    let best = -1;
+    if (!game.running) return;
+
+    let bestIdx = -1;
     let bestD2 = Infinity;
 
-    for (let i=0;i<game.targets.length;i++){
+    for (let i = 0; i < game.targets.length; i++){
       const t = game.targets[i];
       const dx = wx - t.x, dy = wy - t.y;
-      const rr = t.r * t.r;
+      const rr = (t.r + aim.clickHitExtra);
       const d2 = dx*dx + dy*dy;
-      if (d2 <= rr && d2 < bestD2){
+      if (d2 <= rr*rr && d2 < bestD2){
         bestD2 = d2;
-        best = i;
+        bestIdx = i;
       }
     }
 
-    if (best === -1) return;
+    if (bestIdx === -1) return;
 
-    const t = game.targets[best];
-    game.targets.splice(best, 1); // حذف درست -> آبی “گم” نمی‌شه چون بعداً دوباره spawn میشه
+    const t = game.targets[bestIdx];
+    game.targets.splice(bestIdx, 1);
 
+    // پولک/امتیاز از همان لحظه Start درست کار کند:
     if (t.type === 'blue'){
-      // پولک آبی: هم امتیاز، هم coins
-      game.coins += 1;
-      game.score += 10;
+      game.coins += 1;      // پولک آبی
+      game.score += 10;     // امتیاز آبی
     } else if (t.type === 'bomb'){
-      game.hp -= 15;
+      game.hp -= 15;        // HP کم می‌شود
       game.score -= 5;
+      if (game.hp < 0) game.hp = 0;
     } else {
       game.score += 5;
     }
   }
 
-  // input
   canvas.addEventListener('pointerdown', (e) => {
     if (!game.running) return;
     e.preventDefault();
     e.stopPropagation();
-    const {x,y} = clientToWorld(e.clientX, e.clientY);
-    hitAt(x,y);
-  }, { passive:false });
+
+    const { x, y } = clientToWorld(e.clientX, e.clientY);
+    hitAt(x, y);
+  }, { passive: false });
 
   function draw(){
-    // IMPORTANT: clear every frame -> prevents "blue whole page" bug
+    // همیشه پاکسازی کامل -> جلوگیری از "آبی شدن کل صفحه"
     ctx.fillStyle = COLORS.bg;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // scale to world size
+    // scale world -> canvas
     const scaleX = (canvas.width / dpr) / W;
     const scaleY = (canvas.height / dpr) / H;
 
@@ -192,7 +241,7 @@
     for (const t of game.targets){
       // body
       ctx.beginPath();
-      ctx.arc(t.x, t.y, t.r, 0, Math.PI*2);
+      ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
       ctx.fillStyle = t.color;
       ctx.globalAlpha = 0.95;
       ctx.fill();
@@ -203,14 +252,14 @@
       ctx.strokeStyle = COLORS.ring;
       ctx.stroke();
 
-      // coin/prefix (blue coin should look "blue" explicitly)
+      // icon
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
 
       if (t.type === 'blue'){
-        // پولک آبی
         ctx.font = '18px sans-serif';
+        // پولک آبی
         ctx.fillText('💠', t.x, t.y + 1);
       } else if (t.type === 'bomb'){
         ctx.font = '22px sans-serif';
@@ -224,31 +273,7 @@
     ctx.restore();
   }
 
-  let last = performance.now();
-  function tick(now){
-    const dt = (now - last) / 1000;
-    last = now;
-
-    if (game.running){
-      game.timeLeft -= dt;
-      game.spawnAcc += dt;
-
-      // spawn controlled (no while explosion per frame)
-      while (game.spawnAcc >= aim.spawnEvery){
-        game.spawnAcc -= aim.spawnEvery;
-        spawnOne();
-        // safety: اگر خیلی جمع شد، بیشتر spawn نکن
-        if (game.targets.length >= aim.maxTargets) break;
-      }
-
-      if (game.timeLeft <= 0 || game.hp <= 0){
-        game.running = false;
-        btn.textContent = 'Start';
-        centerMsg.textContent = (game.hp <= 0) ? 'Game Over' : 'Finished';
-        centerMsg.style.opacity = 1;
-      }
-    }
-
+  function updateHUD(){
     hud.innerHTML = `
       <div><b>Time:</b> ${Math.max(0, game.timeLeft).toFixed(1)}</div>
       <div><b>HP:</b> ${game.hp}</div>
@@ -256,13 +281,39 @@
       <div><b>Score:</b> ${game.score}</div>
       <div style="opacity:.85;margin-top:4px;"><b>Targets:</b> ${game.targets.length}</div>
     `;
+  }
 
+  let last = performance.now();
+  function tick(now){
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+
+    if (game.running){
+      game.timeLeft -= dt;
+      game.spawnAcc += dt;
+
+      // spawn کنترل‌شده (بدون while انفجاری)
+      while (game.spawnAcc >= aim.spawnEvery){
+        game.spawnAcc -= aim.spawnEvery;
+        spawnOne();
+        if (game.targets.length >= aim.maxTargets) break;
+      }
+
+      if (game.timeLeft <= 0 || game.hp <= 0){
+        game.running = false;
+        panel.style.display = 'block';
+        btn.textContent = 'Restart';
+        centerOverlay.textContent = (game.hp <= 0) ? 'Game Over' : 'Finished';
+        centerOverlay.style.opacity = 1;
+      }
+    }
+
+    updateHUD();
     draw();
     requestAnimationFrame(tick);
   }
 
-  btn.addEventListener('click', () => reset());
-  reset();
+  resetState();
   requestAnimationFrame(tick);
 })();
 </script>
